@@ -41,7 +41,7 @@
 저장소를 클론하고 패키지를 설치합니다.
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/zeroone-2025/jbnu-alarm-app-v1.git
 cd jbnu-alarm-app-v1
 npm install
 ```
@@ -54,7 +54,7 @@ npm install
 
 ```typescript
 // app/lib/api.ts
-const API_BASE_URL = "http://localhost:8000"; // 이 부분을 본인의 백엔드 주소로 변경
+const API_BASE_URL = 'http://localhost:8000'; // 이 부분을 본인의 백엔드 주소로 변경
 ```
 
 ### 4. 실행 (Run)
