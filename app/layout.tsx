@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import BottomNav from "./components/BottomNav";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,9 +17,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      {/* 배경색(bg-gray-50) 적용 확인 */}
-      <body className={`${inter.className} bg-gray-50 text-gray-900`}>
-        {children}
+      <body className={`${inter.className} flex h-screen flex-col bg-gray-50 text-gray-900`}>
+        <main className="flex-1 overflow-hidden">
+          {children}
+        </main>
+        <BottomNav />
       </body>
     </html>
   );
