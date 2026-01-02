@@ -77,7 +77,7 @@ const COLOR_PALETTE: CategoryColor[] = [
   },
 ];
 
-// 계층적 카테고리 그룹 설정
+// 계층적 카테고리 그룹 설정 (Prefix 기반)
 export const CATEGORY_GROUPS: CategoryGroup[] = [
   {
     id: 'academic',
@@ -85,8 +85,8 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     order: 1,
     children: [
       {
-        id: 'homepage',
-        label: '학교 공지',
+        id: 'academic_main',  // Backend와 일치 (Prefix: academic_)
+        label: '본부 공지',
         color: COLOR_PALETTE[0], // indigo
         available: true,
       },
@@ -96,7 +96,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     id: 'college',
     label: '단과대',
     order: 2,
-    children: [], // 준비 중
+    children: [], // 준비 중 (예: college_eng, college_biz)
   },
   {
     id: 'department',
@@ -104,7 +104,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     order: 3,
     children: [
       {
-        id: 'csai',
+        id: 'dept_csai',  // Backend와 일치 (Prefix: dept_)
         label: '컴퓨터인공지능학부',
         color: COLOR_PALETTE[1], // emerald
         available: true,
@@ -112,14 +112,80 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     ],
   },
   {
-    id: 'business',
+    id: 'agency',
     label: '사업단',
     order: 4,
-    children: [], // 준비 중
+    children: [
+      {
+        id: 'agency_swuniv',  // Backend와 일치 (Prefix: agency_)
+        label: 'SW중심대학사업단',
+        color: COLOR_PALETTE[2], // amber
+        available: true,
+      },
+    ],
   },
 ];
 
+// ==================== 카테고리 이름 매핑 (한글) ====================
+// 백엔드에서 영어 코드로 들어오는 것을 한글 이름으로 표시
+export const CATEGORY_NAME_MAP: Record<string, string> = {
+  // 학사 (academic_)
+  academic_main: '본부 공지',
+
+  // 단과대 (college_)
+  college_eng: '공과대학',
+  college_biz: '경영대학',
+
+  // 학과 (dept_)
+  dept_csai: '컴퓨터인공지능학부',
+
+  // 사업단 (agency_)
+  agency_swuniv: 'SW중심대학사업단',
+  agency_bk21: 'BK21사업단',
+};
+
 // 헬퍼 함수들
+
+/**
+ * 카테고리 ID의 Prefix를 추출
+ * 예: "dept_csai" → "dept"
+ */
+export function getCategoryPrefix(categoryId: string): string {
+  const parts = categoryId.split('_');
+  return parts[0] || '';
+}
+
+/**
+ * 특정 Prefix로 시작하는 모든 카테고리 아이템 반환
+ * 예: "dept" → [dept_csai, dept_math, ...]
+ */
+export function getCategoriesByPrefix(prefix: string): CategoryItem[] {
+  return getAllCategoryItems().filter((item) =>
+    item.id.startsWith(prefix + '_')
+  );
+}
+
+/**
+ * 카테고리 ID가 특정 그룹에 속하는지 Prefix로 확인
+ * 예: "dept_csai"가 "department" 그룹인지 확인
+ */
+export function belongsToGroup(
+  categoryId: string,
+  groupId: string
+): boolean {
+  // 그룹 ID를 Prefix로 사용 (academic → academic_, department → dept_)
+  const prefixMap: Record<string, string> = {
+    academic: 'academic_',
+    college: 'college_',
+    department: 'dept_',
+    agency: 'agency_',
+  };
+
+  const prefix = prefixMap[groupId];
+  if (!prefix) return false;
+
+  return categoryId.startsWith(prefix);
+}
 
 /**
  * 인덱스를 기반으로 색상을 순환하여 반환
@@ -178,11 +244,22 @@ export function getCategoryColor(categoryId: string): CategoryColor {
 
 /**
  * 카테고리의 표시 레이블을 반환
- * 알 수 없는 카테고리는 ID를 그대로 반환
+ * 우선순위: CATEGORY_NAME_MAP → CategoryItem.label → categoryId
  */
 export function getCategoryLabel(categoryId: string): string {
+  // 1순위: 한글 매핑에서 찾기
+  if (CATEGORY_NAME_MAP[categoryId]) {
+    return CATEGORY_NAME_MAP[categoryId];
+  }
+
+  // 2순위: CategoryItem에서 찾기
   const item = getCategoryItem(categoryId);
-  return item?.label || categoryId;
+  if (item?.label) {
+    return item.label;
+  }
+
+  // 3순위: ID 그대로 반환
+  return categoryId;
 }
 
 /**

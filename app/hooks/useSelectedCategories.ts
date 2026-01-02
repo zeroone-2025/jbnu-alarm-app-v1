@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { getAllCategoryIds } from '@/lib/categories';
 
-const STORAGE_KEY = 'selected-categories';
+const STORAGE_KEY = 'my_subscribed_categories'; // 온보딩과 동일한 키 사용
 
 /**
  * 선택된 카테고리를 localStorage에서 관리하는 hook
- * 기본값: 모든 카테고리 선택됨
+ *
+ * 초기값:
+ * 1. localStorage에 'my_subscribed_categories'가 있으면 사용 (온보딩 완료)
+ * 2. 없으면 빈 배열 (온보딩 필요)
  */
 export function useSelectedCategories() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -16,15 +19,15 @@ export function useSelectedCategories() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
+        // 온보딩 완료: 저장된 구독 카테고리 사용
         setSelectedCategories(JSON.parse(saved));
       } else {
-        // 저장된 값이 없으면 모든 카테고리 선택
-        setSelectedCategories(getAllCategoryIds());
+        // 온보딩 미완료: 빈 배열 (page.tsx에서 온보딩 모달 표시)
+        setSelectedCategories([]);
       }
     } catch (error) {
       console.error('Failed to load selected categories:', error);
-      // 에러 발생 시 모든 카테고리 선택
-      setSelectedCategories(getAllCategoryIds());
+      setSelectedCategories([]);
     } finally {
       setIsLoading(false);
     }
