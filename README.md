@@ -109,3 +109,42 @@ jbnu-alarm-app-v1/
 3. 변경 사항을 커밋합니다 (`git commit -m 'Add some AmazingFeature'`).
 4. 브랜치에 Push 합니다 (`git push origin feature/AmazingFeature`).
 5. Pull Request를 요청합니다.
+
+## 🚢 서버 배포 가이드 (Server Deployment)
+
+실제 운영 서버에 배포하는 절차입니다.
+
+### 1. 서버 접속
+```bash
+ssh -i [local PEM키 경로] -p 19230 ubuntu@113.198.66.75
+```
+
+### 2. 프론트엔드 배포 (Frontend)
+```bash
+cd ~/jbnu-alarm-app-v1
+git pull origin main
+
+# Github 인증 필요 시:
+# Username: Zeroone012025
+# Password: (GitHub Classic Token 입력)
+
+# 프로세스 중지 및 빌드
+pm2 stop jbnu-alarm-app
+npm install
+npm run build
+
+# 정상 작동 테스트 (선택 사항)
+# npm run start
+
+# 프로세스 재시작 및 확인
+pm2 restart jbnu-alarm-app
+pm2 list
+```
+
+### 3. 백엔드 업데이트 (참고용)
+```bash
+cd ~/jbnu-alarm-api-v1
+git pull origin main
+source venv/bin/activate
+pm2 restart jbnu-alarm-api
+```
