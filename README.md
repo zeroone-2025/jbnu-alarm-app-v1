@@ -74,29 +74,31 @@ npm run start
 ```
 jbnu-alarm-app-v1/
 ├── app/
-│   ├── (home)/         # 홈 화면 (공지사항 리스트)
-│   ├── settings/       # 설정 화면 (카테고리 구독)
-│   ├── api/            # API 호출 함수 (Axios 설정)
-│   ├── components/     # 재사용 가능한 UI 컴포넌트
-│   ├── hooks/          # 커스텀 React Hooks
-│   ├── lib/            # 유틸리티 및 상수
-│   ├── layout.tsx      # 전역 레이아웃
-│   └── globals.css     # 전역 스타일
-├── .env.development    # 개발용 환경 변수
-└── .env.production     # 배포용 환경 변수
+│   ├── (home)/
+│   │   ├── components/  # 홈 화면 전용 컴포넌트 (Header, List, Card 등)
+│   │   └── page.tsx     # 홈 화면 메인 (데이터 오케스트레이션)
+│   ├── api/             # API 호출 함수 및 Axios 설정 (index.ts)
+│   ├── components/      # 공통 UI 컴포넌트 (BottomNav, Badge 등)
+│   ├── hooks/           # 커스텀 React Hooks
+│   ├── settings/        # 설정 화면 (카테고리 구독 관리)
+│   ├── theme/           # 테마 정의, 카테고리 설정 및 상수
+│   ├── layout.tsx       # 전역 레이아웃
+│   └── globals.css      # 전역 스타일
+├── .env.development     # 개발용 환경 변수
+└── .env.production      # 배포용 환경 변수
 ```
 
 ## 🔗 API 연동 규격
 
 프론트엔드는 다음 백엔드 API 규격을 따릅니다.
 
-| Method  | Endpoint             | Description                                                  |
-| :------ | :------------------- | :----------------------------------------------------------- |
-| `GET`   | `/notices`           | 공지사항 목록 조회 (params: `skip`, `limit`, `include_read`) |
-| `POST`  | `/notices/crawl`     | 크롤러 수동 트리거 요청                                      |
-| `POST`  | `/notices/{id}/read` | 특정 공지사항 읽음 처리                                      |
-| `GET`   | `/notices/config`    | 사용자 설정 정보 조회 (읽은 공지 포함 여부 등)               |
-| `PATCH` | `/notices/config`    | 사용자 설정 업데이트                                         |
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/notices` | 공지사항 목록 조회 (params: `skip`, `limit`, `include_read`) |
+| `POST` | `/notices/crawl` | 크롤러 수동 트리거 요청 |
+| `POST` | `/notices/{id}/read` | 특정 공지사항 읽음 처리 |
+| `GET` | `/user/config` | 사용자 설정 정보 조회 (읽은 공지 포함 여부 등) |
+| `PATCH` | `/user/config` | 사용자 설정 업데이트 |
 
 ## 🤝 기여하기 (Contributing)
 
