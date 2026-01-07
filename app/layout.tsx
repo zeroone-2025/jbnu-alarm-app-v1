@@ -6,8 +6,8 @@ import BottomNav from "./components/BottomNav";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "전북대 공지 알리미",
-  description: "JBNU & CSAI 공지사항",
+  title: "ZeroTime - 전북대 알리미",
+  description: "ZeroTime - 전북대 공지사항 통합 알림 서비스",
 };
 
 export default function RootLayout({

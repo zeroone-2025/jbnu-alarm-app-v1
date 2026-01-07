@@ -5,8 +5,6 @@ import {
   fetchNotices,
   triggerCrawl,
   markNoticeAsRead,
-  fetchUserConfig,
-  updateUserConfig,
   Notice,
 } from '@/api';
 import dayjs from 'dayjs';
@@ -95,19 +93,12 @@ export default function Home() {
   // Step 1: 설정 먼저 로드
   // Step 2: 설정 로딩 완료 후 공지사항 로드
   useEffect(() => {
-    const initializeData = async () => {
-      try {
-        // 1. 사용자 설정 로드 (includeRead)
-        const config = await fetchUserConfig();
-        setIncludeRead(config.include_read);
-        setIsConfigLoaded(true); // 설정 로딩 완료
-      } catch (error) {
-        console.error('Failed to load user config:', error);
-        setIsConfigLoaded(true); // 에러여도 진행
-      }
-    };
-
-    initializeData();
+    // 1. 사용자 설정 로드 (includeRead) - 로컬 스토리지 사용
+    const savedIncludeRead = localStorage.getItem('include_read');
+    if (savedIncludeRead !== null) {
+      setIncludeRead(savedIncludeRead === 'true');
+    }
+    setIsConfigLoaded(true); // 설정 로딩 완료
   }, []);
 
   // 설정 로딩 완료 후 공지사항 로드
@@ -134,12 +125,15 @@ export default function Home() {
     setShowOnboarding(false);
   };
 
-  // 읽음 필터 토글 핸들러 (Optimistic Update + API 연동)
+  // 읽음 필터 토글 핸들러 (로컬 스토리지 저장)
   const handleToggleIncludeRead = async () => {
     const newValue = !includeRead;
 
-    // 1. Optimistic Update: UI 즉시 반영
+    // 1. UI 즉시 반영
     setIncludeRead(newValue);
+
+    // 2. 로컬 스토리지 저장
+    localStorage.setItem('include_read', String(newValue));
 
     // 토스트 메시지 표시
     const message = newValue
@@ -152,19 +146,6 @@ export default function Home() {
     setTimeout(() => {
       setShowToast(false);
     }, 3000);
-
-    // 2. 백엔드 API 호출
-    try {
-      await updateUserConfig(newValue);
-      // 성공 시 공지사항 목록은 useEffect dependency에 의해 자동 재조회됨
-    } catch (error) {
-      console.error('Failed to update user config:', error);
-      // 3. 실패 시 롤백
-      setIncludeRead(!newValue);
-      setToastMessage('설정 업데이트 실패. 다시 시도해주세요.');
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3000);
-    }
   };
 
   // 구독한 카테고리만 필터링 (온보딩 프리셋 + 추가 선택)

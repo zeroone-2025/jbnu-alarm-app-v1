@@ -11,6 +11,17 @@ const api = axios.create({
   },
 });
 
+// 요청 인터셉터: localStorage에 토큰이 있으면 Authorization 헤더에 추가
+api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
 // 공지사항 데이터 타입 정의 (백엔드 모델과 일치)
 export interface Notice {
   id: number;
@@ -53,19 +64,26 @@ export const markNoticeAsRead = async (noticeId: number) => {
   return response.data;
 };
 
-// 사용자 설정 조회
-export const fetchUserConfig = async () => {
-  const response = await api.get<{ include_read: boolean }>('/notices/config');
+// 구글 로그인 URL (Redirect용)
+export const getGoogleLoginUrl = (redirectUri?: string) => {
+  const url = new URL(`${API_BASE_URL}/auth/google/login`);
+  if (redirectUri) {
+    url.searchParams.append('redirect_uri', redirectUri);
+  }
+  return url.toString();
+};
+
+// 구글 인증 콜백 처리 (JWT 발급 등)
+export const processGoogleCallback = async (code: string) => {
+  const response = await api.get('/auth/google/callback', {
+    params: { code },
+  });
   return response.data;
 };
 
-// 사용자 설정 업데이트
-export const updateUserConfig = async (includeRead: boolean) => {
-  const response = await api.patch<{
-    message: string;
-    include_read: boolean;
-  }>('/notices/config', { include_read: includeRead });
-  return response.data;
+// DB 데이터 전체 초기화 (관리자용)
+export const resetNotices = async () => {
+  return api.delete('/notices/reset');
 };
 
 export default api;

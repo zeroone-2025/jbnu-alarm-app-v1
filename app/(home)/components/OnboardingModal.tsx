@@ -36,7 +36,7 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
         <div className="mb-6 text-center">
           <div className="mb-3 text-4xl">🎓</div>
           <h2 className="mb-2 text-2xl font-bold text-gray-900">
-            전북대 알리미에 오신 것을 환영합니다!
+            ZeroTime에 오신 것을 환영합니다!
           </h2>
           <p className="text-sm text-gray-600">
             학과를 선택하시면 필수 공지사항을 자동으로 구독해 드려요!
