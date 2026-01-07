@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   fetchNotices,
   triggerCrawl,
@@ -10,16 +11,20 @@ import {
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko'; // 한국어 설정
 import relativeTime from 'dayjs/plugin/relativeTime'; // '방금 전' 기능
+import Toast from '@/components/Toast';
+import { useSelectedCategories } from '@/hooks/useSelectedCategories';
 import OnboardingModal from './components/OnboardingModal';
 import NoticeList from './components/NoticeList';
 import HomeHeader from './components/HomeHeader';
-import { useSelectedCategories } from '@/hooks/useSelectedCategories';
+import Sidebar from '@/components/Sidebar';
 
 // Dayjs 설정
 dayjs.extend(relativeTime);
 dayjs.locale('ko');
 
 export default function Home() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false); // 크롤링 중 표시
@@ -28,6 +33,8 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false); // 온보딩 모달 표시 여부
   const [showToast, setShowToast] = useState(false); // 토스트 메시지 표시 여부
   const [toastMessage, setToastMessage] = useState(''); // 토스트 메시지 내용
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // 사이드바 상태
 
   // 선택된 카테고리 관리 (온보딩 프리셋 + 추가 선택)
   const { selectedCategories, updateSelectedCategories } = useSelectedCategories();
@@ -140,13 +147,26 @@ export default function Home() {
       ? '이제 읽은 공지도 함께 표시됩니다.'
       : '안 읽은 공지만 모아서 봅니다.';
     setToastMessage(message);
+    setToastType('info');
     setShowToast(true);
-
-    // 3초 후 자동으로 토스트 숨기기
-    setTimeout(() => {
-      setShowToast(false);
-    }, 3000);
   };
+
+  // 로그인 결과 처리 (쿼리 파라미터 확인)
+  useEffect(() => {
+    const loginStatus = searchParams.get('login');
+    if (loginStatus === 'success') {
+      setToastMessage('로그인에 성공했습니다!');
+      setToastType('success');
+      setShowToast(true);
+      // 파라미터 제거
+      router.replace('/');
+    } else if (loginStatus === 'failed') {
+      setToastMessage('로그인 처리에 실패했습니다.');
+      setToastType('error');
+      setShowToast(true);
+      router.replace('/');
+    }
+  }, [searchParams, router]);
 
   // 구독한 카테고리만 필터링 (온보딩 프리셋 + 추가 선택)
   const filteredNotices = notices.filter((notice) => selectedCategories.includes(notice.category));
@@ -157,23 +177,24 @@ export default function Home() {
       <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
 
       {/* 토스트 메시지 */}
-      {showToast && (
-        <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 transition-all duration-300">
-          <div className="rounded-lg bg-gray-900 px-4 py-3 text-sm text-white shadow-lg">
-            {toastMessage}
-          </div>
-        </div>
-      )}
+      <Toast
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        type={toastType}
+      />
 
       <main className="h-full overflow-hidden bg-gray-50">
         {/* --- 반응형 컨테이너 (모바일: 꽉 참, 태블릿+: 넓어짐) --- */}
-        <div className="mx-auto flex h-full w-full max-w-md flex-col border-x border-gray-100 bg-white shadow-xl transition-all md:max-w-4xl">
+        <div className="relative mx-auto flex h-full w-full max-w-md flex-col overflow-hidden border-x border-gray-100 bg-white shadow-xl transition-all md:max-w-4xl">
           {/* 1. 헤더 */}
           <HomeHeader
-            includeRead={includeRead}
-            refreshing={refreshing}
-            onToggleIncludeRead={handleToggleIncludeRead}
-            onRefresh={handleRefresh}
+            onMenuClick={() => setIsSidebarOpen(true)}
+            onNotificationClick={() => {
+              setToastMessage('알림 기능은 준비 중입니다.');
+              setToastType('info');
+              setShowToast(true);
+            }}
           />
 
           {/* 2. 공지사항 리스트 */}
@@ -184,6 +205,9 @@ export default function Home() {
             onRefresh={handleRefresh}
             onMarkAsRead={handleMarkAsRead}
           />
+
+          {/* 3. 사이드바 (컨테이너 내부에 배치) */}
+          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         </div>
       </main>
     </>

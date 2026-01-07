@@ -40,8 +40,8 @@ export default function NoticeCard({ notice, onMarkAsRead }: NoticeCardProps) {
           {/* 날짜 */}
           <span className={`flex items-center gap-1 text-xs ${styleConfig.textColor}`}>
             {notice.date}
-            {/* 오늘 날짜이면서 안 읽은 경우에만 New 표시 */}
-            {!notice.is_read && notice.date === dayjs().format('YYYY-MM-DD') && (
+            {/* 2일 이내 게시물인 경우 New 표시 (읽음 여부 상관없이 유지) */}
+            {dayjs().diff(dayjs(notice.date), 'day') <= 2 && (
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
             )}
           </span>
