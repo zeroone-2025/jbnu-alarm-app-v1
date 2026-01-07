@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   fetchNotices,
@@ -22,7 +22,7 @@ import Sidebar from '@/components/Sidebar';
 dayjs.extend(relativeTime);
 dayjs.locale('ko');
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -211,5 +211,19 @@ export default function Home() {
         </div>
       </main>
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen w-full items-center justify-center bg-gray-50">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }

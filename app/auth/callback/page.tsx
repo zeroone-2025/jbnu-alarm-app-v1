@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { processGoogleCallback } from '@/api';
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const processedRef = useRef(false);
@@ -47,4 +47,12 @@ export default function AuthCallbackPage() {
 
   // 화면에 아무것도 표시하지 않음 (투명한 처리)
   return <div className="min-h-screen bg-white" />;
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <AuthCallbackContent />
+    </Suspense>
+  );
 }
