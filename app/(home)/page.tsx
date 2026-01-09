@@ -6,6 +6,7 @@ import {
   fetchNotices,
   triggerCrawl,
   markNoticeAsRead,
+  toggleNoticeFavorite,
   Notice,
 } from '@/api';
 import dayjs from 'dayjs';
@@ -17,6 +18,7 @@ import OnboardingModal from './components/OnboardingModal';
 import NoticeList from './components/NoticeList';
 import HomeHeader from './components/HomeHeader';
 import Sidebar from '@/components/Sidebar';
+import CategoryFilter from '@/components/CategoryFilter';
 
 // Dayjs 설정
 dayjs.extend(relativeTime);
@@ -28,24 +30,32 @@ export default function Home() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false); // 크롤링 중 표시
-  const [includeRead, setIncludeRead] = useState(false); // 읽은 공지 포함 여부
-  const [isConfigLoaded, setIsConfigLoaded] = useState(false); // 설정 로딩 완료 여부 (Race Condition 방지)
   const [showOnboarding, setShowOnboarding] = useState(false); // 온보딩 모달 표시 여부
   const [showToast, setShowToast] = useState(false); // 토스트 메시지 표시 여부
   const [toastMessage, setToastMessage] = useState(''); // 토스트 메시지 내용
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // 사이드바 상태
+  const [filter, setFilter] = useState('ALL'); // 카테고리 필터 상태 (전체, 안읽음, 최신공지, 즐겨찾기)
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // 로그인 상태
 
-  // 선택된 카테고리 관리 (온보딩 프리셋 + 추가 선택)
+  // 선택된 카테고리 관리 (로그인 사용자만 사용)
   const { selectedCategories, updateSelectedCategories } = useSelectedCategories();
+
+  // 게시판 목록 결정:
+  // - 게스트(비로그인): 무조건 home_campus만 (localStorage 무시)
+  // - 로그인 사용자: localStorage 구독 정보 사용 (없으면 home_campus)
+  const selectedBoards = isLoggedIn
+    ? (selectedCategories.length > 0 ? selectedCategories : ['home_campus'])
+    : ['home_campus'];
 
   // 데이터 가져오기 함수
   const loadNotices = async () => {
     setLoading(true);
     try {
-      // Backend 필터링: includeRead 파라미터로 읽은 공지 제외/포함
+      // 모든 공지를 가져옴 (includeRead = true 고정)
+      // 읽음/안읽음 필터링은 프론트엔드에서 처리
       // IMPORTANT: limit 200으로 증가 (날짜순 정렬 시 공과대학 공지가 밀리는 문제 방지)
-      const data = await fetchNotices(0, 200, includeRead);
+      const data = await fetchNotices(0, 200, true);
       setNotices(data);
     } catch (error) {
       console.error('Failed to load notices', error);
@@ -96,33 +106,54 @@ export default function Home() {
     }
   };
 
-  // CRITICAL: 로딩 시퀀스 제어 (Race Condition 방지)
-  // Step 1: 설정 먼저 로드
-  // Step 2: 설정 로딩 완료 후 공지사항 로드
-  useEffect(() => {
-    // 1. 사용자 설정 로드 (includeRead) - 로컬 스토리지 사용
-    const savedIncludeRead = localStorage.getItem('include_read');
-    if (savedIncludeRead !== null) {
-      setIncludeRead(savedIncludeRead === 'true');
-    }
-    setIsConfigLoaded(true); // 설정 로딩 완료
-  }, []);
+  /**
+   * 즐겨찾기 토글 (Optimistic Update)
+   * 1. UI를 먼저 즉시 업데이트
+   * 2. 백엔드 API 호출
+   * 3. 실패 시 롤백
+   */
+  const handleToggleFavorite = async (noticeId: number) => {
+    // 1. Optimistic Update: 즉시 UI 업데이트 (토글)
+    setNotices((prevNotices) =>
+      prevNotices.map((notice) =>
+        notice.id === noticeId ? { ...notice, is_favorite: !notice.is_favorite } : notice,
+      ),
+    );
 
-  // 설정 로딩 완료 후 공지사항 로드
-  useEffect(() => {
-    if (isConfigLoaded) {
-      loadNotices();
+    // 2. 백엔드 API 호출
+    try {
+      await toggleNoticeFavorite(noticeId);
+      // 성공 시 이미 UI가 업데이트되어 있으므로 추가 작업 불필요
+    } catch (error) {
+      // 3. 실패 시 롤백: 원래 상태로 복구
+      console.error('Failed to toggle favorite:', error);
+      setNotices((prevNotices) =>
+        prevNotices.map((notice) =>
+          notice.id === noticeId ? { ...notice, is_favorite: !notice.is_favorite } : notice,
+        ),
+      );
     }
+  };
+
+  // 초기화: 로그인 상태 확인 및 공지사항 로드
+  useEffect(() => {
+    // 로그인 상태 확인
+    const token = localStorage.getItem('accessToken');
+    setIsLoggedIn(!!token);
+
+    // 공지사항 로드
+    loadNotices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConfigLoaded, includeRead]);
-
-  // 온보딩 필요 여부 확인
-  useEffect(() => {
-    const savedCategories = localStorage.getItem('my_subscribed_categories');
-    if (!savedCategories) {
-      setShowOnboarding(true);
-    }
   }, []);
+
+  // 온보딩 모달 자동 표시 비활성화
+  // 기본값(home_campus)으로 시작하고, 사용자가 원할 때 설정에서 변경 가능
+  // useEffect(() => {
+  //   const savedCategories = localStorage.getItem('my_subscribed_categories');
+  //   if (!savedCategories) {
+  //     setShowOnboarding(true);
+  //   }
+  // }, []);
 
   // 온보딩 완료 핸들러
   const handleOnboardingComplete = (categories: string[]) => {
@@ -130,25 +161,6 @@ export default function Home() {
     // useSelectedCategories 훅을 업데이트만 하면 됨
     updateSelectedCategories(categories);
     setShowOnboarding(false);
-  };
-
-  // 읽음 필터 토글 핸들러 (로컬 스토리지 저장)
-  const handleToggleIncludeRead = async () => {
-    const newValue = !includeRead;
-
-    // 1. UI 즉시 반영
-    setIncludeRead(newValue);
-
-    // 2. 로컬 스토리지 저장
-    localStorage.setItem('include_read', String(newValue));
-
-    // 토스트 메시지 표시
-    const message = newValue
-      ? '이제 읽은 공지도 함께 표시됩니다.'
-      : '안 읽은 공지만 모아서 봅니다.';
-    setToastMessage(message);
-    setToastType('info');
-    setShowToast(true);
   };
 
   // 로그인 결과 처리 (쿼리 파라미터 확인)
@@ -168,8 +180,24 @@ export default function Home() {
     }
   }, [searchParams, router]);
 
-  // 구독한 카테고리만 필터링 (온보딩 프리셋 + 추가 선택)
-  const filteredNotices = notices.filter((notice) => selectedCategories.includes(notice.category));
+  // 1단계: 게시판 필터링 (Guest: home_campus만, User: 구독한 게시판)
+  let filteredNotices = notices.filter((notice) => selectedBoards.includes(notice.board_code));
+
+  // 2단계: 카테고리 필터 적용 (전체, 안읽음, 최신공지, 즐겨찾기)
+  if (filter === 'UNREAD') {
+    // 안 읽음: is_read가 false인 공지만
+    filteredNotices = filteredNotices.filter((notice) => !notice.is_read);
+  } else if (filter === 'LATEST') {
+    // 최신 공지: 최근 3일 이내 공지
+    filteredNotices = filteredNotices.filter((notice) => {
+      const daysAgo = dayjs().diff(dayjs(notice.date), 'day');
+      return daysAgo <= 3;
+    });
+  } else if (filter === 'FAVORITE') {
+    // 즐겨찾기: is_favorite가 true인 공지만
+    filteredNotices = filteredNotices.filter((notice) => notice.is_favorite);
+  }
+  // 'ALL'은 모든 공지 표시 (selectedBoards 필터링만 적용)
 
   return (
     <>
@@ -197,16 +225,21 @@ export default function Home() {
             }}
           />
 
-          {/* 2. 공지사항 리스트 */}
+          {/* 2. 카테고리 필터 */}
+          <CategoryFilter activeFilter={filter} onFilterChange={setFilter} isLoggedIn={isLoggedIn} />
+
+          {/* 3. 공지사항 리스트 */}
           <NoticeList
             loading={loading}
             selectedCategories={selectedCategories}
             filteredNotices={filteredNotices}
             onRefresh={handleRefresh}
             onMarkAsRead={handleMarkAsRead}
+            onToggleFavorite={handleToggleFavorite}
+            isInFavoriteTab={filter === 'FAVORITE'}
           />
 
-          {/* 3. 사이드바 (컨테이너 내부에 배치) */}
+          {/* 4. 사이드바 (컨테이너 내부에 배치) */}
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         </div>
       </main>

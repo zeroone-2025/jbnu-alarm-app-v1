@@ -8,6 +8,8 @@ interface NoticeListProps {
   filteredNotices: Notice[];
   onRefresh: () => void;
   onMarkAsRead: (noticeId: number) => void;
+  onToggleFavorite?: (noticeId: number) => void;
+  isInFavoriteTab?: boolean;
 }
 
 export default function NoticeList({
@@ -16,6 +18,8 @@ export default function NoticeList({
   filteredNotices,
   onRefresh,
   onMarkAsRead,
+  onToggleFavorite,
+  isInFavoriteTab,
 }: NoticeListProps) {
   return (
     <ul className="flex-1 overflow-y-auto bg-gray-50 p-0 md:p-5">
@@ -49,6 +53,8 @@ export default function NoticeList({
               key={notice.id}
               notice={notice}
               onMarkAsRead={onMarkAsRead}
+              onToggleFavorite={onToggleFavorite}
+              isInFavoriteTab={isInFavoriteTab}
             />
           ))
         ) : (

@@ -1,50 +1,55 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { processGoogleCallback } from '@/api';
 
 export default function AuthCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const processedRef = useRef(false);
+  const [status, setStatus] = useState('로그인 처리 중...');
 
   useEffect(() => {
     if (processedRef.current) return;
+    processedRef.current = true;
 
-    const code = searchParams.get('code');
-    const token = searchParams.get('access_token');
+    const accessToken = searchParams.get('access_token');
 
-    const handleLogin = async () => {
-      processedRef.current = true;
+    if (accessToken) {
       try {
-        let accessToken = token;
-        if (!accessToken && code) {
-          const response = await processGoogleCallback(code);
-          accessToken = response.access_token;
-        }
+        // 백엔드에서 전달받은 JWT를 localStorage에 저장
+        localStorage.setItem('accessToken', accessToken);
+        setStatus('로그인 성공! 홈으로 이동합니다.');
 
-        if (accessToken) {
-          localStorage.setItem('accessToken', accessToken);
-          // 성공 시 홈으로 이동하며 쿼리 파라미터 전달
+        // 성공 시 홈으로 이동
+        setTimeout(() => {
           router.replace('/?login=success');
-        } else {
-          throw new Error('No access token');
-        }
+        }, 500);
       } catch (error) {
         console.error('Login failed:', error);
-        // 실패 시에도 홈으로 이동
-        router.replace('/?login=failed');
-      }
-    };
+        setStatus('로그인 실패. 다시 시도해주세요.');
 
-    if (code || token) {
-      handleLogin();
+        // 실패 시 로그인 페이지로 이동
+        setTimeout(() => {
+          router.replace('/login');
+        }, 2000);
+      }
     } else {
-      router.replace('/');
+      console.error('No access_token parameter found in URL');
+      setStatus('잘못된 접근입니다. 로그인 페이지로 이동합니다.');
+
+      setTimeout(() => {
+        router.replace('/login');
+      }, 2000);
     }
   }, [searchParams, router]);
 
-  // 화면에 아무것도 표시하지 않음 (투명한 처리)
-  return <div className="min-h-screen bg-white" />;
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="text-center">
+        <div className="mb-4 inline-block h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+        <p className="text-lg font-medium text-gray-700">{status}</p>
+      </div>
+    </div>
+  );
 }

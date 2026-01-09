@@ -1,23 +1,41 @@
-import { Notice } from '@/api';
+import { Notice, incrementNoticeView } from '@/api';
 import { THEME } from '@/theme/theme';
 import dayjs from 'dayjs';
 import CategoryBadge from '@/components/CategoryBadge';
+import { FaStar, FaRegStar } from 'react-icons/fa';
 
 interface NoticeCardProps {
   notice: Notice;
   onMarkAsRead?: (noticeId: number) => void; // 읽음 처리 콜백 (옵션)
+  onToggleFavorite?: (noticeId: number) => void; // 즐겨찾기 토글 콜백 (옵션)
+  isInFavoriteTab?: boolean; // 즐겨찾기 탭 여부 (항상 unread 스타일 표시)
 }
 
-export default function NoticeCard({ notice, onMarkAsRead }: NoticeCardProps) {
-  // 읽음 상태에 따른 스타일 결정 (하드코딩 금지)
-  const styleConfig = notice.is_read
-    ? THEME.readState.read
-    : THEME.readState.unread;
+export default function NoticeCard({ notice, onMarkAsRead, onToggleFavorite, isInFavoriteTab }: NoticeCardProps) {
+  // 읽음 상태에 따른 스타일 결정
+  // 즐겨찾기 탭에서는 항상 unread 스타일 표시
+  const styleConfig = (isInFavoriteTab || !notice.is_read)
+    ? THEME.readState.unread
+    : THEME.readState.read;
 
-  // 링크 클릭 시 읽음 처리
+  // 링크 클릭 시 조회수 증가 + 읽음 처리
   const handleClick = () => {
+    // 조회수 증가 (비동기, 에러 무시)
+    // 로그인하지 않은 사용자는 401 에러가 발생하지만 무시됨
+    incrementNoticeView(notice.id).catch(() => {});
+
+    // 읽음 처리 (로그인 사용자만)
     if (!notice.is_read && onMarkAsRead) {
       onMarkAsRead(notice.id);
+    }
+  };
+
+  // 즐겨찾기 버튼 클릭 (이벤트 전파 중지)
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // 링크 이동 방지
+    e.stopPropagation(); // 이벤트 버블링 방지
+    if (onToggleFavorite) {
+      onToggleFavorite(notice.id);
     }
   };
 
@@ -33,18 +51,35 @@ export default function NoticeCard({ notice, onMarkAsRead }: NoticeCardProps) {
         className="block p-5"
         onClick={handleClick}
       >
-        <div className="mb-2 flex items-center gap-2">
-          {/* 카테고리 배지 */}
-          <CategoryBadge category={notice.category} />
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {/* 게시판 배지 */}
+            <CategoryBadge boardCode={notice.board_code} />
 
-          {/* 날짜 */}
-          <span className={`flex items-center gap-1 text-xs ${styleConfig.textColor}`}>
-            {notice.date}
-            {/* 2일 이내 게시물인 경우 New 표시 (읽음 여부 상관없이 유지) */}
-            {dayjs().diff(dayjs(notice.date), 'day') <= 2 && (
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-            )}
-          </span>
+            {/* 날짜 (YYYY-MM-DD 형식만 표시) */}
+            <span className={`flex items-center gap-1 text-xs ${styleConfig.textColor}`}>
+              {dayjs(notice.date).format('YYYY-MM-DD')}
+              {/* 2일 이내 게시물인 경우 New 표시 (읽음 여부 상관없이 유지) */}
+              {dayjs().diff(dayjs(notice.date), 'day') <= 2 && (
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+              )}
+            </span>
+          </div>
+
+          {/* 즐겨찾기 버튼 */}
+          {onToggleFavorite && (
+            <button
+              onClick={handleFavoriteClick}
+              className="shrink-0 p-1 text-gray-400 transition-colors hover:text-yellow-500"
+              aria-label={notice.is_favorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+            >
+              {notice.is_favorite ? (
+                <FaStar className="h-4 w-4 text-yellow-500" />
+              ) : (
+                <FaRegStar className="h-4 w-4" />
+              )}
+            </button>
+          )}
         </div>
 
         {/* 제목 */}
