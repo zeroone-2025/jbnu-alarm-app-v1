@@ -1,8 +1,11 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  output: 'export', // 정적 배포를 위한 설정
-  images: {
-    unoptimized: true, // GitHub Pages에서 이미지를 최적화할 수 없으므로 필수
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+  env: {
+    // .env 파일에서 읽어온 값을 빌드 타임에 고정
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
   },
 };
 

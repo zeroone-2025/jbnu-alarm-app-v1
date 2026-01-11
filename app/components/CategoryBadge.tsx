@@ -1,16 +1,17 @@
-import { getCategoryColor, getCategoryLabel } from '@/theme/categories';
+import { getBoardLabel, getBoardColor, getColorClasses } from '@/constants/boards';
 
 interface CategoryBadgeProps {
-  category: string;
+  boardCode: string; // category에서 boardCode로 변경
 }
 
-export default function CategoryBadge({ category }: CategoryBadgeProps) {
-  const color = getCategoryColor(category);
-  const label = getCategoryLabel(category);
+export default function CategoryBadge({ boardCode }: CategoryBadgeProps) {
+  const color = getBoardColor(boardCode);
+  const label = getBoardLabel(boardCode);
+  const colorClasses = getColorClasses(color);
 
   return (
     <span
-      className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${color.bg} ${color.text}`}
+      className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${colorClasses.bg} ${colorClasses.text}`}
     >
       {label}
     </span>

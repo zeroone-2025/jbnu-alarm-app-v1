@@ -1,11 +1,11 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   fetchNotices,
-  triggerCrawl,
   markNoticeAsRead,
+  toggleNoticeFavorite,
   Notice,
 } from '@/api';
 import dayjs from 'dayjs';
@@ -17,6 +17,8 @@ import OnboardingModal from './components/OnboardingModal';
 import NoticeList from './components/NoticeList';
 import HomeHeader from './components/HomeHeader';
 import Sidebar from '@/components/Sidebar';
+import CategoryFilter from '@/components/CategoryFilter';
+import BoardFilterModal from '@/components/BoardFilterModal';
 
 // Dayjs 설정
 dayjs.extend(relativeTime);
@@ -28,24 +30,35 @@ function HomeContent() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false); // 크롤링 중 표시
-  const [includeRead, setIncludeRead] = useState(false); // 읽은 공지 포함 여부
-  const [isConfigLoaded, setIsConfigLoaded] = useState(false); // 설정 로딩 완료 여부 (Race Condition 방지)
   const [showOnboarding, setShowOnboarding] = useState(false); // 온보딩 모달 표시 여부
   const [showToast, setShowToast] = useState(false); // 토스트 메시지 표시 여부
   const [toastMessage, setToastMessage] = useState(''); // 토스트 메시지 내용
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // 사이드바 상태
+  const [filter, setFilter] = useState('ALL'); // 카테고리 필터 상태 (전체, 안읽음, 최신공지, 즐겨찾기)
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // 로그인 상태
+  const [isPulling, setIsPulling] = useState(false); // Pull to Refresh 상태
+  const [pullDistance, setPullDistance] = useState(0); // 당긴 거리
+  const touchStartY = useRef(0); // 터치 시작 Y 좌표
+  const scrollContainerRef = useRef<HTMLElement>(null); // 스크롤 컨테이너 참조
+  const [showBoardFilterModal, setShowBoardFilterModal] = useState(false); // 게시판 필터 모달
 
-  // 선택된 카테고리 관리 (온보딩 프리셋 + 추가 선택)
+  // 선택된 카테고리 관리 (로그인 사용자만 사용)
   const { selectedCategories, updateSelectedCategories } = useSelectedCategories();
+
+  // 게시판 목록 결정:
+  // - 로그인 사용자: DB의 user_subscriptions에서 가져온 구독 정보 사용 (빈 배열 가능)
+  // - 비로그인 사용자: home_campus만 고정 표시 (게시판 선택 기능 접근 불가)
+  const selectedBoards = isLoggedIn ? selectedCategories : ['home_campus'];
 
   // 데이터 가져오기 함수
   const loadNotices = async () => {
     setLoading(true);
     try {
-      // Backend 필터링: includeRead 파라미터로 읽은 공지 제외/포함
+      // 모든 공지를 가져옴 (includeRead = true 고정)
+      // 읽음/안읽음 필터링은 프론트엔드에서 처리
       // IMPORTANT: limit 200으로 증가 (날짜순 정렬 시 공과대학 공지가 밀리는 문제 방지)
-      const data = await fetchNotices(0, 200, includeRead);
+      const data = await fetchNotices(0, 200, true);
       setNotices(data);
     } catch (error) {
       console.error('Failed to load notices', error);
@@ -54,20 +67,6 @@ function HomeContent() {
     }
   };
 
-  // 수동 크롤링 & 새로고침
-  const handleRefresh = async () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    try {
-      await triggerCrawl(); // 1. 크롤링 요청
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // 2. 1초 대기 (DB저장 시간 벌기)
-      await loadNotices(); // 3. 목록 다시 불러오기
-    } catch (error) {
-      alert('크롤링 실패!');
-    } finally {
-      setRefreshing(false);
-    }
-  };
 
   /**
    * 공지사항 읽음 처리 (Optimistic Update)
@@ -96,33 +95,119 @@ function HomeContent() {
     }
   };
 
-  // CRITICAL: 로딩 시퀀스 제어 (Race Condition 방지)
-  // Step 1: 설정 먼저 로드
-  // Step 2: 설정 로딩 완료 후 공지사항 로드
-  useEffect(() => {
-    // 1. 사용자 설정 로드 (includeRead) - 로컬 스토리지 사용
-    const savedIncludeRead = localStorage.getItem('include_read');
-    if (savedIncludeRead !== null) {
-      setIncludeRead(savedIncludeRead === 'true');
-    }
-    setIsConfigLoaded(true); // 설정 로딩 완료
-  }, []);
+  /**
+   * 즐겨찾기 토글 (Optimistic Update)
+   * 1. UI를 먼저 즉시 업데이트
+   * 2. 백엔드 API 호출
+   * 3. 실패 시 롤백
+   */
+  const handleToggleFavorite = async (noticeId: number) => {
+    // 1. Optimistic Update: 즉시 UI 업데이트 (토글)
+    setNotices((prevNotices) =>
+      prevNotices.map((notice) =>
+        notice.id === noticeId ? { ...notice, is_favorite: !notice.is_favorite } : notice,
+      ),
+    );
 
-  // 설정 로딩 완료 후 공지사항 로드
-  useEffect(() => {
-    if (isConfigLoaded) {
-      loadNotices();
+    // 2. 백엔드 API 호출
+    try {
+      await toggleNoticeFavorite(noticeId);
+      // 성공 시 이미 UI가 업데이트되어 있으므로 추가 작업 불필요
+    } catch (error) {
+      // 3. 실패 시 롤백: 원래 상태로 복구
+      console.error('Failed to toggle favorite:', error);
+      setNotices((prevNotices) =>
+        prevNotices.map((notice) =>
+          notice.id === noticeId ? { ...notice, is_favorite: !notice.is_favorite } : notice,
+        ),
+      );
     }
+  };
+
+  // 초기화: 로그인 상태 확인 및 공지사항 로드
+  useEffect(() => {
+    // 로그인 상태 확인
+    const token = localStorage.getItem('accessToken');
+    setIsLoggedIn(!!token);
+
+    // 공지사항 로드
+    loadNotices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConfigLoaded, includeRead]);
-
-  // 온보딩 필요 여부 확인
-  useEffect(() => {
-    const savedCategories = localStorage.getItem('my_subscribed_categories');
-    if (!savedCategories) {
-      setShowOnboarding(true);
-    }
   }, []);
+
+  // 페이지 visibility 변경 시 새로고침 (다른 탭 갔다가 돌아올 때)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // 페이지가 다시 보이게 되면 로그인 상태 재확인 및 데이터 새로고침
+        const token = localStorage.getItem('accessToken');
+        setIsLoggedIn(!!token);
+        loadNotices();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Pull to Refresh 핸들러
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    // 스크롤이 최상단에 있을 때만 작동
+    if (container.scrollTop === 0) {
+      touchStartY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const container = scrollContainerRef.current;
+    if (!container || touchStartY.current === 0) return;
+
+    const currentY = e.touches[0].clientY;
+    const distance = currentY - touchStartY.current;
+
+    // 아래로 당길 때만 (distance > 0) & 스크롤 최상단일 때
+    if (distance > 0 && container.scrollTop === 0) {
+      e.preventDefault();
+      setIsPulling(true);
+
+      // Rubber band effect: 저항감을 주기 위한 감쇠 함수
+      // 멀리 당길수록 저항이 증가 (최대 80px)
+      const maxDistance = 80;
+      const dampingFactor = 0.5;
+      const dampedDistance = maxDistance * (1 - Math.exp(-distance * dampingFactor / maxDistance));
+
+      setPullDistance(Math.min(dampedDistance, maxDistance));
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (isPulling && pullDistance > 30) {
+      // 30px 이상 당기면 새로고침
+      setRefreshing(true);
+      await loadNotices();
+      setRefreshing(false);
+    }
+
+    // 상태 초기화
+    setIsPulling(false);
+    setPullDistance(0);
+    touchStartY.current = 0;
+  };
+
+  // 온보딩 모달 자동 표시 비활성화
+  // 기본값(home_campus)으로 시작하고, 사용자가 원할 때 설정에서 변경 가능
+  // useEffect(() => {
+  //   const savedCategories = localStorage.getItem('my_subscribed_categories');
+  //   if (!savedCategories) {
+  //     setShowOnboarding(true);
+  //   }
+  // }, []);
 
   // 온보딩 완료 핸들러
   const handleOnboardingComplete = (categories: string[]) => {
@@ -132,29 +217,24 @@ function HomeContent() {
     setShowOnboarding(false);
   };
 
-  // 읽음 필터 토글 핸들러 (로컬 스토리지 저장)
-  const handleToggleIncludeRead = async () => {
-    const newValue = !includeRead;
-
-    // 1. UI 즉시 반영
-    setIncludeRead(newValue);
-
-    // 2. 로컬 스토리지 저장
-    localStorage.setItem('include_read', String(newValue));
-
-    // 토스트 메시지 표시
-    const message = newValue
-      ? '이제 읽은 공지도 함께 표시됩니다.'
-      : '안 읽은 공지만 모아서 봅니다.';
-    setToastMessage(message);
-    setToastType('info');
-    setShowToast(true);
+  // 게시판 필터 적용 핸들러
+  const handleBoardFilterApply = async (boards: string[]) => {
+    await updateSelectedCategories(boards);
+    // 게시판 변경 시 공지사항 목록 자동 새로고침
+    await loadNotices();
   };
 
   // 로그인 결과 처리 (쿼리 파라미터 확인)
   useEffect(() => {
     const loginStatus = searchParams.get('login');
+    const showOnboardingParam = searchParams.get('show_onboarding');
+
     if (loginStatus === 'success') {
+      // 온보딩 모달 표시 여부 확인
+      if (showOnboardingParam === 'true') {
+        setShowOnboarding(true);
+      }
+
       setToastMessage('로그인에 성공했습니다!');
       setToastType('success');
       setShowToast(true);
@@ -168,13 +248,37 @@ function HomeContent() {
     }
   }, [searchParams, router]);
 
-  // 구독한 카테고리만 필터링 (온보딩 프리셋 + 추가 선택)
-  const filteredNotices = notices.filter((notice) => selectedCategories.includes(notice.category));
+  // 1단계: 게시판 필터링 (Guest: home_campus만, User: 구독한 게시판)
+  let filteredNotices = notices.filter((notice) => selectedBoards.includes(notice.board_code));
+
+  // 2단계: 카테고리 필터 적용 (전체, 안읽음, 최신공지, 즐겨찾기)
+  if (filter === 'UNREAD') {
+    // 안 읽음: is_read가 false인 공지만
+    filteredNotices = filteredNotices.filter((notice) => !notice.is_read);
+  } else if (filter === 'LATEST') {
+    // 최신 공지: 최근 3일 이내 공지
+    filteredNotices = filteredNotices.filter((notice) => {
+      const daysAgo = dayjs().diff(dayjs(notice.date), 'day');
+      return daysAgo <= 3;
+    });
+  } else if (filter === 'FAVORITE') {
+    // 즐겨찾기: is_favorite가 true인 공지만
+    filteredNotices = filteredNotices.filter((notice) => notice.is_favorite);
+  }
+  // 'ALL'은 모든 공지 표시 (selectedBoards 필터링만 적용)
 
   return (
     <>
       {/* 온보딩 모달 */}
       <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
+
+      {/* 게시판 필터 모달 */}
+      <BoardFilterModal
+        isOpen={showBoardFilterModal}
+        onClose={() => setShowBoardFilterModal(false)}
+        selectedBoards={selectedBoards}
+        onApply={handleBoardFilterApply}
+      />
 
       {/* 토스트 메시지 */}
       <Toast
@@ -186,7 +290,7 @@ function HomeContent() {
 
       <main className="h-full overflow-hidden bg-gray-50">
         {/* --- 반응형 컨테이너 (모바일: 꽉 참, 태블릿+: 넓어짐) --- */}
-        <div className="relative mx-auto flex h-full w-full max-w-md flex-col overflow-hidden border-x border-gray-100 bg-white shadow-xl transition-all md:max-w-4xl">
+        <div className="relative flex flex-col w-full h-full max-w-md mx-auto overflow-hidden transition-all bg-white border-gray-100 shadow-xl border-x md:max-w-4xl">
           {/* 1. 헤더 */}
           <HomeHeader
             onMenuClick={() => setIsSidebarOpen(true)}
@@ -197,16 +301,72 @@ function HomeContent() {
             }}
           />
 
-          {/* 2. 공지사항 리스트 */}
-          <NoticeList
-            loading={loading}
-            selectedCategories={selectedCategories}
-            filteredNotices={filteredNotices}
-            onRefresh={handleRefresh}
-            onMarkAsRead={handleMarkAsRead}
+          {/* 2. 카테고리 필터 */}
+          <CategoryFilter
+            activeFilter={filter}
+            onFilterChange={setFilter}
+            isLoggedIn={isLoggedIn}
+            onSettingsClick={() => setShowBoardFilterModal(true)}
           />
 
-          {/* 3. 사이드바 (컨테이너 내부에 배치) */}
+          {/* 3. 공지사항 리스트 (Pull to Refresh 지원) */}
+          <div
+            className="relative flex-1 overflow-hidden"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* Pull to Refresh 인디케이터 */}
+            {isPulling && (
+              <div
+                className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center bg-gradient-to-b from-gray-50 to-transparent"
+                style={{
+                  height: `${pullDistance}px`,
+                  opacity: Math.min(pullDistance / 50, 1),
+                  transition: 'opacity 0.1s ease-out',
+                }}
+              >
+                <div
+                  className="text-sm font-medium text-gray-600"
+                  style={{
+                    transform: `scale(${Math.min(pullDistance / 40, 1)})`,
+                    transition: 'transform 0.1s ease-out',
+                  }}
+                >
+                  {pullDistance > 30 ? '↓ 놓아서 새로고침' : '↓ 당겨서 새로고침'}
+                </div>
+              </div>
+            )}
+
+            {/* 새로고침 중 스피너 */}
+            {refreshing && (
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center h-16 bg-gray-50">
+                <div className="w-6 h-6 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+              </div>
+            )}
+
+            <div
+              ref={scrollContainerRef as React.RefObject<HTMLDivElement>}
+              className="h-full overflow-y-auto"
+              style={{
+                marginTop: refreshing ? '64px' : isPulling ? `${pullDistance}px` : '0',
+                transition: isPulling ? 'none' : 'margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+            >
+              <NoticeList
+                loading={loading}
+                selectedCategories={selectedBoards}
+                filteredNotices={filteredNotices}
+                onMarkAsRead={handleMarkAsRead}
+                onToggleFavorite={handleToggleFavorite}
+                isInFavoriteTab={filter === 'FAVORITE'}
+                isLoggedIn={isLoggedIn}
+                onOpenBoardFilter={() => setShowBoardFilterModal(true)}
+              />
+            </div>
+          </div>
+
+          {/* 4. 사이드바 (컨테이너 내부에 배치) */}
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         </div>
       </main>

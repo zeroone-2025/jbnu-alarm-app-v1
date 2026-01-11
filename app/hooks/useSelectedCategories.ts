@@ -1,74 +1,102 @@
 import { useState, useEffect } from 'react';
-import { getAllCategoryIds } from '@/theme/categories';
+import { BOARD_LIST } from '@/constants/boards';
+import { getUserSubscriptions, updateUserSubscriptions } from '@/api';
 
 const STORAGE_KEY = 'my_subscribed_categories'; // 온보딩과 동일한 키 사용
 
 /**
- * 선택된 카테고리를 localStorage에서 관리하는 hook
+ * 선택된 카테고리를 관리하는 hook
  *
- * 초기값:
- * 1. localStorage에 'my_subscribed_categories'가 있으면 사용 (온보딩 완료)
- * 2. 없으면 빈 배열 (온보딩 필요)
+ * 로그인 상태:
+ * 1. 로그인: 백엔드 API에서 구독 정보 가져오기 → DB에 저장
+ * 2. 비로그인: 빈 배열 반환 (page.tsx에서 home_campus로 fallback)
  */
 export function useSelectedCategories() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 초기 로딩: localStorage에서 불러오기
+  // 초기 로딩: 백엔드 API 또는 localStorage에서 불러오기
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        // 온보딩 완료: 저장된 구독 카테고리 사용
-        setSelectedCategories(JSON.parse(saved));
+    const loadCategories = async () => {
+      const token = localStorage.getItem('accessToken');
+
+      if (token) {
+        // 로그인 상태: 백엔드 API에서 구독 정보 가져오기
+        try {
+          const subscriptions = await getUserSubscriptions();
+          const boardCodes = subscriptions.map(sub => sub.board_code);
+          setSelectedCategories(boardCodes);
+
+          // localStorage에도 동기화 (설정 페이지에서 사용)
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(boardCodes));
+        } catch (error) {
+          console.error('Failed to load subscriptions from API:', error);
+          // API 실패 시 빈 배열 (page.tsx에서 home_campus로 fallback)
+          setSelectedCategories([]);
+        }
       } else {
-        // 온보딩 미완료: 빈 배열 (page.tsx에서 온보딩 모달 표시)
+        // 비로그인 상태: API 호출하지 않고 빈 배열 반환
+        // page.tsx에서 게스트 모드는 home_campus로 처리됨
         setSelectedCategories([]);
       }
-    } catch (error) {
-      console.error('Failed to load selected categories:', error);
-      setSelectedCategories([]);
-    } finally {
+
       setIsLoading(false);
-    }
+    };
+
+    loadCategories();
   }, []);
 
-  // 선택 변경 시 localStorage에 저장
-  const updateSelectedCategories = (categories: string[]) => {
+  // 선택 변경 시 백엔드 DB에 저장 (Optimistic Update)
+  const updateSelectedCategories = async (categories: string[]) => {
+    const previousCategories = selectedCategories;
+
+    // 1. UI 먼저 업데이트 (Optimistic Update)
     setSelectedCategories(categories);
+
+    // 2. 백엔드 API 호출
     try {
+      await updateUserSubscriptions(categories);
+      // 성공 시 localStorage에도 캐시 저장
       localStorage.setItem(STORAGE_KEY, JSON.stringify(categories));
     } catch (error) {
-      console.error('Failed to save selected categories:', error);
+      console.error('Failed to save subscriptions to backend:', error);
+      // 3. 실패 시 롤백
+      setSelectedCategories(previousCategories);
+      alert('설정 저장에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
   // 카테고리 토글
-  const toggleCategory = (categoryId: string) => {
-    setSelectedCategories((prev) => {
-      const newSelection = prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId];
+  const toggleCategory = async (categoryId: string) => {
+    const previousCategories = selectedCategories;
+    const newSelection = previousCategories.includes(categoryId)
+      ? previousCategories.filter((id) => id !== categoryId)
+      : [...previousCategories, categoryId];
 
-      // localStorage에 저장
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newSelection));
-      } catch (error) {
-        console.error('Failed to save selected categories:', error);
-      }
+    // 1. UI 먼저 업데이트
+    setSelectedCategories(newSelection);
 
-      return newSelection;
-    });
+    // 2. 백엔드 API 호출
+    try {
+      await updateUserSubscriptions(newSelection);
+      // 성공 시 localStorage에도 캐시 저장
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newSelection));
+    } catch (error) {
+      console.error('Failed to save subscriptions to backend:', error);
+      // 3. 실패 시 롤백
+      setSelectedCategories(previousCategories);
+      alert('설정 저장에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   // 전체 선택
-  const selectAll = () => {
-    updateSelectedCategories(getAllCategoryIds());
+  const selectAll = async () => {
+    await updateSelectedCategories(BOARD_LIST.map((board) => board.id));
   };
 
   // 전체 해제
-  const deselectAll = () => {
-    updateSelectedCategories([]);
+  const deselectAll = async () => {
+    await updateSelectedCategories([]);
   };
 
   return {
