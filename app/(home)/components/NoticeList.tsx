@@ -1,51 +1,52 @@
 import { Notice } from '@/api';
-import Link from 'next/link';
 import NoticeCard from './NoticeCard';
 
 interface NoticeListProps {
   loading: boolean;
   selectedCategories: string[];
   filteredNotices: Notice[];
-  onRefresh: () => void;
   onMarkAsRead: (noticeId: number) => void;
   onToggleFavorite?: (noticeId: number) => void;
   isInFavoriteTab?: boolean;
+  isLoggedIn?: boolean;
+  onOpenBoardFilter?: () => void;
 }
 
 export default function NoticeList({
   loading,
   selectedCategories,
   filteredNotices,
-  onRefresh,
   onMarkAsRead,
   onToggleFavorite,
   isInFavoriteTab,
+  isLoggedIn,
+  onOpenBoardFilter,
 }: NoticeListProps) {
   return (
-    <ul className="flex-1 overflow-y-auto bg-gray-50 p-0 md:p-5">
+    <ul className="min-h-full p-0 bg-gray-50 md:p-5">
       <div className="divide-y divide-gray-100 md:grid md:grid-cols-1 md:gap-4 md:divide-y-0">
         {loading ? (
           // 로딩 스켈레톤 UI
           [...Array(6)].map((_, i) => (
             <li
               key={i}
-              className="animate-pulse bg-white p-5 md:rounded-xl md:border md:border-gray-100 md:shadow-sm"
+              className="p-5 bg-white animate-pulse md:rounded-xl md:border md:border-gray-100 md:shadow-sm"
             >
-              <div className="mb-2 h-4 w-3/4 rounded bg-gray-200"></div>
-              <div className="h-3 w-1/4 rounded bg-gray-100"></div>
+              <div className="w-3/4 h-4 mb-2 bg-gray-200 rounded"></div>
+              <div className="w-1/4 h-3 bg-gray-100 rounded"></div>
             </li>
           ))
         ) : selectedCategories.length === 0 ? (
-          // 선택된 카테고리가 없을 때
-          <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
+          // 선택된 게시판이 없을 때
+          <div className="flex flex-col items-center justify-center py-20 text-center col-span-full">
             <div className="text-6xl">📭</div>
-            <p className="mt-4 text-gray-400">선택된 알림 카테고리가 없습니다</p>
-            <Link
-              href="/settings"
-              className="mt-4 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600"
+            <p className="mt-4 text-base font-medium text-gray-500">선택된 게시판이 없어요</p>
+            <button
+              onClick={onOpenBoardFilter}
+              className="mt-4 rounded-lg bg-blue-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-600 active:scale-95"
             >
-              설정에서 카테고리 선택하기
-            </Link>
+              게시판 선택하기
+            </button>
           </div>
         ) : filteredNotices.length > 0 ? (
           filteredNotices.map((notice) => (
@@ -55,18 +56,13 @@ export default function NoticeList({
               onMarkAsRead={onMarkAsRead}
               onToggleFavorite={onToggleFavorite}
               isInFavoriteTab={isInFavoriteTab}
+              isLoggedIn={isLoggedIn}
             />
           ))
         ) : (
-          // 데이터 없을 때
-          <div className="col-span-full py-20 text-center text-gray-400">
-            <p>표시할 공지사항이 없어요 😢</p>
-            <button
-              onClick={onRefresh}
-              className="mt-2 text-sm text-blue-500 underline"
-            >
-              데이터 새로고침
-            </button>
+          // 필터링 결과 데이터가 없을 때
+          <div className="py-20 text-center col-span-full">
+            <p className="text-gray-400">표시할 공지사항이 없어요</p>
           </div>
         )}
       </div>

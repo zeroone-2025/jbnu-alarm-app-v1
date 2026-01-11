@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { getGoogleLoginUrl, getUserProfile, UserProfile } from '@/api';
 import { FiX, FiLogIn, FiLogOut, FiUser } from 'react-icons/fi';
 
@@ -11,7 +10,6 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
 
@@ -44,10 +42,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const handleLogout = () => {
     if (confirm('로그아웃 하시겠습니까?')) {
+      // localStorage 정리
       localStorage.removeItem('accessToken');
+      localStorage.removeItem('my_subscribed_categories');
+
       setIsLoggedIn(false);
       onClose();
-      router.push('/');
+
+      // 페이지 새로고침 (상태 초기화)
+      window.location.href = '/';
     }
   };
 

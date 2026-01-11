@@ -9,9 +9,10 @@ interface NoticeCardProps {
   onMarkAsRead?: (noticeId: number) => void; // 읽음 처리 콜백 (옵션)
   onToggleFavorite?: (noticeId: number) => void; // 즐겨찾기 토글 콜백 (옵션)
   isInFavoriteTab?: boolean; // 즐겨찾기 탭 여부 (항상 unread 스타일 표시)
+  isLoggedIn?: boolean; // 로그인 여부
 }
 
-export default function NoticeCard({ notice, onMarkAsRead, onToggleFavorite, isInFavoriteTab }: NoticeCardProps) {
+export default function NoticeCard({ notice, onMarkAsRead, onToggleFavorite, isInFavoriteTab, isLoggedIn }: NoticeCardProps) {
   // 읽음 상태에 따른 스타일 결정
   // 즐겨찾기 탭에서는 항상 unread 스타일 표시
   const styleConfig = (isInFavoriteTab || !notice.is_read)
@@ -34,6 +35,13 @@ export default function NoticeCard({ notice, onMarkAsRead, onToggleFavorite, isI
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault(); // 링크 이동 방지
     e.stopPropagation(); // 이벤트 버블링 방지
+
+    // 게스트 모드일 때는 로그인 안내 메시지 표시
+    if (!isLoggedIn) {
+      alert('로그인 후 즐겨찾기에 추가할 수 있습니다.');
+      return;
+    }
+
     if (onToggleFavorite) {
       onToggleFavorite(notice.id);
     }

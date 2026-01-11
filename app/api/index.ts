@@ -107,6 +107,20 @@ export const getUserProfile = async () => {
   return response.data;
 };
 
+// 사용자 정보 업데이트 인터페이스
+export interface UserProfileUpdate {
+  nickname?: string;
+  dept_code?: string;
+  fcm_token?: string;
+  profile_image?: string;
+}
+
+// 사용자 정보 업데이트
+export const updateUserProfile = async (data: UserProfileUpdate) => {
+  const response = await api.patch<UserProfile>('/users/me', data);
+  return response.data;
+};
+
 // ==================== User Subscriptions ====================
 
 // 구독 정보 인터페이스

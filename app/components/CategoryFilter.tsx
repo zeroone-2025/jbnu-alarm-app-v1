@@ -6,6 +6,7 @@ interface CategoryFilterProps {
   activeFilter: string;
   onFilterChange: (filter: string) => void;
   isLoggedIn: boolean; // 로그인 상태
+  onSettingsClick: () => void; // 설정 버튼 클릭 콜백
 }
 
 // 전체 필터 목록
@@ -21,33 +22,33 @@ const GUEST_FILTERS = [
   { key: 'ALL', label: '전체' },
 ];
 
-export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedIn }: CategoryFilterProps) {
+export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedIn, onSettingsClick }: CategoryFilterProps) {
   const handleSettingsClick = () => {
     if (!isLoggedIn) {
       // Guest일 경우 로그인 유도
       alert('로그인 후 설정을 변경할 수 있습니다.');
       return;
     }
-    console.log('필터 설정 모달 오픈');
-    // TODO: 필터 설정 모달 구현 예정
+    // 로그인된 사용자: 모달 열기
+    onSettingsClick();
   };
 
   // 로그인 여부에 따라 다른 필터 목록 사용
   const filters = isLoggedIn ? ALL_FILTERS : GUEST_FILTERS;
 
   return (
-    <div className="sticky top-0 z-10 flex w-full items-center gap-3 overflow-hidden bg-gray-50 px-4 py-2">
+    <div className="sticky top-0 z-10 flex w-full items-center gap-2 bg-gray-50 px-4 py-2">
       {/* 좌측 고정 설정 버튼 */}
       <button
         onClick={handleSettingsClick}
-        className="shrink-0 rounded-full bg-gray-100 p-2 text-gray-700 transition-colors hover:bg-gray-200"
+        className="shrink-0 rounded-full bg-gray-100 p-1.5 text-gray-700 transition-colors hover:bg-gray-200"
         aria-label="필터 설정"
       >
-        <FiSliders size={20} />
+        <FiSliders size={18} />
       </button>
 
-      {/* 우측 스크롤 가능한 필터 칩 목록 */}
-      <div className="no-scrollbar flex gap-2 overflow-x-auto">
+      {/* 필터 칩 목록 (글자 크기에 따라 자연스럽게) */}
+      <div className="flex flex-1 justify-between gap-2">
         {filters.map((filter) => {
           const isActive = activeFilter === filter.key;
           return (
