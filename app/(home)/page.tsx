@@ -376,7 +376,13 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="p-4 text-center text-gray-500">로딩 중...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex h-screen w-full items-center justify-center bg-gray-50">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+        </div>
+      }
+    >
       <HomeContent />
     </Suspense>
   );
