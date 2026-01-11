@@ -79,11 +79,3 @@ export default function AuthCallbackPage() {
     </Suspense>
   );
 }
-
-export default function AuthCallbackPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-white" />}>
-      <AuthCallbackContent />
-    </Suspense>
-  );
-}
