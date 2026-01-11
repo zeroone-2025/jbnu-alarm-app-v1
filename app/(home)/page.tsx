@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   fetchNotices,
@@ -290,7 +290,7 @@ function HomeContent() {
 
       <main className="h-full overflow-hidden bg-gray-50">
         {/* --- 반응형 컨테이너 (모바일: 꽉 참, 태블릿+: 넓어짐) --- */}
-        <div className="relative mx-auto flex h-full w-full max-w-md flex-col overflow-hidden border-x border-gray-100 bg-white shadow-xl transition-all md:max-w-4xl">
+        <div className="relative flex flex-col w-full h-full max-w-md mx-auto overflow-hidden transition-all bg-white border-gray-100 shadow-xl border-x md:max-w-4xl">
           {/* 1. 헤더 */}
           <HomeHeader
             onMenuClick={() => setIsSidebarOpen(true)}
@@ -319,7 +319,7 @@ function HomeContent() {
             {/* Pull to Refresh 인디케이터 */}
             {isPulling && (
               <div
-                className="absolute left-0 right-0 top-0 z-10 flex items-center justify-center bg-gradient-to-b from-gray-50 to-transparent"
+                className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center bg-gradient-to-b from-gray-50 to-transparent"
                 style={{
                   height: `${pullDistance}px`,
                   opacity: Math.min(pullDistance / 50, 1),
@@ -340,8 +340,8 @@ function HomeContent() {
 
             {/* 새로고침 중 스피너 */}
             {refreshing && (
-              <div className="absolute left-0 right-0 top-0 z-10 flex h-16 items-center justify-center bg-gray-50">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center h-16 bg-gray-50">
+                <div className="w-6 h-6 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
               </div>
             )}
 
