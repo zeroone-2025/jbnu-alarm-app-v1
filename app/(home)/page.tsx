@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   fetchNotices,
@@ -24,7 +24,7 @@ import BoardFilterModal from '@/components/BoardFilterModal';
 dayjs.extend(relativeTime);
 dayjs.locale('ko');
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -371,5 +371,13 @@ export default function Home() {
         </div>
       </main>
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="p-4 text-center text-gray-500">로딩 중...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

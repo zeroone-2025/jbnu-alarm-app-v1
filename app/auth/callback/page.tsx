@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getUserProfile } from '@/api';
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const processedRef = useRef(false);
@@ -69,5 +69,13 @@ export default function AuthCallbackPage() {
         <p className="text-lg font-medium text-gray-700">{status}</p>
       </div>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-center text-gray-500">로그인 처리 중...</div>}>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }
