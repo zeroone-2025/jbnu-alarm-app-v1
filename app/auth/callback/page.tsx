@@ -15,6 +15,25 @@ function AuthCallbackContent() {
     processedRef.current = true;
 
     const accessToken = searchParams.get('access_token');
+    const error = searchParams.get('error');
+
+    // 사용자가 로그인을 취소한 경우
+    if (error === 'access_denied') {
+      setStatus('로그인이 취소되었습니다.');
+      setTimeout(() => {
+        router.replace('/');
+      }, 800);
+      return;
+    }
+
+    // 기타 에러가 있는 경우
+    if (error) {
+      setStatus('로그인 중 문제가 발생했습니다. 다시 시도해주세요.');
+      setTimeout(() => {
+        router.replace('/');
+      }, 2000);
+      return;
+    }
 
     if (accessToken) {
       const processLogin = async () => {
@@ -44,9 +63,9 @@ function AuthCallbackContent() {
           console.error('Login failed:', error);
           setStatus('로그인 실패. 다시 시도해주세요.');
 
-          // 실패 시 로그인 페이지로 이동
+          // 실패 시 홈으로 이동
           setTimeout(() => {
-            router.replace('/login');
+            router.replace('/');
           }, 2000);
         }
       };
@@ -54,18 +73,18 @@ function AuthCallbackContent() {
       processLogin();
     } else {
       console.error('No access_token parameter found in URL');
-      setStatus('잘못된 접근입니다. 로그인 페이지로 이동합니다.');
+      setStatus('잘못된 접근입니다. 홈으로 이동합니다.');
 
       setTimeout(() => {
-        router.replace('/login');
+        router.replace('/');
       }, 2000);
     }
   }, [searchParams, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="text-center">
-        <div className="mb-4 inline-block h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+        <div className="inline-block w-10 h-10 mb-4 border-4 border-blue-500 rounded-full animate-spin border-t-transparent" />
         <p className="text-lg font-medium text-gray-700">{status}</p>
       </div>
     </div>
