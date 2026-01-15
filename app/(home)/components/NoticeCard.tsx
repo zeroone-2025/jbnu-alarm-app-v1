@@ -10,9 +10,10 @@ interface NoticeCardProps {
   onToggleFavorite?: (noticeId: number) => void; // 즐겨찾기 토글 콜백 (옵션)
   isInFavoriteTab?: boolean; // 즐겨찾기 탭 여부 (항상 unread 스타일 표시)
   isLoggedIn?: boolean; // 로그인 여부
+  onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void; // 토스트 메시지 표시
 }
 
-export default function NoticeCard({ notice, onMarkAsRead, onToggleFavorite, isInFavoriteTab, isLoggedIn }: NoticeCardProps) {
+export default function NoticeCard({ notice, onMarkAsRead, onToggleFavorite, isInFavoriteTab, isLoggedIn, onShowToast }: NoticeCardProps) {
   // 읽음 상태에 따른 스타일 결정
   // 즐겨찾기 탭에서는 항상 unread 스타일 표시
   const styleConfig = (isInFavoriteTab || !notice.is_read)
@@ -21,9 +22,10 @@ export default function NoticeCard({ notice, onMarkAsRead, onToggleFavorite, isI
 
   // 링크 클릭 시 조회수 증가 + 읽음 처리
   const handleClick = () => {
-    // 조회수 증가 (비동기, 에러 무시)
-    // 로그인하지 않은 사용자는 401 에러가 발생하지만 무시됨
-    incrementNoticeView(notice.id).catch(() => {});
+    // 조회수 증가 (로그인 사용자만 - 401 에러 방지)
+    if (isLoggedIn) {
+      incrementNoticeView(notice.id).catch(() => {});
+    }
 
     // 읽음 처리 (로그인 사용자만)
     if (!notice.is_read && onMarkAsRead) {
@@ -38,7 +40,9 @@ export default function NoticeCard({ notice, onMarkAsRead, onToggleFavorite, isI
 
     // 게스트 모드일 때는 로그인 안내 메시지 표시
     if (!isLoggedIn) {
-      alert('로그인 후 즐겨찾기에 추가할 수 있습니다.');
+      if (onShowToast) {
+        onShowToast('로그인 후 즐겨찾기를 사용할 수 있습니다.', 'info');
+      }
       return;
     }
 

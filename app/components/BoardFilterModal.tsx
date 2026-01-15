@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiX } from 'react-icons/fi';
+import { FiX, FiInfo } from 'react-icons/fi';
 import { BOARD_LIST, CATEGORY_ORDER, BoardCategory } from '@/constants/boards';
+import { isUserLoggedIn } from '@/lib/auth';
 
 interface BoardFilterModalProps {
   isOpen: boolean;
@@ -18,13 +19,17 @@ export default function BoardFilterModal({
   onApply,
 }: BoardFilterModalProps) {
   const [tempSelection, setTempSelection] = useState<Set<string>>(new Set());
+  const isLoggedIn = isUserLoggedIn();
+  const isGuest = !isLoggedIn;
+  const isFixedGuestBoard = (boardId: string) => isGuest && boardId === 'home_campus';
 
   // 모달이 열릴 때 선택 상태 초기화
   useEffect(() => {
     if (isOpen) {
-      setTempSelection(new Set(selectedBoards));
+      const initial = isGuest ? [...selectedBoards, 'home_campus'] : selectedBoards;
+      setTempSelection(new Set(initial));
     }
-  }, [isOpen, selectedBoards]);
+  }, [isOpen, selectedBoards, isGuest]);
 
   if (!isOpen) return null;
 
@@ -34,7 +39,7 @@ export default function BoardFilterModal({
 
   // 카테고리별로 미선택 게시판 그룹화
   const groupedUnselected: Record<BoardCategory, typeof BOARD_LIST> = {
-    '대학 본부': [],
+    '전북대': [],
     '단과대': [],
     '학과': [],
     '사업단': [],
@@ -46,6 +51,7 @@ export default function BoardFilterModal({
 
   // 선택/해제 토글
   const toggleBoard = (boardId: string) => {
+    if (isFixedGuestBoard(boardId)) return;
     setTempSelection((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(boardId)) {
@@ -59,7 +65,10 @@ export default function BoardFilterModal({
 
   // 적용하기
   const handleApply = () => {
-    onApply(Array.from(tempSelection));
+    const applied = isGuest
+      ? Array.from(new Set([...tempSelection, 'home_campus']))
+      : Array.from(tempSelection);
+    onApply(applied);
     onClose();
   };
 
@@ -93,7 +102,12 @@ export default function BoardFilterModal({
                   <button
                     key={board.id}
                     onClick={() => toggleBoard(board.id)}
-                    className="rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-md transition-all hover:bg-blue-700 active:scale-95"
+                    disabled={isFixedGuestBoard(board.id)}
+                    className={`rounded-full border-2 border-gray-900 bg-white px-4 py-2 text-sm font-bold text-gray-900 shadow-md transition-all ${
+                      isFixedGuestBoard(board.id)
+                        ? 'cursor-not-allowed opacity-60'
+                        : 'hover:bg-gray-50 active:scale-95'
+                    }`}
                   >
                     {board.name}
                   </button>
@@ -122,7 +136,12 @@ export default function BoardFilterModal({
                           <button
                             key={board.id}
                             onClick={() => toggleBoard(board.id)}
-                            className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-all hover:bg-gray-100 active:scale-95"
+                            disabled={isFixedGuestBoard(board.id)}
+                            className={`rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-all ${
+                              isFixedGuestBoard(board.id)
+                                ? 'cursor-not-allowed opacity-60'
+                                : 'hover:bg-gray-100 active:scale-95'
+                            }`}
                           >
                             {board.name}
                           </button>
@@ -139,19 +158,32 @@ export default function BoardFilterModal({
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 border-t border-gray-100 px-6 py-4">
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-lg border border-gray-200 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            취소
-          </button>
-          <button
-            onClick={handleApply}
-            className="flex-1 rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
-          >
-            적용하기
-          </button>
+        <div className="border-t border-gray-100">
+          {/* Guest 안내 문구 */}
+          {!isLoggedIn && (
+            <div className="flex items-start gap-2 bg-blue-50 px-6 py-3">
+              <FiInfo className="mt-0.5 shrink-0 text-blue-600" size={16} />
+              <p className="text-xs text-gray-600">
+                로그인하지 않으면 설정이 다른 기기에서 저장되지 않습니다.
+              </p>
+            </div>
+          )}
+
+          {/* 버튼 영역 */}
+          <div className="flex gap-3 px-6 py-4">
+            <button
+              onClick={onClose}
+              className="flex-1 rounded-lg border border-gray-200 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+            >
+              취소
+            </button>
+            <button
+              onClick={handleApply}
+              className="flex-1 rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+              적용하기
+            </button>
+          </div>
         </div>
       </div>
     </div>

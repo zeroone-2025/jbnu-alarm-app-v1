@@ -41,17 +41,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   };
 
   const handleLogout = () => {
-    if (confirm('로그아웃 하시겠습니까?')) {
-      // localStorage 정리
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('my_subscribed_categories');
+    // localStorage 정리
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('my_subscribed_categories');
 
-      setIsLoggedIn(false);
-      onClose();
+    setIsLoggedIn(false);
+    onClose();
 
-      // 페이지 새로고침 (상태 초기화)
-      window.location.href = '/';
-    }
+    // 홈으로 이동하면서 토스트 표시
+    window.location.href = '/?logout=success';
   };
 
   return (
@@ -99,7 +97,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <span className="font-medium">Google 계정으로 로그인</span>
                   </button>
                   <p className="px-1 mt-2 text-xs text-gray-500">
-                    로그인하여 설정을 동기화하고 더 많은 기능을 이용해보세요.
+                    로그인하여 설정을 저장하고 더 많은 기능을 이용해보세요.
                   </p>
                 </>
               ) : (
