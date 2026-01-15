@@ -43,13 +43,11 @@ function HomeContent() {
   const scrollContainerRef = useRef<HTMLElement>(null); // 스크롤 컨테이너 참조
   const [showBoardFilterModal, setShowBoardFilterModal] = useState(false); // 게시판 필터 모달
 
-  // 선택된 카테고리 관리 (로그인 사용자만 사용)
+  // 선택된 카테고리 관리 (Guest/User 모두 사용)
   const { selectedCategories, updateSelectedCategories } = useSelectedCategories();
 
-  // 게시판 목록 결정:
-  // - 로그인 사용자: DB의 user_subscriptions에서 가져온 구독 정보 사용 (빈 배열 가능)
-  // - 비로그인 사용자: home_campus만 고정 표시 (게시판 선택 기능 접근 불가)
-  const selectedBoards = isLoggedIn ? selectedCategories : ['home_campus'];
+  // 게시판 목록 결정 (Guest: localStorage, User: DB/API)
+  const selectedBoards = selectedCategories;
 
   // 데이터 가져오기 함수
   const loadNotices = async () => {
@@ -71,16 +69,21 @@ function HomeContent() {
   /**
    * 공지사항 읽음 처리 (Optimistic Update)
    * 1. UI를 먼저 즉시 업데이트 (사용자 경험 향상)
-   * 2. 백엔드 API 호출
+   * 2. 백엔드 API 호출 (로그인 사용자만)
    * 3. 실패 시 롤백
    */
   const handleMarkAsRead = async (noticeId: number) => {
+    // 비로그인 사용자: API 호출 차단 (401 에러 방지)
+    if (!isLoggedIn) {
+      return;
+    }
+
     // 1. Optimistic Update: 즉시 UI 업데이트
     setNotices((prevNotices) =>
       prevNotices.map((notice) => (notice.id === noticeId ? { ...notice, is_read: true } : notice)),
     );
 
-    // 2. 백엔드 API 호출
+    // 2. 백엔드 API 호출 (로그인 사용자만)
     try {
       await markNoticeAsRead(noticeId);
       // 성공 시 이미 UI가 업데이트되어 있으므로 추가 작업 불필요
@@ -98,10 +101,16 @@ function HomeContent() {
   /**
    * 즐겨찾기 토글 (Optimistic Update)
    * 1. UI를 먼저 즉시 업데이트
-   * 2. 백엔드 API 호출
+   * 2. 백엔드 API 호출 (로그인 사용자만)
    * 3. 실패 시 롤백
    */
   const handleToggleFavorite = async (noticeId: number) => {
+    // 비로그인 사용자: 로그인 유도 후 차단 (401 에러 방지)
+    if (!isLoggedIn) {
+      alert('로그인 후 사용할 수 있는 기능입니다.');
+      return;
+    }
+
     // 1. Optimistic Update: 즉시 UI 업데이트 (토글)
     setNotices((prevNotices) =>
       prevNotices.map((notice) =>
@@ -109,7 +118,7 @@ function HomeContent() {
       ),
     );
 
-    // 2. 백엔드 API 호출
+    // 2. 백엔드 API 호출 (로그인 사용자만)
     try {
       await toggleNoticeFavorite(noticeId);
       // 성공 시 이미 UI가 업데이트되어 있으므로 추가 작업 불필요
@@ -217,6 +226,13 @@ function HomeContent() {
     setShowOnboarding(false);
   };
 
+  // 토스트 메시지 표시 헬퍼 함수
+  const handleShowToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToastMessage(message);
+    setToastType(type);
+    setShowToast(true);
+  };
+
   // 게시판 필터 적용 핸들러
   const handleBoardFilterApply = async (boards: string[]) => {
     await updateSelectedCategories(boards);
@@ -228,6 +244,7 @@ function HomeContent() {
   useEffect(() => {
     const loginStatus = searchParams.get('login');
     const showOnboardingParam = searchParams.get('show_onboarding');
+    const logoutStatus = searchParams.get('logout');
 
     if (loginStatus === 'success') {
       // 온보딩 모달 표시 여부 확인
@@ -243,6 +260,11 @@ function HomeContent() {
     } else if (loginStatus === 'failed') {
       setToastMessage('로그인 처리에 실패했습니다.');
       setToastType('error');
+      setShowToast(true);
+      router.replace('/');
+    } else if (logoutStatus === 'success') {
+      setToastMessage('로그아웃되었습니다.');
+      setToastType('info');
       setShowToast(true);
       router.replace('/');
     }
@@ -307,6 +329,7 @@ function HomeContent() {
             onFilterChange={setFilter}
             isLoggedIn={isLoggedIn}
             onSettingsClick={() => setShowBoardFilterModal(true)}
+            onShowToast={handleShowToast}
           />
 
           {/* 3. 공지사항 리스트 (Pull to Refresh 지원) */}
@@ -362,6 +385,7 @@ function HomeContent() {
                 isInFavoriteTab={filter === 'FAVORITE'}
                 isLoggedIn={isLoggedIn}
                 onOpenBoardFilter={() => setShowBoardFilterModal(true)}
+                onShowToast={handleShowToast}
               />
             </div>
           </div>

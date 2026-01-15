@@ -10,6 +10,7 @@ interface NoticeListProps {
   isInFavoriteTab?: boolean;
   isLoggedIn?: boolean;
   onOpenBoardFilter?: () => void;
+  onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
 export default function NoticeList({
@@ -21,6 +22,7 @@ export default function NoticeList({
   isInFavoriteTab,
   isLoggedIn,
   onOpenBoardFilter,
+  onShowToast,
 }: NoticeListProps) {
   return (
     <ul className="min-h-full p-0 bg-gray-50 md:p-5">
@@ -57,6 +59,7 @@ export default function NoticeList({
               onToggleFavorite={onToggleFavorite}
               isInFavoriteTab={isInFavoriteTab}
               isLoggedIn={isLoggedIn}
+              onShowToast={onShowToast}
             />
           ))
         ) : (
