@@ -310,39 +310,41 @@ function HomeContent() {
         type={toastType}
       />
 
-      <main className="h-full overflow-hidden bg-gray-50">
+      <main className="h-full overflow-hidden bg-gray-50" style={{ overscrollBehavior: 'none' }}>
         {/* --- 반응형 컨테이너 (모바일: 꽉 참, 태블릿+: 넓어짐) --- */}
         <div className="relative flex flex-col w-full h-full max-w-md mx-auto overflow-hidden transition-all bg-white border-gray-100 shadow-xl border-x md:max-w-4xl">
-          {/* 1. 헤더 */}
-          <HomeHeader
-            onMenuClick={() => setIsSidebarOpen(true)}
-            onNotificationClick={() => {
-              setToastMessage('알림 기능은 준비 중입니다.');
-              setToastType('info');
-              setShowToast(true);
-            }}
-          />
+          {/* 1. 헤더 (고정) */}
+          <div className="shrink-0">
+            <HomeHeader
+              onMenuClick={() => setIsSidebarOpen(true)}
+              onNotificationClick={() => {
+                setToastMessage('알림 기능은 준비 중입니다.');
+                setToastType('info');
+                setShowToast(true);
+              }}
+            />
+          </div>
 
-          {/* 2. 카테고리 필터 */}
-          <CategoryFilter
-            activeFilter={filter}
-            onFilterChange={setFilter}
-            isLoggedIn={isLoggedIn}
-            onSettingsClick={() => setShowBoardFilterModal(true)}
-            onShowToast={handleShowToast}
-          />
+          {/* 2. 카테고리 필터 (고정) */}
+          <div className="shrink-0">
+            <CategoryFilter
+              activeFilter={filter}
+              onFilterChange={setFilter}
+              isLoggedIn={isLoggedIn}
+              onSettingsClick={() => setShowBoardFilterModal(true)}
+              onShowToast={handleShowToast}
+            />
+          </div>
 
           {/* 3. 공지사항 리스트 (Pull to Refresh 지원) */}
           <div
-            className="relative flex-1 overflow-hidden"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            className="relative flex-1 min-h-0 overflow-hidden"
+            style={{ overscrollBehavior: 'contain' }}
           >
             {/* Pull to Refresh 인디케이터 */}
             {isPulling && (
               <div
-                className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center bg-gradient-to-b from-gray-50 to-transparent"
+                className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center bg-linear-to-b from-gray-50 to-transparent"
                 style={{
                   height: `${pullDistance}px`,
                   opacity: Math.min(pullDistance / 50, 1),
@@ -372,9 +374,13 @@ function HomeContent() {
               ref={scrollContainerRef as React.RefObject<HTMLDivElement>}
               className="h-full overflow-y-auto"
               style={{
-                marginTop: refreshing ? '64px' : isPulling ? `${pullDistance}px` : '0',
-                transition: isPulling ? 'none' : 'margin-top 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                overscrollBehavior: 'contain',
+                transform: refreshing ? 'translateY(64px)' : isPulling ? `translateY(${pullDistance}px)` : 'translateY(0)',
+                transition: isPulling ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
               }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
               <NoticeList
                 loading={loading}

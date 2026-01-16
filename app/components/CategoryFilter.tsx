@@ -38,7 +38,7 @@ export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedI
   };
 
   return (
-    <div className="sticky top-0 z-10 flex w-full items-center gap-2 bg-gray-50 px-4 py-2">
+    <div className="flex w-full items-center gap-2 bg-gray-50 px-4 py-2">
       {/* 좌측 고정 설정 버튼 */}
       <button
         onClick={handleSettingsClick}
