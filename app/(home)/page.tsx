@@ -41,6 +41,8 @@ function HomeContent() {
   const [pullDistance, setPullDistance] = useState(0); // 당긴 거리
   const touchStartY = useRef(0); // 터치 시작 Y 좌표
   const scrollContainerRef = useRef<HTMLElement>(null); // 스크롤 컨테이너 참조
+  const isPullingRef = useRef(false);
+  const pullDistanceRef = useRef(0);
   const [showBoardFilterModal, setShowBoardFilterModal] = useState(false); // 게시판 필터 모달
 
   // 선택된 카테고리 관리 (Guest/User 모두 사용)
@@ -162,18 +164,28 @@ function HomeContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    isPullingRef.current = isPulling;
+  }, [isPulling]);
+
+  useEffect(() => {
+    pullDistanceRef.current = pullDistance;
+  }, [pullDistance]);
+
   // Pull to Refresh 핸들러
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = (e: TouchEvent) => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
     // 스크롤이 최상단에 있을 때만 작동
-    if (container.scrollTop === 0) {
+    if (container.scrollTop <= 0) {
       touchStartY.current = e.touches[0].clientY;
+    } else {
+      touchStartY.current = 0;
     }
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = (e: TouchEvent) => {
     const container = scrollContainerRef.current;
     if (!container || touchStartY.current === 0) return;
 
@@ -181,7 +193,7 @@ function HomeContent() {
     const distance = currentY - touchStartY.current;
 
     // 아래로 당길 때만 (distance > 0) & 스크롤 최상단일 때
-    if (distance > 0 && container.scrollTop === 0) {
+    if (distance > 0 && container.scrollTop <= 0) {
       e.preventDefault();
       setIsPulling(true);
 
@@ -196,7 +208,7 @@ function HomeContent() {
   };
 
   const handleTouchEnd = async () => {
-    if (isPulling && pullDistance > 30) {
+    if (isPullingRef.current && pullDistanceRef.current > 30) {
       // 30px 이상 당기면 새로고침
       setRefreshing(true);
       await loadNotices();
@@ -208,6 +220,21 @@ function HomeContent() {
     setPullDistance(0);
     touchStartY.current = 0;
   };
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, []);
 
   // 온보딩 모달 자동 표시 비활성화
   // 기본값(home_campus)으로 시작하고, 사용자가 원할 때 설정에서 변경 가능
@@ -310,11 +337,11 @@ function HomeContent() {
         type={toastType}
       />
 
-      <main className="h-full overflow-hidden bg-gray-50" style={{ overscrollBehavior: 'none' }}>
+      <main className="h-full overflow-hidden bg-gray-50">
         {/* --- 반응형 컨테이너 (모바일: 꽉 참, 태블릿+: 넓어짐) --- */}
         <div className="relative flex flex-col w-full h-full max-w-md mx-auto overflow-hidden transition-all bg-white border-gray-100 shadow-xl border-x md:max-w-4xl">
-          {/* 1. 헤더 (고정) */}
-          <div className="shrink-0">
+          {/* 1. 헤더 (고정) - touch-action: none으로 터치 스크롤 차단 */}
+          <div className="shrink-0" style={{ touchAction: 'none' }}>
             <HomeHeader
               onMenuClick={() => setIsSidebarOpen(true)}
               onNotificationClick={() => {
@@ -325,8 +352,8 @@ function HomeContent() {
             />
           </div>
 
-          {/* 2. 카테고리 필터 (고정) */}
-          <div className="shrink-0">
+          {/* 2. 카테고리 필터 (고정) - touch-action: none으로 터치 스크롤 차단 */}
+          <div className="shrink-0" style={{ touchAction: 'none' }}>
             <CategoryFilter
               activeFilter={filter}
               onFilterChange={setFilter}
@@ -336,51 +363,40 @@ function HomeContent() {
             />
           </div>
 
-          {/* 3. 공지사항 리스트 (Pull to Refresh 지원) */}
+          {/* Pull to Refresh 인디케이터 - overflow-hidden 밖에 배치 */}
           <div
-            className="relative flex-1 min-h-0 overflow-hidden"
-            style={{ overscrollBehavior: 'contain' }}
+            className="shrink-0 flex items-center justify-center bg-linear-to-b from-gray-50 to-transparent overflow-hidden"
+            style={{
+              height: refreshing ? '64px' : isPulling ? `${pullDistance}px` : '0px',
+              opacity: refreshing ? 1 : isPulling ? Math.min(pullDistance / 50, 1) : 0,
+              transition: isPulling ? 'none' : 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out',
+            }}
           >
-            {/* Pull to Refresh 인디케이터 */}
-            {isPulling && (
+            {refreshing ? (
+              <div className="w-6 h-6 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+            ) : (
               <div
-                className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center bg-linear-to-b from-gray-50 to-transparent"
+                className="text-sm font-medium text-gray-600"
                 style={{
-                  height: `${pullDistance}px`,
-                  opacity: Math.min(pullDistance / 50, 1),
-                  transition: 'opacity 0.1s ease-out',
+                  transform: `scale(${Math.min(pullDistance / 40, 1)})`,
+                  transition: 'transform 0.1s ease-out',
                 }}
               >
-                <div
-                  className="text-sm font-medium text-gray-600"
-                  style={{
-                    transform: `scale(${Math.min(pullDistance / 40, 1)})`,
-                    transition: 'transform 0.1s ease-out',
-                  }}
-                >
-                  {pullDistance > 30 ? '↓ 놓아서 새로고침' : '↓ 당겨서 새로고침'}
-                </div>
+                {pullDistance > 30 ? '↓ 놓아서 새로고침' : '↓ 당겨서 새로고침'}
               </div>
             )}
+          </div>
 
-            {/* 새로고침 중 스피너 */}
-            {refreshing && (
-              <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center h-16 bg-gray-50">
-                <div className="w-6 h-6 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
-              </div>
-            )}
-
+          {/* 3. 공지사항 리스트 (Pull to Refresh 지원) */}
+          <div className="relative flex-1 min-h-0 overflow-hidden">
             <div
               ref={scrollContainerRef as React.RefObject<HTMLDivElement>}
               className="h-full overflow-y-auto"
               style={{
+                touchAction: 'pan-y',
+                WebkitOverflowScrolling: 'touch',
                 overscrollBehavior: 'contain',
-                transform: refreshing ? 'translateY(64px)' : isPulling ? `translateY(${pullDistance}px)` : 'translateY(0)',
-                transition: isPulling ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
               }}
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
             >
               <NoticeList
                 loading={loading}
