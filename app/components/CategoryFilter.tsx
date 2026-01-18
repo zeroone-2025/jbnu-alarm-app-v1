@@ -14,12 +14,11 @@ interface CategoryFilterProps {
 const ALL_FILTERS = [
   { key: 'ALL', label: '전체' },
   { key: 'UNREAD', label: '안 읽음' },
-  { key: 'LATEST', label: '최신 공지' },
   { key: 'FAVORITE', label: '즐겨 찾기' },
 ];
 
 // 로그인 필요 필터 목록
-const LOGIN_REQUIRED_FILTERS = ['UNREAD', 'LATEST', 'FAVORITE'];
+const LOGIN_REQUIRED_FILTERS = ['UNREAD', 'FAVORITE'];
 
 export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedIn, onSettingsClick, onShowToast }: CategoryFilterProps) {
   const handleSettingsClick = () => {
@@ -48,8 +47,8 @@ export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedI
         <FiSliders size={18} />
       </button>
 
-      {/* 필터 칩 목록 (글자 크기에 따라 자연스럽게) */}
-      <div className="flex flex-1 justify-between gap-2">
+      {/* 필터 칩 목록 (왼쪽부터 일정 간격으로 배치) */}
+      <div className="flex flex-1 flex-wrap justify-start gap-2">
         {ALL_FILTERS.map((filter) => {
           const isActive = activeFilter === filter.key;
 

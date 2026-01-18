@@ -300,16 +300,10 @@ function HomeContent() {
   // 1단계: 게시판 필터링 (Guest: home_campus만, User: 구독한 게시판)
   let filteredNotices = notices.filter((notice) => selectedBoards.includes(notice.board_code));
 
-  // 2단계: 카테고리 필터 적용 (전체, 안읽음, 최신공지, 즐겨찾기)
+  // 2단계: 카테고리 필터 적용 (전체, 안읽음, 즐겨찾기)
   if (filter === 'UNREAD') {
     // 안 읽음: is_read가 false인 공지만
     filteredNotices = filteredNotices.filter((notice) => !notice.is_read);
-  } else if (filter === 'LATEST') {
-    // 최신 공지: 최근 3일 이내 공지
-    filteredNotices = filteredNotices.filter((notice) => {
-      const daysAgo = dayjs().diff(dayjs(notice.date), 'day');
-      return daysAgo <= 3;
-    });
   } else if (filter === 'FAVORITE') {
     // 즐겨찾기: is_favorite가 true인 공지만
     filteredNotices = filteredNotices.filter((notice) => notice.is_favorite);

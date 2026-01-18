@@ -101,7 +101,6 @@ The app implements a **two-stage filtering pipeline**:
 2. **Category filter** (`filter` state): Further filters by:
    - `ALL`: Shows all subscribed notices
    - `UNREAD`: Shows only unread notices (`is_read === false`)
-   - `LATEST`: Shows all notices (same as ALL, sorted by date)
    - `FAVORITE`: Shows only favorited notices (`is_favorite === true`)
 
 Filtering logic is implemented client-side in `app/(home)/page.tsx:173-182`.
