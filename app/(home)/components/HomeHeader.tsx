@@ -3,11 +3,12 @@ import { FiUser, FiBell } from 'react-icons/fi';
 interface HomeHeaderProps {
   // 알림 버튼 클릭 핸들러 (추후 구현)
   onNotificationClick?: () => void;
+  showNotificationBadge?: boolean;
   // 메뉴 버튼 클릭 핸들러
   onMenuClick: () => void;
 }
 
-export default function HomeHeader({ onNotificationClick, onMenuClick }: HomeHeaderProps) {
+export default function HomeHeader({ onNotificationClick, showNotificationBadge, onMenuClick }: HomeHeaderProps) {
   return (
     <header className="relative flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white px-5">
       {/* Left: User Icon (Menu) */}
@@ -30,10 +31,13 @@ export default function HomeHeader({ onNotificationClick, onMenuClick }: HomeHea
       <div className="flex w-20 items-center justify-end">
         <button
           onClick={onNotificationClick}
-          className="rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
+          className="relative rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
           aria-label="알림"
         >
           <FiBell size={24} />
+          {showNotificationBadge && (
+            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+          )}
         </button>
       </div>
     </header>

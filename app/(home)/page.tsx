@@ -34,6 +34,7 @@ function HomeContent() {
   const [keywordNotices, setKeywordNotices] = useState<Notice[]>([]);
   const [keywordCount, setKeywordCount] = useState<number | null>(null);
   const [keywordList, setKeywordList] = useState<string[]>([]);
+  const [hasNewKeywordNotices, setHasNewKeywordNotices] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false); // 크롤링 중 표시
   const [showOnboarding, setShowOnboarding] = useState(false); // 온보딩 모달 표시 여부
@@ -86,6 +87,15 @@ function HomeContent() {
     }
   };
 
+  const loadKeywordNoticesSilent = async () => {
+    try {
+      const data = await getKeywordNotices(0, 200, true);
+      setKeywordNotices(data);
+    } catch (error) {
+      console.error('Failed to load keyword notices', error);
+    }
+  };
+
   const loadKeywordCount = async () => {
     try {
       const data = await getMyKeywords();
@@ -124,6 +134,40 @@ function HomeContent() {
       return;
     }
     await loadNotices();
+  };
+
+  const getLatestKeywordNoticeAt = (items: Notice[]) => {
+    if (items.length === 0) return null;
+    return items
+      .map((notice) => new Date(notice.created_at ?? notice.date).getTime())
+      .reduce((latest, current) => (current > latest ? current : latest), 0);
+  };
+
+  const updateKeywordBadge = (items: Notice[]) => {
+    if (typeof window === 'undefined') return;
+    if (items.length === 0) {
+      setHasNewKeywordNotices(false);
+      return;
+    }
+    const latest = getLatestKeywordNoticeAt(items);
+    if (!latest) {
+      setHasNewKeywordNotices(false);
+      return;
+    }
+    const seenAt = localStorage.getItem('keyword_notice_seen_at');
+    if (!seenAt) {
+      setHasNewKeywordNotices(true);
+      return;
+    }
+    setHasNewKeywordNotices(latest > new Date(seenAt).getTime());
+  };
+
+  const markKeywordNoticesSeen = (items: Notice[]) => {
+    if (typeof window === 'undefined') return;
+    const latest = getLatestKeywordNoticeAt(items);
+    if (!latest) return;
+    localStorage.setItem('keyword_notice_seen_at', new Date(latest).toISOString());
+    setHasNewKeywordNotices(false);
   };
 
 
@@ -184,10 +228,19 @@ function HomeContent() {
   useEffect(() => {
     // 로그인 상태 확인
     const token = localStorage.getItem('accessToken');
-    setIsLoggedIn(!!token);
+    const loggedIn = !!token;
+    setIsLoggedIn(loggedIn);
 
     // 공지사항 로드
     loadNotices();
+    if (loggedIn) {
+      (async () => {
+        const count = await loadKeywordCount();
+        if (count > 0) {
+          await loadKeywordNoticesSilent();
+        }
+      })();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -203,6 +256,20 @@ function HomeContent() {
       })();
     }
   }, [filter, isLoggedIn]);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setHasNewKeywordNotices(false);
+      return;
+    }
+    updateKeywordBadge(keywordNotices);
+  }, [keywordNotices, isLoggedIn]);
+
+  useEffect(() => {
+    if (filter === 'KEYWORD') {
+      markKeywordNoticesSeen(keywordNotices);
+    }
+  }, [filter, keywordNotices]);
 
   // 페이지 visibility 변경 시 새로고침 (다른 탭 갔다가 돌아올 때)
   useEffect(() => {
@@ -428,8 +495,10 @@ function HomeContent() {
               onMenuClick={() => setIsSidebarOpen(true)}
               onNotificationClick={() => {
                 const returnTo = `/?filter=${filter}`;
+                markKeywordNoticesSeen(keywordNotices);
                 router.push(`/notifications/keyword?returnTo=${encodeURIComponent(returnTo)}`);
               }}
+              showNotificationBadge={isLoggedIn && hasNewKeywordNotices}
             />
           </div>
 
