@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FiArrowLeft, FiSettings } from 'react-icons/fi';
 import {
@@ -14,7 +14,7 @@ import {
 import Toast from '@/components/Toast';
 import NoticeList from '@/(home)/components/NoticeList';
 
-export default function KeywordNotificationsPage() {
+function KeywordNotificationsClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -324,5 +324,19 @@ export default function KeywordNotificationsPage() {
         </div>
       </main>
     </>
+  );
+}
+
+export default function KeywordNotificationsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen w-full items-center justify-center bg-gray-50">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+        </div>
+      }
+    >
+      <KeywordNotificationsClient />
+    </Suspense>
   );
 }
