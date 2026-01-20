@@ -14,11 +14,12 @@ interface CategoryFilterProps {
 const ALL_FILTERS = [
   { key: 'ALL', label: '전체' },
   { key: 'UNREAD', label: '안 읽음' },
-  { key: 'FAVORITE', label: '즐겨 찾기' },
+  { key: 'KEYWORD', label: '키워드' },
+  { key: 'FAVORITE', label: '즐겨찾기' },
 ];
 
 // 로그인 필요 필터 목록
-const LOGIN_REQUIRED_FILTERS = ['UNREAD', 'FAVORITE'];
+const LOGIN_REQUIRED_FILTERS = ['UNREAD', 'KEYWORD', 'FAVORITE'];
 
 export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedIn, onSettingsClick, onShowToast }: CategoryFilterProps) {
   const handleSettingsClick = () => {

@@ -6,6 +6,8 @@ import { FaStar, FaRegStar } from 'react-icons/fa';
 
 interface NoticeCardProps {
   notice: Notice;
+  highlightKeywords?: string[];
+  showKeywordPrefix?: boolean;
   onMarkAsRead?: (noticeId: number) => void; // 읽음 처리 콜백 (옵션)
   onToggleFavorite?: (noticeId: number) => void; // 즐겨찾기 토글 콜백 (옵션)
   isInFavoriteTab?: boolean; // 즐겨찾기 탭 여부 (항상 unread 스타일 표시)
@@ -13,7 +15,29 @@ interface NoticeCardProps {
   onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void; // 토스트 메시지 표시
 }
 
-export default function NoticeCard({ notice, onMarkAsRead, onToggleFavorite, isInFavoriteTab, isLoggedIn, onShowToast }: NoticeCardProps) {
+const findMatchedKeywords = (title: string, keywords?: string[]) => {
+  if (!keywords || keywords.length === 0) return [];
+  const normalizedTitle = title.toLowerCase();
+  const normalizedKeywords = keywords
+    .map((keyword) => keyword.trim())
+    .filter(Boolean);
+
+  const matched = normalizedKeywords.filter((keyword) =>
+    normalizedTitle.includes(keyword.toLowerCase()),
+  );
+  return Array.from(new Set(matched));
+};
+
+export default function NoticeCard({
+  notice,
+  highlightKeywords,
+  showKeywordPrefix,
+  onMarkAsRead,
+  onToggleFavorite,
+  isInFavoriteTab,
+  isLoggedIn,
+  onShowToast,
+}: NoticeCardProps) {
   // 읽음 상태에 따른 스타일 결정
   // 즐겨찾기 탭에서는 항상 unread 스타일 표시
   const styleConfig = (isInFavoriteTab || !notice.is_read)
@@ -50,6 +74,10 @@ export default function NoticeCard({ notice, onMarkAsRead, onToggleFavorite, isI
       onToggleFavorite(notice.id);
     }
   };
+
+  const matchedKeywords = showKeywordPrefix
+    ? findMatchedKeywords(notice.title, highlightKeywords)
+    : [];
 
   return (
     <li
@@ -98,6 +126,18 @@ export default function NoticeCard({ notice, onMarkAsRead, onToggleFavorite, isI
         <h3
           className={`text-[15px] font-medium leading-snug ${styleConfig.titleColor}`}
         >
+          {matchedKeywords.length > 0 && (
+            <span className="mr-2 inline-flex flex-wrap items-center gap-1">
+              {matchedKeywords.map((keyword) => (
+                <span
+                  key={keyword}
+                  className="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-semibold text-gray-600"
+                >
+                  {keyword}
+                </span>
+              ))}
+            </span>
+          )}
           {notice.title}
         </h3>
       </a>

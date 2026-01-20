@@ -5,24 +5,36 @@ interface NoticeListProps {
   loading: boolean;
   selectedCategories: string[];
   filteredNotices: Notice[];
+  highlightKeywords?: string[];
+  showKeywordPrefix?: boolean;
   onMarkAsRead: (noticeId: number) => void;
   onToggleFavorite?: (noticeId: number) => void;
   isInFavoriteTab?: boolean;
   isLoggedIn?: boolean;
   onOpenBoardFilter?: () => void;
   onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
+  emptyMessage?: string;
+  emptyDescription?: string;
+  emptyActionLabel?: string;
+  onEmptyActionClick?: () => void;
 }
 
 export default function NoticeList({
   loading,
   selectedCategories,
   filteredNotices,
+  highlightKeywords,
+  showKeywordPrefix,
   onMarkAsRead,
   onToggleFavorite,
   isInFavoriteTab,
   isLoggedIn,
   onOpenBoardFilter,
   onShowToast,
+  emptyMessage = '표시할 공지사항이 없어요',
+  emptyDescription,
+  emptyActionLabel,
+  onEmptyActionClick,
 }: NoticeListProps) {
   return (
     <ul className="min-h-full p-0 bg-gray-50 md:p-5">
@@ -55,6 +67,8 @@ export default function NoticeList({
             <NoticeCard
               key={notice.id}
               notice={notice}
+              highlightKeywords={highlightKeywords}
+              showKeywordPrefix={showKeywordPrefix}
               onMarkAsRead={onMarkAsRead}
               onToggleFavorite={onToggleFavorite}
               isInFavoriteTab={isInFavoriteTab}
@@ -65,7 +79,18 @@ export default function NoticeList({
         ) : (
           // 필터링 결과 데이터가 없을 때
           <div className="py-20 text-center col-span-full">
-            <p className="text-gray-400">표시할 공지사항이 없어요</p>
+            <p className="text-gray-400">{emptyMessage}</p>
+            {emptyDescription && (
+              <p className="mt-2 text-sm text-gray-400">{emptyDescription}</p>
+            )}
+            {emptyActionLabel && onEmptyActionClick && (
+              <button
+                onClick={onEmptyActionClick}
+                className="mt-4 rounded-lg bg-blue-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-600 active:scale-95"
+              >
+                {emptyActionLabel}
+              </button>
+            )}
           </div>
         )}
       </div>

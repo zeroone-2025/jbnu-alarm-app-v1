@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   fetchNotices,
+  getKeywordNotices,
+  getMyKeywords,
   markNoticeAsRead,
   toggleNoticeFavorite,
   Notice,
@@ -24,10 +26,14 @@ import BoardFilterModal from '@/components/BoardFilterModal';
 dayjs.extend(relativeTime);
 dayjs.locale('ko');
 
+
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [keywordNotices, setKeywordNotices] = useState<Notice[]>([]);
+  const [keywordCount, setKeywordCount] = useState<number | null>(null);
+  const [keywordList, setKeywordList] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false); // 크롤링 중 표시
   const [showOnboarding, setShowOnboarding] = useState(false); // 온보딩 모달 표시 여부
@@ -35,7 +41,8 @@ function HomeContent() {
   const [toastMessage, setToastMessage] = useState(''); // 토스트 메시지 내용
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // 사이드바 상태
-  const [filter, setFilter] = useState('ALL'); // 카테고리 필터 상태 (전체, 안읽음, 최신공지, 즐겨찾기)
+  const initialFilter = searchParams.get('filter') ?? 'ALL';
+  const [filter, setFilter] = useState(initialFilter); // 카테고리 필터 상태 (전체, 안읽음, 즐겨찾기, 키워드)
   const [isLoggedIn, setIsLoggedIn] = useState(false); // 로그인 상태
   const [isPulling, setIsPulling] = useState(false); // Pull to Refresh 상태
   const [pullDistance, setPullDistance] = useState(0); // 당긴 거리
@@ -67,6 +74,58 @@ function HomeContent() {
     }
   };
 
+  const loadKeywordNotices = async () => {
+    setLoading(true);
+    try {
+      const data = await getKeywordNotices(0, 200, true);
+      setKeywordNotices(data);
+    } catch (error) {
+      console.error('Failed to load keyword notices', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadKeywordCount = async () => {
+    try {
+      const data = await getMyKeywords();
+      const count = data.length;
+      setKeywordCount(count);
+      setKeywordList(data.map((item) => item.keyword));
+      return count;
+    } catch (error) {
+      console.error('Failed to load keywords', error);
+      setKeywordCount(0);
+      setKeywordList([]);
+      return 0;
+    }
+  };
+
+  const updateNoticeState = (
+    noticeId: number,
+    updater: (notice: Notice) => Notice,
+  ) => {
+    setNotices((prevNotices) =>
+      prevNotices.map((notice) => (notice.id === noticeId ? updater(notice) : notice)),
+    );
+    setKeywordNotices((prevNotices) =>
+      prevNotices.map((notice) => (notice.id === noticeId ? updater(notice) : notice)),
+    );
+  };
+
+  const refreshCurrentFilter = async () => {
+    if (filter === 'KEYWORD') {
+      const count = await loadKeywordCount();
+      if (count === 0) {
+        setKeywordNotices([]);
+        return;
+      }
+      await loadKeywordNotices();
+      return;
+    }
+    await loadNotices();
+  };
+
 
   /**
    * 공지사항 읽음 처리 (Optimistic Update)
@@ -81,9 +140,7 @@ function HomeContent() {
     }
 
     // 1. Optimistic Update: 즉시 UI 업데이트
-    setNotices((prevNotices) =>
-      prevNotices.map((notice) => (notice.id === noticeId ? { ...notice, is_read: true } : notice)),
-    );
+    updateNoticeState(noticeId, (notice) => ({ ...notice, is_read: true }));
 
     // 2. 백엔드 API 호출 (로그인 사용자만)
     try {
@@ -92,11 +149,7 @@ function HomeContent() {
     } catch (error) {
       // 3. 실패 시 롤백: 원래 상태로 복구
       console.error('Failed to mark notice as read:', error);
-      setNotices((prevNotices) =>
-        prevNotices.map((notice) =>
-          notice.id === noticeId ? { ...notice, is_read: false } : notice,
-        ),
-      );
+      updateNoticeState(noticeId, (notice) => ({ ...notice, is_read: false }));
     }
   };
 
@@ -114,11 +167,7 @@ function HomeContent() {
     }
 
     // 1. Optimistic Update: 즉시 UI 업데이트 (토글)
-    setNotices((prevNotices) =>
-      prevNotices.map((notice) =>
-        notice.id === noticeId ? { ...notice, is_favorite: !notice.is_favorite } : notice,
-      ),
-    );
+    updateNoticeState(noticeId, (notice) => ({ ...notice, is_favorite: !notice.is_favorite }));
 
     // 2. 백엔드 API 호출 (로그인 사용자만)
     try {
@@ -127,11 +176,7 @@ function HomeContent() {
     } catch (error) {
       // 3. 실패 시 롤백: 원래 상태로 복구
       console.error('Failed to toggle favorite:', error);
-      setNotices((prevNotices) =>
-        prevNotices.map((notice) =>
-          notice.id === noticeId ? { ...notice, is_favorite: !notice.is_favorite } : notice,
-        ),
-      );
+      updateNoticeState(noticeId, (notice) => ({ ...notice, is_favorite: !notice.is_favorite }));
     }
   };
 
@@ -145,6 +190,19 @@ function HomeContent() {
     loadNotices();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (filter === 'KEYWORD' && isLoggedIn) {
+      (async () => {
+        const count = await loadKeywordCount();
+        if (count === 0) {
+          setKeywordNotices([]);
+          return;
+        }
+        await loadKeywordNotices();
+      })();
+    }
+  }, [filter, isLoggedIn]);
 
   // 페이지 visibility 변경 시 새로고침 (다른 탭 갔다가 돌아올 때)
   useEffect(() => {
@@ -210,9 +268,14 @@ function HomeContent() {
   const handleTouchEnd = async () => {
     if (isPullingRef.current && pullDistanceRef.current > 30) {
       // 30px 이상 당기면 새로고침
+      // 놓는 순간 텍스트가 사라지도록 먼저 상태 초기화
+      setIsPulling(false);
+      setPullDistance(0);
+      touchStartY.current = 0;
       setRefreshing(true);
-      await loadNotices();
+      await refreshCurrentFilter();
       setRefreshing(false);
+      return;
     }
 
     // 상태 초기화
@@ -264,7 +327,7 @@ function HomeContent() {
   const handleBoardFilterApply = async (boards: string[]) => {
     await updateSelectedCategories(boards);
     // 게시판 변경 시 공지사항 목록 자동 새로고침
-    await loadNotices();
+    await refreshCurrentFilter();
   };
 
   // 로그인 결과 처리 (쿼리 파라미터 확인)
@@ -297,8 +360,33 @@ function HomeContent() {
     }
   }, [searchParams, router]);
 
-  // 1단계: 게시판 필터링 (Guest: home_campus만, User: 구독한 게시판)
-  let filteredNotices = notices.filter((notice) => selectedBoards.includes(notice.board_code));
+  const selectedBoardsForList = filter === 'KEYWORD' ? ['keyword'] : selectedBoards;
+
+  const highlightKeywords = isLoggedIn ? keywordList : [];
+  const boardFilteredNotices = notices.filter((notice) => selectedBoards.includes(notice.board_code));
+  const mergeNoticesForAll = (primary: Notice[], extra: Notice[]) => {
+    const noticeMap = new Map<number, Notice>();
+    primary.forEach((notice) => noticeMap.set(notice.id, notice));
+    extra.forEach((notice) => {
+      if (!noticeMap.has(notice.id)) {
+        noticeMap.set(notice.id, notice);
+      }
+    });
+
+    return Array.from(noticeMap.values()).sort((a, b) => {
+      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      return b.id - a.id;
+    });
+  };
+
+  // 1단계: 게시판/키워드 필터링
+  let filteredNotices = boardFilteredNotices;
+  if (filter === 'KEYWORD') {
+    filteredNotices = keywordNotices;
+  } else if (filter === 'ALL') {
+    filteredNotices = mergeNoticesForAll(boardFilteredNotices, keywordNotices);
+  }
 
   // 2단계: 카테고리 필터 적용 (전체, 안읽음, 즐겨찾기)
   if (filter === 'UNREAD') {
@@ -339,9 +427,8 @@ function HomeContent() {
             <HomeHeader
               onMenuClick={() => setIsSidebarOpen(true)}
               onNotificationClick={() => {
-                setToastMessage('알림 기능은 준비 중입니다.');
-                setToastType('info');
-                setShowToast(true);
+                const returnTo = `/?filter=${filter}`;
+                router.push(`/notifications/keyword?returnTo=${encodeURIComponent(returnTo)}`);
               }}
             />
           </div>
@@ -394,14 +481,43 @@ function HomeContent() {
             >
               <NoticeList
                 loading={loading}
-                selectedCategories={selectedBoards}
+                selectedCategories={selectedBoardsForList}
                 filteredNotices={filteredNotices}
+                highlightKeywords={filter === 'KEYWORD' || filter === 'ALL' ? highlightKeywords : undefined}
+                showKeywordPrefix={filter === 'KEYWORD' || filter === 'ALL'}
                 onMarkAsRead={handleMarkAsRead}
                 onToggleFavorite={handleToggleFavorite}
                 isInFavoriteTab={filter === 'FAVORITE'}
                 isLoggedIn={isLoggedIn}
                 onOpenBoardFilter={() => setShowBoardFilterModal(true)}
                 onShowToast={handleShowToast}
+                emptyMessage={
+                  filter === 'KEYWORD'
+                    ? (keywordCount === 0
+                      ? '키워드를 등록하면 관련 공지가 모여요'
+                      : '아직 키워드에 맞는 공지사항이 없어요')
+                    : '표시할 공지사항이 없어요'
+                }
+                emptyDescription={
+                  filter === 'KEYWORD'
+                    ? (keywordCount === 0
+                      ? '키워드를 추가해 주세요'
+                      : '새 공지가 올라오면 여기에 표시돼요')
+                    : undefined
+                }
+                emptyActionLabel={
+                  filter === 'KEYWORD' && keywordNotices.length === 0
+                    ? (keywordCount === 0 ? '키워드 추가' : '키워드 관리')
+                    : undefined
+                }
+                onEmptyActionClick={
+                  filter === 'KEYWORD' && keywordNotices.length === 0
+                    ? () => {
+                      const returnTo = `/?filter=${filter}`;
+                      router.push(`/keywords?returnTo=${encodeURIComponent(returnTo)}`);
+                    }
+                    : undefined
+                }
               />
             </div>
           </div>
