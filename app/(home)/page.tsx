@@ -26,12 +26,14 @@ import BoardFilterModal from '@/components/BoardFilterModal';
 dayjs.extend(relativeTime);
 dayjs.locale('ko');
 
+
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [keywordNotices, setKeywordNotices] = useState<Notice[]>([]);
   const [keywordCount, setKeywordCount] = useState<number | null>(null);
+  const [keywordList, setKeywordList] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false); // 크롤링 중 표시
   const [showOnboarding, setShowOnboarding] = useState(false); // 온보딩 모달 표시 여부
@@ -89,10 +91,12 @@ function HomeContent() {
       const data = await getMyKeywords();
       const count = data.length;
       setKeywordCount(count);
+      setKeywordList(data.map((item) => item.keyword));
       return count;
     } catch (error) {
       console.error('Failed to load keywords', error);
       setKeywordCount(0);
+      setKeywordList([]);
       return 0;
     }
   };
@@ -264,9 +268,14 @@ function HomeContent() {
   const handleTouchEnd = async () => {
     if (isPullingRef.current && pullDistanceRef.current > 30) {
       // 30px 이상 당기면 새로고침
+      // 놓는 순간 텍스트가 사라지도록 먼저 상태 초기화
+      setIsPulling(false);
+      setPullDistance(0);
+      touchStartY.current = 0;
       setRefreshing(true);
       await refreshCurrentFilter();
       setRefreshing(false);
+      return;
     }
 
     // 상태 초기화
@@ -353,10 +362,31 @@ function HomeContent() {
 
   const selectedBoardsForList = filter === 'KEYWORD' ? ['keyword'] : selectedBoards;
 
+  const highlightKeywords = isLoggedIn ? keywordList : [];
+  const boardFilteredNotices = notices.filter((notice) => selectedBoards.includes(notice.board_code));
+  const mergeNoticesForAll = (primary: Notice[], extra: Notice[]) => {
+    const noticeMap = new Map<number, Notice>();
+    primary.forEach((notice) => noticeMap.set(notice.id, notice));
+    extra.forEach((notice) => {
+      if (!noticeMap.has(notice.id)) {
+        noticeMap.set(notice.id, notice);
+      }
+    });
+
+    return Array.from(noticeMap.values()).sort((a, b) => {
+      const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateDiff !== 0) return dateDiff;
+      return b.id - a.id;
+    });
+  };
+
   // 1단계: 게시판/키워드 필터링
-  let filteredNotices = filter === 'KEYWORD'
-    ? keywordNotices
-    : notices.filter((notice) => selectedBoards.includes(notice.board_code));
+  let filteredNotices = boardFilteredNotices;
+  if (filter === 'KEYWORD') {
+    filteredNotices = keywordNotices;
+  } else if (filter === 'ALL') {
+    filteredNotices = mergeNoticesForAll(boardFilteredNotices, keywordNotices);
+  }
 
   // 2단계: 카테고리 필터 적용 (전체, 안읽음, 즐겨찾기)
   if (filter === 'UNREAD') {
@@ -398,7 +428,7 @@ function HomeContent() {
               onMenuClick={() => setIsSidebarOpen(true)}
               onNotificationClick={() => {
                 const returnTo = `/?filter=${filter}`;
-                router.push(`/keywords?returnTo=${encodeURIComponent(returnTo)}`);
+                router.push(`/notifications/keyword?returnTo=${encodeURIComponent(returnTo)}`);
               }}
             />
           </div>
@@ -453,6 +483,8 @@ function HomeContent() {
                 loading={loading}
                 selectedCategories={selectedBoardsForList}
                 filteredNotices={filteredNotices}
+                highlightKeywords={filter === 'KEYWORD' || filter === 'ALL' ? highlightKeywords : undefined}
+                showKeywordPrefix={filter === 'KEYWORD' || filter === 'ALL'}
                 onMarkAsRead={handleMarkAsRead}
                 onToggleFavorite={handleToggleFavorite}
                 isInFavoriteTab={filter === 'FAVORITE'}
@@ -462,15 +494,24 @@ function HomeContent() {
                 emptyMessage={
                   filter === 'KEYWORD'
                     ? (keywordCount === 0
-                      ? '키워드를 먼저 등록해 주세요'
-                      : '아직 키워드에 맞는 공지사항이 오지 않았어요')
+                      ? '키워드를 등록하면 관련 공지가 모여요'
+                      : '아직 키워드에 맞는 공지사항이 없어요')
                     : '표시할 공지사항이 없어요'
                 }
+                emptyDescription={
+                  filter === 'KEYWORD'
+                    ? (keywordCount === 0
+                      ? '키워드를 추가해 주세요'
+                      : '새 공지가 올라오면 여기에 표시돼요')
+                    : undefined
+                }
                 emptyActionLabel={
-                  filter === 'KEYWORD' && keywordCount === 0 ? '키워드 등록' : undefined
+                  filter === 'KEYWORD' && keywordNotices.length === 0
+                    ? (keywordCount === 0 ? '키워드 추가' : '키워드 관리')
+                    : undefined
                 }
                 onEmptyActionClick={
-                  filter === 'KEYWORD' && keywordCount === 0
+                  filter === 'KEYWORD' && keywordNotices.length === 0
                     ? () => {
                       const returnTo = `/?filter=${filter}`;
                       router.push(`/keywords?returnTo=${encodeURIComponent(returnTo)}`);
