@@ -1,44 +1,43 @@
-import { FiRefreshCw, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUser, FiBell } from 'react-icons/fi';
 
 interface HomeHeaderProps {
-  includeRead: boolean;
-  refreshing: boolean;
-  onToggleIncludeRead: () => void;
-  onRefresh: () => void;
+  // 알림 버튼 클릭 핸들러 (추후 구현)
+  onNotificationClick?: () => void;
+  showNotificationBadge?: boolean;
+  // 메뉴 버튼 클릭 핸들러
+  onMenuClick: () => void;
 }
 
-export default function HomeHeader({
-  includeRead,
-  refreshing,
-  onToggleIncludeRead,
-  onRefresh,
-}: HomeHeaderProps) {
+export default function HomeHeader({ onNotificationClick, showNotificationBadge, onMenuClick }: HomeHeaderProps) {
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white px-5">
-      <h1 className="text-xl font-bold text-gray-800">📢 전북대 알리미</h1>
-      <div className="flex items-center gap-2">
-        {/* 읽음 필터 버튼 */}
+    <header className="relative flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white px-5">
+      {/* Left: User Icon (Menu) */}
+      <div className="flex w-20 justify-start">
         <button
-          onClick={onToggleIncludeRead}
-          className={`rounded-full p-2 transition-all hover:bg-gray-100 ${
-            includeRead ? 'text-blue-500' : 'text-gray-600'
-          }`}
-          aria-label={includeRead ? '읽은 공지 포함 중' : '안 읽은 공지만 보기'}
-          title={includeRead ? '읽은 공지도 함께 보는 중' : '안 읽은 공지만 보는 중'}
+          onClick={onMenuClick}
+          className="rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
+          aria-label="메뉴 열기"
         >
-          {includeRead ? <FiEye size={20} /> : <FiEyeOff size={20} />}
+          <FiUser size={24} />
         </button>
+      </div>
 
-        {/* 새로고침 버튼 */}
+      {/* Center: Logo */}
+      <div className="absolute left-1/2 -translate-x-1/2 transform">
+        <h1 className="text-xl font-bold text-gray-800">ZeroTime</h1>
+      </div>
+
+      {/* Right: Notification */}
+      <div className="flex w-20 items-center justify-end">
         <button
-          onClick={onRefresh}
-          disabled={refreshing}
-          className={`rounded-full p-2 transition-all hover:bg-gray-100 ${
-            refreshing ? 'animate-spin text-blue-500' : 'text-gray-600'
-          }`}
-          aria-label="새로고침"
+          onClick={onNotificationClick}
+          className="relative rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
+          aria-label="알림"
         >
-          <FiRefreshCw size={20} />
+          <FiBell size={24} />
+          {showNotificationBadge && (
+            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+          )}
         </button>
       </div>
     </header>

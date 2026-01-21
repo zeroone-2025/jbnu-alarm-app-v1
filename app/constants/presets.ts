@@ -30,20 +30,20 @@ export const MAJOR_PRESETS: MajorPreset[] = [
     id: 'cse',
     label: '컴퓨터인공지능학부',
     categories: [
+      'home_campus',      // 본부 공지 (교내공지)
       'dept_csai',        // 학과 공지
-      'college_eng',      // 공과대학 (준비 중)
-      'agency_swuniv',    // SW중심대학사업단
-      'academic_main',    // 본부 공지
+      'college_eng',      // 공과대학
+      'agency_sw',        // SW중심대학사업단
     ],
   },
   {
     id: 'software',
     label: '소프트웨어학과',
     categories: [
-      'dept_software',    // 학과 공지 (준비 중)
-      'college_eng',      // 공과대학 (준비 중)
-      'agency_swuniv',    // SW중심대학사업단
-      'academic_main',    // 본부 공지
+      'home_campus',      // 본부 공지 (교내공지)
+      'college_eng',      // 공과대학
+      'agency_sw',        // SW중심대학사업단
+      // 'dept_software' - 아직 크롤러 미구현
     ],
   },
   // TODO: 다른 공과대학 학과 추가
@@ -69,7 +69,7 @@ export const MAJOR_PRESETS: MajorPreset[] = [
   {
     id: 'common',
     label: '기타 (본부 공지만 구독)',
-    categories: ['academic_main'],
+    categories: ['home_campus'],
   },
 ];
 

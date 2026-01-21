@@ -1,5 +1,5 @@
 # JBNU Notice Alarm (Frontend)
-
+ 
 전북대학교 공지사항과 컴퓨터인공지능학부 공지사항을 한곳에서 모아보고, 최신 데이터를 크롤링할 수 있는 웹 애플리케이션의 프론트엔드입니다.
 
 ![Project Status](https://img.shields.io/badge/status-active-success.svg)

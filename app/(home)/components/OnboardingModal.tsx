@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { MAJOR_PRESETS } from '@/constants/presets';
+import { updateUserProfile, updateUserSubscriptions } from '@/api';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -10,10 +11,11 @@ interface OnboardingModalProps {
 
 export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
   const [selectedMajor, setSelectedMajor] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedMajor) {
       alert('학과를 선택해주세요!');
       return;
@@ -22,11 +24,26 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
     const preset = MAJOR_PRESETS.find((p) => p.id === selectedMajor);
     if (!preset) return;
 
-    // localStorage에 구독 카테고리 저장
-    localStorage.setItem('my_subscribed_categories', JSON.stringify(preset.categories));
+    setIsSubmitting(true);
 
-    // 부모 컴포넌트에 알림
-    onComplete(preset.categories);
+    try {
+      // 1. 백엔드 users.dept_code 업데이트
+      await updateUserProfile({ dept_code: selectedMajor });
+
+      // 2. 백엔드 user_subscriptions에 구독 카테고리 저장
+      await updateUserSubscriptions(preset.categories);
+
+      // 3. localStorage에도 캐시 저장
+      localStorage.setItem('my_subscribed_categories', JSON.stringify(preset.categories));
+
+      // 4. 부모 컴포넌트에 알림
+      onComplete(preset.categories);
+    } catch (error) {
+      console.error('학과 정보 저장 실패:', error);
+      alert('학과 정보 저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -36,7 +53,7 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
         <div className="mb-6 text-center">
           <div className="mb-3 text-4xl">🎓</div>
           <h2 className="mb-2 text-2xl font-bold text-gray-900">
-            전북대 알리미에 오신 것을 환영합니다!
+            ZeroTime에 오신 것을 환영합니다!
           </h2>
           <p className="text-sm text-gray-600">
             학과를 선택하시면 필수 공지사항을 자동으로 구독해 드려요!
@@ -83,10 +100,10 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
         {/* 버튼 */}
         <button
           onClick={handleSubmit}
-          disabled={!selectedMajor}
+          disabled={!selectedMajor || isSubmitting}
           className="w-full rounded-lg bg-blue-500 py-3 font-semibold text-white transition-all hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
         >
-          시작하기
+          {isSubmitting ? '저장 중...' : '시작하기'}
         </button>
 
         {/* 안내 문구 */}

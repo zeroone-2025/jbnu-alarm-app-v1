@@ -8,10 +8,17 @@ module.exports = {
   safelist: [
     // 동적 색상 클래스 보호 (프로덕션 빌드 시 purge 방지)
     {
-      pattern: /bg-(indigo|emerald|amber|rose|violet|cyan|pink|lime|orange|teal)-(100)/,
+      pattern: /bg-(indigo|emerald|amber|rose|violet|cyan|pink|lime|orange|teal|sky)-(100)/,
     },
     {
-      pattern: /text-(indigo|emerald|amber|rose|violet|cyan|pink|lime|orange|teal)-(600|700)/,
+      pattern: /text-(indigo|emerald|amber|rose|violet|cyan|pink|lime|orange|teal|sky)-(600|700)/,
+    },
+    // BoardFilterModal 선택된 게시판 색상 (카테고리별)
+    {
+      pattern: /bg-(blue|green|gray|indigo|sky)-(500|600)/,
+    },
+    {
+      pattern: /hover:bg-(blue|green|gray|indigo|sky)-(600|700)/,
     },
   ],
   theme: {
