@@ -453,17 +453,16 @@ function HomeContent() {
           >
             {refreshing ? (
               <div className="w-6 h-6 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
-            ) : (
+            ) : isPulling && pullDistance > 0 ? (
               <div
                 className="text-sm font-medium text-gray-600"
                 style={{
                   transform: `scale(${Math.min(pullDistance / 40, 1)})`,
-                  transition: 'transform 0.1s ease-out',
                 }}
               >
                 {pullDistance > 30 ? '↓ 놓아서 새로고침' : '↓ 당겨서 새로고침'}
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* 3. 공지사항 리스트 (Pull to Refresh 지원) */}
