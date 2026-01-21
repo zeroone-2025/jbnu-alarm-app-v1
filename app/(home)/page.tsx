@@ -51,6 +51,8 @@ function HomeContent() {
   const scrollContainerRef = useRef<HTMLElement>(null); // 스크롤 컨테이너 참조
   const isPullingRef = useRef(false);
   const pullDistanceRef = useRef(0);
+  const filterRef = useRef(filter);
+  const keywordCountRef = useRef(keywordCount);
   const [showBoardFilterModal, setShowBoardFilterModal] = useState(false); // 게시판 필터 모달
 
   // 선택된 카테고리 관리 (Guest/User 모두 사용)
@@ -277,8 +279,14 @@ function HomeContent() {
       if (document.visibilityState === 'visible') {
         // 페이지가 다시 보이게 되면 로그인 상태 재확인 및 데이터 새로고침
         const token = localStorage.getItem('accessToken');
-        setIsLoggedIn(!!token);
+        const loggedIn = !!token;
+        setIsLoggedIn(loggedIn);
         loadNotices();
+        // 로그인 상태이면 키워드 목록도 갱신 (ALL 탭에서 라벨 표시를 위해)
+        if (loggedIn) {
+          loadKeywordCount();
+          loadKeywordNoticesSilent();
+        }
       }
     };
 
@@ -297,6 +305,14 @@ function HomeContent() {
     pullDistanceRef.current = pullDistance;
   }, [pullDistance]);
 
+  useEffect(() => {
+    filterRef.current = filter;
+  }, [filter]);
+
+  useEffect(() => {
+    keywordCountRef.current = keywordCount;
+  }, [keywordCount]);
+
   // Pull to Refresh 핸들러
   const handleTouchStart = (e: TouchEvent) => {
     const container = scrollContainerRef.current;
@@ -313,6 +329,9 @@ function HomeContent() {
   const handleTouchMove = (e: TouchEvent) => {
     const container = scrollContainerRef.current;
     if (!container || touchStartY.current === 0) return;
+
+    // KEYWORD 필터에서 키워드가 0개일 때는 pull-to-refresh 비활성화
+    if (filterRef.current === 'KEYWORD' && keywordCountRef.current === 0) return;
 
     const currentY = e.touches[0].clientY;
     const distance = currentY - touchStartY.current;
@@ -552,8 +571,8 @@ function HomeContent() {
                 loading={loading}
                 selectedCategories={selectedBoardsForList}
                 filteredNotices={filteredNotices}
-                highlightKeywords={filter === 'KEYWORD' || filter === 'ALL' ? highlightKeywords : undefined}
-                showKeywordPrefix={filter === 'KEYWORD' || filter === 'ALL'}
+                highlightKeywords={keywordList}
+                keywordNoticeIds={new Set(keywordNotices.map((n) => n.id))}
                 onMarkAsRead={handleMarkAsRead}
                 onToggleFavorite={handleToggleFavorite}
                 isInFavoriteTab={filter === 'FAVORITE'}
