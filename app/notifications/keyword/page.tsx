@@ -303,7 +303,7 @@ function KeywordNotificationsClient() {
                   selectedCategories={['keyword']}
                   filteredNotices={keywordNotices}
                   highlightKeywords={keywordList}
-                  showKeywordPrefix
+                  keywordNoticeIds={new Set(keywordNotices.map((n) => n.id))}
                   onMarkAsRead={handleMarkAsRead}
                   onToggleFavorite={handleToggleFavorite}
                   isLoggedIn={isLoggedIn}
