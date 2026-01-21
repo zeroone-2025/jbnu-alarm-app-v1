@@ -448,7 +448,7 @@ function HomeContent() {
             style={{
               height: refreshing ? '64px' : isPulling ? `${pullDistance}px` : '0px',
               opacity: refreshing ? 1 : isPulling ? Math.min(pullDistance / 50, 1) : 0,
-              transition: isPulling ? 'none' : 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out',
+              transition: (isPulling || refreshing) ? 'none' : 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out',
             }}
           >
             {refreshing ? (
