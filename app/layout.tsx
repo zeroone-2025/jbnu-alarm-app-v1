@@ -28,12 +28,12 @@ export const viewport: Viewport = {
   themeColor: '#3b82f6',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const host = headers().get('host') ?? '';
+  const host = (await headers()).get('host') ?? '';
   const isDevHost = host === 'dev.zerotime.kr' || host.startsWith('dev.zerotime.kr:');
 
   return (
