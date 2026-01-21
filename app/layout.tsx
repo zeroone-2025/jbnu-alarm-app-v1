@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { Inter } from 'next/font/google';
+import { headers } from 'next/headers';
 import './globals.css';
 import Providers from './providers';
 
@@ -9,10 +10,6 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'ZeroTime - 전북대 알리미',
   description: 'ZeroTime - 전북대 공지사항 통합 알림 서비스',
-  robots: {
-    index: false,
-    follow: false,
-  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -36,11 +33,15 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const host = headers().get('host') ?? '';
+  const isDevHost = host === 'dev.zerotime.kr' || host.startsWith('dev.zerotime.kr:');
+
   return (
     <html lang="ko">
       <head>
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/logo-192x192.png" />
+        {isDevHost && <meta name="robots" content="noindex, nofollow" />}
         <Script async src="https://www.googletagmanager.com/gtag/js?id=G-SMF31V39T9" />
         <Script id="ga-init">
           {`window.dataLayer = window.dataLayer || [];
