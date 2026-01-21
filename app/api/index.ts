@@ -33,6 +33,7 @@ export interface Notice {
   is_read: boolean; // 읽음 여부 (백엔드에서 제공)
   view: number; // 조회수
   is_favorite: boolean; // 즐겨찾기 여부
+  matched_keywords?: string[]; // 매칭된 키워드 목록 (삭제된 키워드 포함)
 }
 
 // API 함수들 정리
