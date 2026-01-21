@@ -13,22 +13,15 @@ import {
 } from '@/api';
 import Toast from '@/components/Toast';
 import NoticeList from '@/(home)/components/NoticeList';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 
 function KeywordNotificationsClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [keywordCount, setKeywordCount] = useState<number | null>(null);
-  const [keywordList, setKeywordList] = useState<string[]>([]);
   const [keywordNotices, setKeywordNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [isPulling, setIsPulling] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
-  const touchStartY = useRef(0);
-  const scrollContainerRef = useRef<HTMLElement>(null);
-  const isPullingRef = useRef(false);
-  const pullDistanceRef = useRef(0);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [showToast, setShowToast] = useState(false);
@@ -44,12 +37,10 @@ function KeywordNotificationsClient() {
       const data = await getMyKeywords();
       const count = data.length;
       setKeywordCount(count);
-      setKeywordList(data.map((item) => item.keyword));
       return count;
     } catch (error) {
       console.error('Failed to load keywords', error);
       setKeywordCount(0);
-      setKeywordList([]);
       return 0;
     }
   };
@@ -76,6 +67,12 @@ function KeywordNotificationsClient() {
     }
     await loadKeywordNotices();
   };
+
+  // Pull to Refresh 훅
+  const { scrollContainerRef, isPulling, pullDistance, refreshing } = usePullToRefresh({
+    onRefresh: refreshKeywordNotices,
+    enabled: true, // 항상 활성화 (키워드 있으면 공지 없어도 새로고침 가능)
+  });
 
   const updateNoticeState = (
     noticeId: number,
@@ -130,82 +127,6 @@ function KeywordNotificationsClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    isPullingRef.current = isPulling;
-  }, [isPulling]);
-
-  useEffect(() => {
-    pullDistanceRef.current = pullDistance;
-  }, [pullDistance]);
-
-  const handleTouchStart = (e: TouchEvent) => {
-    if (keywordCountLabel === 0) return;
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    if (container.scrollTop <= 0) {
-      touchStartY.current = e.touches[0].clientY;
-    } else {
-      touchStartY.current = 0;
-    }
-  };
-
-  const handleTouchMove = (e: TouchEvent) => {
-    if (keywordCountLabel === 0) return;
-    const container = scrollContainerRef.current;
-    if (!container || touchStartY.current === 0) return;
-
-    const currentY = e.touches[0].clientY;
-    const distance = currentY - touchStartY.current;
-
-    if (distance > 0 && container.scrollTop <= 0) {
-      e.preventDefault();
-      setIsPulling(true);
-
-      const maxDistance = 80;
-      const dampingFactor = 0.5;
-      const dampedDistance = maxDistance * (1 - Math.exp(-distance * dampingFactor / maxDistance));
-
-      setPullDistance(Math.min(dampedDistance, maxDistance));
-    }
-  };
-
-  const handleTouchEnd = async () => {
-    if (keywordCountLabel === 0) {
-      setIsPulling(false);
-      setPullDistance(0);
-      touchStartY.current = 0;
-      return;
-    }
-    if (isPullingRef.current && pullDistanceRef.current > 30) {
-      setIsPulling(false);
-      setPullDistance(0);
-      touchStartY.current = 0;
-      setRefreshing(true);
-      await refreshKeywordNotices();
-      setRefreshing(false);
-      return;
-    }
-
-    setIsPulling(false);
-    setPullDistance(0);
-    touchStartY.current = 0;
-  };
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [isLoggedIn]);
 
   const returnTo = searchParams.get('returnTo') ?? '/';
   const keywordCountLabel = keywordCount ?? 0;
@@ -302,8 +223,7 @@ function KeywordNotificationsClient() {
                   loading={loading}
                   selectedCategories={['keyword']}
                   filteredNotices={keywordNotices}
-                  highlightKeywords={keywordList}
-                  keywordNoticeIds={new Set(keywordNotices.map((n) => n.id))}
+                  showKeywordPrefix={true}
                   onMarkAsRead={handleMarkAsRead}
                   onToggleFavorite={handleToggleFavorite}
                   isLoggedIn={isLoggedIn}

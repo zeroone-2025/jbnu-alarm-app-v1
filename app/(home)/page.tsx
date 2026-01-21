@@ -15,6 +15,7 @@ import 'dayjs/locale/ko'; // 한국어 설정
 import relativeTime from 'dayjs/plugin/relativeTime'; // '방금 전' 기능
 import Toast from '@/components/Toast';
 import { useSelectedCategories } from '@/hooks/useSelectedCategories';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import OnboardingModal from './components/OnboardingModal';
 import NoticeList from './components/NoticeList';
 import HomeHeader from './components/HomeHeader';
@@ -33,10 +34,8 @@ function HomeContent() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [keywordNotices, setKeywordNotices] = useState<Notice[]>([]);
   const [keywordCount, setKeywordCount] = useState<number | null>(null);
-  const [keywordList, setKeywordList] = useState<string[]>([]);
   const [hasNewKeywordNotices, setHasNewKeywordNotices] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false); // 크롤링 중 표시
   const [showOnboarding, setShowOnboarding] = useState(false); // 온보딩 모달 표시 여부
   const [showToast, setShowToast] = useState(false); // 토스트 메시지 표시 여부
   const [toastMessage, setToastMessage] = useState(''); // 토스트 메시지 내용
@@ -45,14 +44,6 @@ function HomeContent() {
   const initialFilter = searchParams.get('filter') ?? 'ALL';
   const [filter, setFilter] = useState(initialFilter); // 카테고리 필터 상태 (전체, 안읽음, 즐겨찾기, 키워드)
   const [isLoggedIn, setIsLoggedIn] = useState(false); // 로그인 상태
-  const [isPulling, setIsPulling] = useState(false); // Pull to Refresh 상태
-  const [pullDistance, setPullDistance] = useState(0); // 당긴 거리
-  const touchStartY = useRef(0); // 터치 시작 Y 좌표
-  const scrollContainerRef = useRef<HTMLElement>(null); // 스크롤 컨테이너 참조
-  const isPullingRef = useRef(false);
-  const pullDistanceRef = useRef(0);
-  const filterRef = useRef(filter);
-  const keywordCountRef = useRef(keywordCount);
   const [showBoardFilterModal, setShowBoardFilterModal] = useState(false); // 게시판 필터 모달
 
   // 선택된 카테고리 관리 (Guest/User 모두 사용)
@@ -103,12 +94,10 @@ function HomeContent() {
       const data = await getMyKeywords();
       const count = data.length;
       setKeywordCount(count);
-      setKeywordList(data.map((item) => item.keyword));
       return count;
     } catch (error) {
       console.error('Failed to load keywords', error);
       setKeywordCount(0);
-      setKeywordList([]);
       return 0;
     }
   };
@@ -137,6 +126,15 @@ function HomeContent() {
     }
     await loadNotices();
   };
+
+  // Pull to Refresh 조건: KEYWORD 필터에서 키워드 0개면 비활성화
+  const pullToRefreshEnabled = !(filter === 'KEYWORD' && keywordCount === 0);
+  
+  // Pull to Refresh 훅
+  const { scrollContainerRef, isPulling, pullDistance, refreshing } = usePullToRefresh({
+    onRefresh: refreshCurrentFilter,
+    enabled: pullToRefreshEnabled,
+  });
 
   const getLatestKeywordNoticeAt = (items: Notice[]) => {
     if (items.length === 0) return null;
@@ -297,93 +295,6 @@ function HomeContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    isPullingRef.current = isPulling;
-  }, [isPulling]);
-
-  useEffect(() => {
-    pullDistanceRef.current = pullDistance;
-  }, [pullDistance]);
-
-  useEffect(() => {
-    filterRef.current = filter;
-  }, [filter]);
-
-  useEffect(() => {
-    keywordCountRef.current = keywordCount;
-  }, [keywordCount]);
-
-  // Pull to Refresh 핸들러
-  const handleTouchStart = (e: TouchEvent) => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    // 스크롤이 최상단에 있을 때만 작동
-    if (container.scrollTop <= 0) {
-      touchStartY.current = e.touches[0].clientY;
-    } else {
-      touchStartY.current = 0;
-    }
-  };
-
-  const handleTouchMove = (e: TouchEvent) => {
-    const container = scrollContainerRef.current;
-    if (!container || touchStartY.current === 0) return;
-
-    // KEYWORD 필터에서 키워드가 0개일 때는 pull-to-refresh 비활성화
-    if (filterRef.current === 'KEYWORD' && keywordCountRef.current === 0) return;
-
-    const currentY = e.touches[0].clientY;
-    const distance = currentY - touchStartY.current;
-
-    // 아래로 당길 때만 (distance > 0) & 스크롤 최상단일 때
-    if (distance > 0 && container.scrollTop <= 0) {
-      e.preventDefault();
-      setIsPulling(true);
-
-      // Rubber band effect: 저항감을 주기 위한 감쇠 함수
-      // 멀리 당길수록 저항이 증가 (최대 80px)
-      const maxDistance = 80;
-      const dampingFactor = 0.5;
-      const dampedDistance = maxDistance * (1 - Math.exp(-distance * dampingFactor / maxDistance));
-
-      setPullDistance(Math.min(dampedDistance, maxDistance));
-    }
-  };
-
-  const handleTouchEnd = async () => {
-    if (isPullingRef.current && pullDistanceRef.current > 30) {
-      // 30px 이상 당기면 새로고침
-      // 놓는 순간 텍스트가 사라지도록 먼저 상태 초기화
-      setIsPulling(false);
-      setPullDistance(0);
-      touchStartY.current = 0;
-      setRefreshing(true);
-      await refreshCurrentFilter();
-      setRefreshing(false);
-      return;
-    }
-
-    // 상태 초기화
-    setIsPulling(false);
-    setPullDistance(0);
-    touchStartY.current = 0;
-  };
-
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, []);
 
   // 온보딩 모달 자동 표시 비활성화
   // 기본값(home_campus)으로 시작하고, 사용자가 원할 때 설정에서 변경 가능
@@ -448,7 +359,6 @@ function HomeContent() {
 
   const selectedBoardsForList = filter === 'KEYWORD' ? ['keyword'] : selectedBoards;
 
-  const highlightKeywords = isLoggedIn ? keywordList : [];
   const boardFilteredNotices = notices.filter((notice) => selectedBoards.includes(notice.board_code));
   const mergeNoticesForAll = (primary: Notice[], extra: Notice[]) => {
     const noticeMap = new Map<number, Notice>();
@@ -571,8 +481,7 @@ function HomeContent() {
                 loading={loading}
                 selectedCategories={selectedBoardsForList}
                 filteredNotices={filteredNotices}
-                highlightKeywords={keywordList}
-                keywordNoticeIds={new Set(keywordNotices.map((n) => n.id))}
+                showKeywordPrefix={filter === 'KEYWORD' || filter === 'ALL'}
                 onMarkAsRead={handleMarkAsRead}
                 onToggleFavorite={handleToggleFavorite}
                 isInFavoriteTab={filter === 'FAVORITE'}
