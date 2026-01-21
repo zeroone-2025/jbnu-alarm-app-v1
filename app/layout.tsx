@@ -9,6 +9,10 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'ZeroTime - 전북대 알리미',
   description: 'ZeroTime - 전북대 공지사항 통합 알림 서비스',
+  robots: {
+    index: false,
+    follow: false,
+  },
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
