@@ -5,8 +5,7 @@ interface NoticeListProps {
   loading: boolean;
   selectedCategories: string[];
   filteredNotices: Notice[];
-  highlightKeywords?: string[];
-  keywordNoticeIds?: Set<number>;
+  showKeywordPrefix?: boolean;
   onMarkAsRead: (noticeId: number) => void;
   onToggleFavorite?: (noticeId: number) => void;
   isInFavoriteTab?: boolean;
@@ -23,8 +22,7 @@ export default function NoticeList({
   loading,
   selectedCategories,
   filteredNotices,
-  highlightKeywords,
-  keywordNoticeIds,
+  showKeywordPrefix,
   onMarkAsRead,
   onToggleFavorite,
   isInFavoriteTab,
@@ -67,8 +65,7 @@ export default function NoticeList({
             <NoticeCard
               key={notice.id}
               notice={notice}
-              highlightKeywords={highlightKeywords}
-              showKeywordPrefix={keywordNoticeIds?.has(notice.id) ?? false}
+              showKeywordPrefix={showKeywordPrefix}
               onMarkAsRead={onMarkAsRead}
               onToggleFavorite={onToggleFavorite}
               isInFavoriteTab={isInFavoriteTab}

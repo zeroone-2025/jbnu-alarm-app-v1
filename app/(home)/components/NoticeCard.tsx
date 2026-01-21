@@ -6,7 +6,6 @@ import { FaStar, FaRegStar } from 'react-icons/fa';
 
 interface NoticeCardProps {
   notice: Notice;
-  highlightKeywords?: string[];
   showKeywordPrefix?: boolean;
   onMarkAsRead?: (noticeId: number) => void; // 읽음 처리 콜백 (옵션)
   onToggleFavorite?: (noticeId: number) => void; // 즐겨찾기 토글 콜백 (옵션)
@@ -15,22 +14,8 @@ interface NoticeCardProps {
   onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void; // 토스트 메시지 표시
 }
 
-const findMatchedKeywords = (title: string, keywords?: string[]) => {
-  if (!keywords || keywords.length === 0) return [];
-  const normalizedTitle = title.toLowerCase();
-  const normalizedKeywords = keywords
-    .map((keyword) => keyword.trim())
-    .filter(Boolean);
-
-  const matched = normalizedKeywords.filter((keyword) =>
-    normalizedTitle.includes(keyword.toLowerCase()),
-  );
-  return Array.from(new Set(matched));
-};
-
 export default function NoticeCard({
   notice,
-  highlightKeywords,
   showKeywordPrefix,
   onMarkAsRead,
   onToggleFavorite,
@@ -75,8 +60,8 @@ export default function NoticeCard({
     }
   };
 
-  const matchedKeywords = showKeywordPrefix
-    ? findMatchedKeywords(notice.title, highlightKeywords)
+  const matchedKeywords = showKeywordPrefix && notice.matched_keywords
+    ? notice.matched_keywords
     : [];
 
   return (
