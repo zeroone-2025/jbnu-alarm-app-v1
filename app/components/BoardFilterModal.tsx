@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FiX, FiInfo } from 'react-icons/fi';
+import { FiX, FiInfo, FiRotateCcw } from 'react-icons/fi';
 import { BOARD_LIST, CATEGORY_ORDER, BoardCategory } from '@/constants/boards';
 import { isUserLoggedIn } from '@/lib/auth';
 
@@ -63,6 +63,17 @@ export default function BoardFilterModal({
     });
   };
 
+  // 초기화하기
+  const handleReset = () => {
+    if (isGuest) {
+      // 게스트는 home_campus만 선택
+      setTempSelection(new Set(['home_campus']));
+    } else {
+      // 로그인 사용자는 모두 해제
+      setTempSelection(new Set());
+    }
+  };
+
   // 적용하기
   const handleApply = () => {
     const applied = isGuest
@@ -77,7 +88,17 @@ export default function BoardFilterModal({
       <div className="mx-4 flex h-[80vh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <h2 className="text-xl font-bold text-gray-900">관심 게시판 설정</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-gray-900">관심 게시판 설정</h2>
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+              aria-label="초기화"
+            >
+              <FiRotateCcw size={16} />
+              <span>초기화</span>
+            </button>
+          </div>
           <button
             onClick={onClose}
             className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"

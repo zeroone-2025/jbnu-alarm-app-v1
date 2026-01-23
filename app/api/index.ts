@@ -8,6 +8,9 @@ const api = axios.create({
   timeout: 5000, // 5초 이상 응답 없으면 에러
   headers: {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
   },
 });
 
