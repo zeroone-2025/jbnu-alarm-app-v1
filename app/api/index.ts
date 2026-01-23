@@ -297,6 +297,18 @@ export const getGoogleLoginUrl = () => {
 // The backend handles the entire OAuth flow and redirects to /auth/callback
 // with the access_token as a URL parameter.
 
+// ==================== Logout ====================
+
+// 로그아웃
+export const logout = async () => {
+  try {
+    await api.post('/auth/logout');
+  } finally {
+    // 실패하더라도 클라이언트 토큰은 삭제
+    clearAccessToken();
+  }
+};
+
 // DB 데이터 전체 초기화 (관리자용)
 export const resetNotices = async () => {
   return api.delete('/notices/reset');

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getUserProfile } from '@/api';
+import { getUserProfile, setAccessToken } from '@/api';
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -38,8 +38,8 @@ function AuthCallbackContent() {
     if (accessToken) {
       const processLogin = async () => {
         try {
-          // 1. 백엔드에서 전달받은 JWT를 localStorage에 저장
-          localStorage.setItem('accessToken', accessToken);
+          // 1. 백엔드에서 전달받은 JWT를 메모리에 저장
+          setAccessToken(accessToken);
           setStatus('로그인 성공! 사용자 정보를 확인하는 중...');
 
           // 2. 사용자 정보 조회
