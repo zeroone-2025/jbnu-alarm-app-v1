@@ -4,11 +4,50 @@ import withPWAInit from "@ducanh2912/next-pwa";
 const withPWA = withPWAInit({
   dest: "public",
   cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
+  aggressiveFrontEndNavCaching: false, // API 응답 캐싱 문제 방지
   reloadOnOnline: true,
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
+    runtimeCaching: [
+      {
+        // API 응답은 항상 네트워크 우선 (캐시는 fallback으로만 사용)
+        urlPattern: /^https?:\/\/.*\/api\/.*/i,
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "api-cache",
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 5 * 60, // 5분
+          },
+          networkTimeoutSeconds: 10,
+        },
+      },
+      {
+        // 정적 리소스는 캐시 우선
+        urlPattern: /\.(?:js|css|woff2?|png|jpg|jpeg|svg|gif|webp)$/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "static-resources",
+          expiration: {
+            maxEntries: 200,
+            maxAgeSeconds: 30 * 24 * 60 * 60, // 30일
+          },
+        },
+      },
+      {
+        // 페이지는 네트워크 우선 (빠른 네비게이션을 위해)
+        urlPattern: /^https?:\/\/.*/i,
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "pages-cache",
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 24 * 60 * 60, // 1일
+          },
+        },
+      },
+    ],
   },
 });
 
