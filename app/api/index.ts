@@ -9,18 +9,115 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // 쿠키 전송 활성화 (Refresh Token용)
 });
 
-// 요청 인터셉터: localStorage에 토큰이 있으면 Authorization 헤더에 추가
+// Access Token 메모리 저장소
+let accessToken: string | null = null;
+
+// Access Token 설정 함수 (로그인 시 호출)
+export const setAccessToken = (token: string) => {
+  accessToken = token;
+};
+
+// Access Token 조회 함수
+export const getAccessToken = () => {
+  return accessToken;
+};
+
+// Access Token 삭제 함수 (로그아웃 시 호출)
+export const clearAccessToken = () => {
+  accessToken = null;
+};
+
+// 토큰 갱신 중복 방지 플래그
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+// 토큰 갱신 완료 시 대기 중인 요청들에게 새 토큰 전달
+const onTokenRefreshed = (token: string) => {
+  refreshSubscribers.forEach((callback) => callback(token));
+  refreshSubscribers = [];
+};
+
+// 토큰 갱신 대기 큐에 추가
+const addRefreshSubscriber = (callback: (token: string) => void) => {
+  refreshSubscribers.push(callback);
+};
+
+// 요청 인터셉터: 메모리의 Access Token을 Authorization 헤더에 추가
 api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+  if (typeof window !== 'undefined' && accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
   }
   return config;
 });
+
+// 응답 인터셉터: 401 에러 시 자동 토큰 갱신
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // 401 Unauthorized && 재시도 안 한 요청 && /auth/refresh가 아닌 경우
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      originalRequest.url !== '/auth/refresh'
+    ) {
+      if (isRefreshing) {
+        // 이미 갱신 중이면 대기 후 재시도
+        return new Promise((resolve) => {
+          addRefreshSubscriber((token: string) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(axios(originalRequest));
+          });
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Refresh Token으로 새 Access Token 발급
+        const { data } = await axios.post<{ access_token: string; token_type: string }>(
+          `${API_BASE_URL}/auth/refresh`,
+          {},
+          {
+            withCredentials: true, // 쿠키의 refresh_token 전송
+          }
+        );
+
+        const newAccessToken = data.access_token;
+
+        // 새 Access Token 저장
+        setAccessToken(newAccessToken);
+
+        // 대기 중인 요청들에게 새 토큰 전달
+        onTokenRefreshed(newAccessToken);
+
+        // 원래 요청 재시도
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return axios(originalRequest);
+      } catch (refreshError) {
+        // Refresh Token도 만료된 경우 → 로그아웃 처리
+        clearAccessToken();
+
+        // 로그인 페이지로 리다이렉트 (현재 페이지 저장)
+        if (typeof window !== 'undefined') {
+          const currentPath = window.location.pathname + window.location.search;
+          window.location.href = `/?redirect=${encodeURIComponent(currentPath)}`;
+        }
+
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 // 공지사항 데이터 타입 정의 (백엔드 모델과 일치)
 export interface Notice {
