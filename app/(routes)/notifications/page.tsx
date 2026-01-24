@@ -139,7 +139,7 @@ function NotificationsClient() {
         type={toastType}
       />
 
-      <FullPageModal isOpen={true} onClose={() => router.push('/')} title="알림">
+      <FullPageModal isOpen={true} onClose={() => router.back()} title="알림">
         <KeywordSettingsBar
           keywordCount={keywordCountLabel}
           onSettingsClick={() =>
