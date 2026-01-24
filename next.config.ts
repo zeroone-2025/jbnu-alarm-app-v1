@@ -9,6 +9,8 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
+    skipWaiting: true, // 새 Service Worker를 즉시 활성화
+    clientsClaim: true, // 활성화 즉시 모든 페이지 제어
     runtimeCaching: [
       {
         // API 응답은 항상 네트워크 우선 (캐시는 fallback으로만 사용)
