@@ -82,10 +82,12 @@ function AuthCallbackContent() {
   }, [searchParams, router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="text-center">
-        <div className="inline-block w-10 h-10 mb-4 border-4 border-blue-500 rounded-full animate-spin border-t-transparent" />
-        <p className="text-lg font-medium text-gray-700">{status}</p>
+    <div className="flex h-screen w-full items-center justify-center bg-white">
+      <div className="flex flex-col items-center gap-4">
+        {/* 로딩 스피너 */}
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900"></div>
+        {/* 로딩 문구 */}
+        <p className="text-sm text-gray-600">로그인 중입니다...</p>
       </div>
     </div>
   );
@@ -93,7 +95,14 @@ function AuthCallbackContent() {
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={<div className="p-4 text-center text-gray-500">로그인 처리 중...</div>}>
+    <Suspense fallback={
+      <div className="flex h-screen w-full items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900"></div>
+          <p className="text-sm text-gray-600">로그인 중입니다...</p>
+        </div>
+      </div>
+    }>
       <AuthCallbackContent />
     </Suspense>
   );

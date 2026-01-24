@@ -1,11 +1,10 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuthState } from '@/_lib/hooks/useAuthState';
-import { addKeyword, deleteKeyword, getGoogleLoginUrl, getMyKeywords, Keyword } from '@/_lib/api';
+import { addKeyword, deleteKeyword, getMyKeywords, Keyword } from '@/_lib/api';
 import Toast from '@/_components/ui/Toast';
 import Button from '@/_components/ui/Button';
+import GoogleLoginButton from '@/_components/auth/GoogleLoginButton';
 import { FiTrash2 } from 'react-icons/fi';
 
 interface KeywordsModalContentProps {
@@ -99,17 +98,11 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
 
       {!isLoggedIn ? (
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
-          <p className="text-sm text-gray-600">
+          <GoogleLoginButton />
+          <p className="mt-4 text-sm text-gray-600">
             로그인하면 키워드를 저장하고 알림을 받을 수 있어요.
           </p>
-          <Button
-            variant="primary"
-            size="md"
-            onClick={() => (window.location.href = getGoogleLoginUrl())}
-            className="mt-4"
-          >
-            Google 계정으로 로그인
-          </Button>
+          
         </div>
       ) : (
         <div className="flex h-full flex-col p-5">

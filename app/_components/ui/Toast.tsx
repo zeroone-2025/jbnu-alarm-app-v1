@@ -44,7 +44,7 @@ export default function Toast({ message, isVisible, onClose, duration = 3000, ty
 
   return (
     <div className={`fixed bottom-28 left-1/2 z-50 -translate-x-1/2 transition-all duration-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
-      <div className={`rounded-lg px-4 py-3 text-sm text-white shadow-lg ${getBgColor()}`}>
+      <div className={`rounded-lg px-5 py-3 text-sm text-white shadow-lg max-w-[90vw] whitespace-nowrap ${getBgColor()}`}>
         {message}
       </div>
     </div>
