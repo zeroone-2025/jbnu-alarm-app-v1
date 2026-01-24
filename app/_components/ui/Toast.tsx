@@ -34,7 +34,7 @@ export default function Toast({ message, isVisible, onClose, duration = 3000, ty
   const getBgColor = () => {
     switch (type) {
       case 'success':
-        return 'bg-blue-600';
+        return 'bg-gray-700';
       case 'error':
         return 'bg-red-600';
       default:
