@@ -18,42 +18,34 @@ const FILTER_STORAGE_KEY = 'current_filter';
  * - 필터 변경 시 스크롤 위치 저장/복원 (즐겨찾기는 항상 최상단)
  */
 export function useFilterState({ isLoggedIn, isAuthLoaded, isMounted, scrollContainerRef }: UseFilterStateOptions) {
-  const [filter, setFilterState] = useState<FilterType>('ALL');
-  const scrollPositionsRef = useRef<Record<string, number>>({});
-  const lastFilterRef = useRef<string | null>(null);
-
-  // 초기 필터 로드 (localStorage → URL 순서)
-  useEffect(() => {
-    if (!isAuthLoaded) return; // 인증 상태 로드 완료 대기
-    if (typeof window === 'undefined') return;
+  // 초기 필터를 URL이나 localStorage에서 직접 읽어서 설정 (깜빡임 방지)
+  const getInitialFilter = (): FilterType => {
+    if (typeof window === 'undefined') return 'ALL';
     
     const params = new URLSearchParams(window.location.search);
     const urlFilterRaw = params.get('filter');
-    // URL에서 읽을 때 대문자로 변환
     const urlFilter = urlFilterRaw ? (urlFilterRaw.toUpperCase() as FilterType) : null;
     const storedFilter = localStorage.getItem(FILTER_STORAGE_KEY) as FilterType | null;
     
-    // 우선순위: URL > localStorage > 기본값('ALL')
-    const initialFilter = urlFilter || storedFilter || 'ALL';
-    
-    // 로그인 체크
-    if (isLoginRequiredFilter(initialFilter) && !isLoggedIn) {
-      setFilterState('ALL');
-      localStorage.setItem(FILTER_STORAGE_KEY, 'ALL');
-    } else {
-      setFilterState(initialFilter);
-      localStorage.setItem(FILTER_STORAGE_KEY, initialFilter);
-    }
-  }, [isAuthLoaded, isLoggedIn]);
+    return urlFilter || storedFilter || 'ALL';
+  };
 
-  // 비로그인 상태에서는 제한된 필터로 진입하지 않도록 방어
+  const [filter, setFilterState] = useState<FilterType>(getInitialFilter);
+  const scrollPositionsRef = useRef<Record<string, number>>({});
+  const lastFilterRef = useRef<string | null>(null);
+
+  // 초기 필터 검증 및 동기화 (로그인 체크)
   useEffect(() => {
-    if (!isMounted || !isAuthLoaded) return; // 인증 로드 완료 후에만 체크
-    if (!isLoggedIn && isLoginRequiredFilter(filter)) {
+    if (!isAuthLoaded) return; // 인증 상태 로드 완료 대기
+    
+    // 로그인이 필요한 필터인데 비로그인 상태면 ALL로 변경
+    if (isLoginRequiredFilter(filter) && !isLoggedIn) {
       setFilterState('ALL');
-      localStorage.setItem(FILTER_STORAGE_KEY, 'ALL');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(FILTER_STORAGE_KEY, 'ALL');
+      }
     }
-  }, [filter, isLoggedIn, isAuthLoaded, isMounted]);
+  }, [isAuthLoaded, isLoggedIn, filter]);
 
   // filter 변경 시 localStorage와 URL 동기화
   const setFilter = (newFilter: FilterType) => {
