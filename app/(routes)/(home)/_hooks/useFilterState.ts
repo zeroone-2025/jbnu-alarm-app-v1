@@ -18,21 +18,27 @@ const FILTER_STORAGE_KEY = 'current_filter';
  * - 필터 변경 시 스크롤 위치 저장/복원 (즐겨찾기는 항상 최상단)
  */
 export function useFilterState({ isLoggedIn, isAuthLoaded, isMounted, scrollContainerRef }: UseFilterStateOptions) {
-  // 초기 필터를 URL이나 localStorage에서 직접 읽어서 설정 (깜빡임 방지)
-  const getInitialFilter = (): FilterType => {
-    if (typeof window === 'undefined') return 'ALL';
+  const [filter, setFilterState] = useState<FilterType>('ALL');
+  const scrollPositionsRef = useRef<Record<string, number>>({});
+  const lastFilterRef = useRef<string | null>(null);
+  const isInitializedRef = useRef(false);
+
+  // 초기 필터 로드 (최대한 빠르게 실행, 한 번만 실행)
+  useEffect(() => {
+    if (isInitializedRef.current) return;
+    if (typeof window === 'undefined') return;
     
     const params = new URLSearchParams(window.location.search);
     const urlFilterRaw = params.get('filter');
     const urlFilter = urlFilterRaw ? (urlFilterRaw.toUpperCase() as FilterType) : null;
     const storedFilter = localStorage.getItem(FILTER_STORAGE_KEY) as FilterType | null;
     
-    return urlFilter || storedFilter || 'ALL';
-  };
-
-  const [filter, setFilterState] = useState<FilterType>(getInitialFilter);
-  const scrollPositionsRef = useRef<Record<string, number>>({});
-  const lastFilterRef = useRef<string | null>(null);
+    const initialFilter = urlFilter || storedFilter || 'ALL';
+    
+    // 인증 체크는 나중에 하고, 일단 URL/localStorage 값으로 설정
+    setFilterState(initialFilter);
+    isInitializedRef.current = true;
+  }, []); // 빈 배열로 최대한 빠르게 실행
 
   // 초기 필터 검증 및 동기화 (로그인 체크)
   useEffect(() => {
