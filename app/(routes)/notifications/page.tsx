@@ -4,14 +4,13 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   getKeywordNotices,
-  getGoogleLoginUrl,
   getMyKeywords,
   markNoticeAsRead,
   toggleNoticeFavorite,
   Notice,
 } from '@/_lib/api';
 import Toast from '@/_components/ui/Toast';
-import Button from '@/_components/ui/Button';
+import GoogleLoginButton from '@/_components/auth/GoogleLoginButton';
 import NoticeList from '@/(routes)/(home)/_components/NoticeList';
 import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
 import FullPageModal from '@/_components/layout/FullPageModal';
@@ -172,16 +171,9 @@ function NotificationsClient() {
         </div>
 
         {!isLoggedIn ? (
-          <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-            <p className="text-sm text-gray-600">로그인하면 알림을 받을 수 있어요.</p>
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => (window.location.href = getGoogleLoginUrl())}
-              className="mt-4"
-            >
-              Google 계정으로 로그인
-            </Button>
+          <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
+            <GoogleLoginButton />
+            <p className="mt-4 text-sm text-gray-600">로그인하면 알림을 받을 수 있어요.</p>
           </div>
         ) : (
           <div className="relative flex-1 min-h-0 overflow-hidden">

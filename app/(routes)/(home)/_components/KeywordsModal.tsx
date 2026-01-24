@@ -15,7 +15,7 @@ export default function KeywordsModal({
   onUpdate,
 }: KeywordsModalProps) {
   return (
-    <FullPageModal isOpen={isOpen} onClose={onClose} title="키워드 알림">
+    <FullPageModal isOpen={isOpen} onClose={onClose} title="키워드 설정">
       <KeywordsModalContent onUpdate={onUpdate} />
     </FullPageModal>
   );

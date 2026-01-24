@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getGoogleLoginUrl, getUserProfile, UserProfile } from '@/_lib/api';
-import { FiX, FiLogIn, FiLogOut, FiUser } from 'react-icons/fi';
+import { getUserProfile, UserProfile } from '@/_lib/api';
+import { FiX, FiLogOut, FiUser } from 'react-icons/fi';
+import GoogleLoginButton from '@/_components/auth/GoogleLoginButton';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -33,12 +34,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       }
     }
   }, [isOpen]);
-
-  const handleLogin = () => {
-    onClose();
-    // 바로 백엔드 Google OAuth URL로 리다이렉트
-    window.location.href = getGoogleLoginUrl();
-  };
 
   const handleLogout = () => {
     // localStorage 정리
@@ -87,15 +82,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               
               {!isLoggedIn ? (
                 <>
-                  <button
-                    onClick={handleLogin}
-                    className="flex items-center w-full gap-3 px-4 py-3 text-blue-600 transition-colors rounded-xl bg-blue-50 hover:bg-blue-100"
-                  >
-                    <div className="flex items-center justify-center w-8 h-8 text-blue-600 bg-white rounded-full">
-                      <FiLogIn size={16} />
-                    </div>
-                    <span className="font-medium">Google 계정으로 로그인</span>
-                  </button>
+                  <GoogleLoginButton onLoginStart={onClose} fullWidth />
                   <p className="px-1 mt-2 text-xs text-gray-500">
                     로그인하여 설정을 저장하고 더 많은 기능을 이용해보세요.
                   </p>

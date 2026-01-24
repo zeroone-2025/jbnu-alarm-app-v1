@@ -16,7 +16,7 @@ export default function KeywordsPage() {
   const { isLoggedIn } = useAuthState();
 
   const handleClose = () => {
-    router.back();
+    router.push('/');
   };
 
   const handleUpdate = () => {
@@ -29,12 +29,12 @@ export default function KeywordsPage() {
     return (
       <FullPageModal isOpen={true} onClose={handleClose} title="키워드 알림">
         <div className="flex h-full flex-col items-center justify-center px-5 pb-20">
-          <p className="mb-4 text-center text-gray-600">
-            로그인 후 키워드 알림을 사용할 수 있습니다.
-          </p>
           <Button variant="primary" onClick={handleClose}>
             홈으로 돌아가기
           </Button>
+          <p className="mt-4 text-center text-gray-600">
+            로그인 후 키워드 알림을 사용할 수 있습니다.
+          </p>
         </div>
       </FullPageModal>
     );
