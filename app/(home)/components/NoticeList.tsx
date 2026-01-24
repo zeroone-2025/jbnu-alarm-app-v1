@@ -35,18 +35,19 @@ export default function NoticeList({
   onEmptyActionClick,
 }: NoticeListProps) {
   return (
-    <ul className="min-h-full p-0 bg-gray-50 md:p-5">
+    <div className="min-h-full p-0 bg-gray-50 md:p-5" role="list">
       <div className="divide-y divide-gray-100 md:grid md:grid-cols-1 md:gap-4 md:divide-y-0">
         {loading ? (
           // 로딩 스켈레톤 UI
           [...Array(6)].map((_, i) => (
-            <li
+            <div
               key={i}
+              role="listitem"
               className="p-5 bg-white animate-pulse md:rounded-xl md:border md:border-gray-100 md:shadow-sm"
             >
               <div className="w-3/4 h-4 mb-2 bg-gray-200 rounded"></div>
               <div className="w-1/4 h-3 bg-gray-100 rounded"></div>
-            </li>
+            </div>
           ))
         ) : selectedCategories.length === 0 ? (
           // 선택된 게시판이 없을 때
@@ -91,6 +92,6 @@ export default function NoticeList({
           </div>
         )}
       </div>
-    </ul>
+    </div>
   );
 }
