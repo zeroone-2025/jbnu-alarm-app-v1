@@ -22,6 +22,7 @@ import HomeHeader from './_components/HomeHeader';
 import Sidebar from '@/_components/layout/Sidebar';
 import CategoryFilter from '@/_components/ui/CategoryFilter';
 import BoardFilterModal from './_components/BoardFilterModal';
+import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
 
 // Dayjs 설정
 dayjs.extend(relativeTime);
@@ -81,6 +82,7 @@ function HomeContent() {
 
   const { filter, setFilter } = useFilterState({
     isLoggedIn,
+    isAuthLoaded,
     isMounted,
     scrollContainerRef,
   });
@@ -298,9 +300,8 @@ function HomeContent() {
             <HomeHeader
               onMenuClick={() => setIsSidebarOpen(true)}
               onNotificationClick={() => {
-                const returnTo = `/?filter=${filter}`;
                 markKeywordNoticesSeen(keywordNotices);
-                router.push(`/notifications/keyword?returnTo=${encodeURIComponent(returnTo)}`);
+                router.push('/notifications');
               }}
               showNotificationBadge={isLoggedIn && hasNewKeywordNotices}
             />
@@ -316,6 +317,14 @@ function HomeContent() {
               onShowToast={handleShowToast}
             />
           </div>
+
+          {/* 키워드 필터일 때만 키워드 설정 바 표시 */}
+          {filter === 'KEYWORD' && (
+            <KeywordSettingsBar
+              keywordCount={keywordCount ?? 0}
+              onSettingsClick={() => router.push('/keywords')}
+            />
+          )}
 
           {/* Pull to Refresh 인디케이터 */}
           <div
@@ -374,19 +383,6 @@ function HomeContent() {
                     ? (keywordCount === 0
                       ? '키워드를 추가해 주세요'
                       : '새 공지가 올라오면 여기에 표시돼요')
-                    : undefined
-                }
-                emptyActionLabel={
-                  filter === 'KEYWORD' && keywordNotices.length === 0
-                    ? (keywordCount === 0 ? '키워드 추가' : '키워드 관리')
-                    : undefined
-                }
-                onEmptyActionClick={
-                  filter === 'KEYWORD' && keywordNotices.length === 0
-                    ? () => {
-                      const returnTo = `/?filter=${filter}`;
-                      router.push(`/keywords?returnTo=${encodeURIComponent(returnTo)}`);
-                    }
                     : undefined
                 }
               />
