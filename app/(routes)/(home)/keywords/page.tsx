@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useAuthState } from '@/_lib/hooks/useAuthState';
 import FullPageModal from '@/_components/layout/FullPageModal';
-import KeywordsModalContent from '../_components/KeywordsModalContent';
+import KeywordsModalContent from './_components/KeywordsModalContent';
 import Button from '@/_components/ui/Button';
 
 /**
@@ -16,7 +16,7 @@ export default function KeywordsPage() {
   const { isLoggedIn } = useAuthState();
 
   const handleClose = () => {
-    router.push('/');
+    router.back();
   };
 
   const handleUpdate = () => {

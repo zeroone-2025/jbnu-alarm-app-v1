@@ -21,39 +21,37 @@ export function useFilterState({ isLoggedIn, isAuthLoaded, isMounted, scrollCont
   const [filter, setFilterState] = useState<FilterType>('ALL');
   const scrollPositionsRef = useRef<Record<string, number>>({});
   const lastFilterRef = useRef<string | null>(null);
+  const isInitializedRef = useRef(false);
 
-  // 초기 필터 로드 (localStorage → URL 순서)
+  // 초기 필터 로드 (최대한 빠르게 실행, 한 번만 실행)
   useEffect(() => {
-    if (!isAuthLoaded) return; // 인증 상태 로드 완료 대기
+    if (isInitializedRef.current) return;
     if (typeof window === 'undefined') return;
     
     const params = new URLSearchParams(window.location.search);
     const urlFilterRaw = params.get('filter');
-    // URL에서 읽을 때 대문자로 변환
     const urlFilter = urlFilterRaw ? (urlFilterRaw.toUpperCase() as FilterType) : null;
     const storedFilter = localStorage.getItem(FILTER_STORAGE_KEY) as FilterType | null;
     
-    // 우선순위: URL > localStorage > 기본값('ALL')
     const initialFilter = urlFilter || storedFilter || 'ALL';
     
-    // 로그인 체크
-    if (isLoginRequiredFilter(initialFilter) && !isLoggedIn) {
-      setFilterState('ALL');
-      localStorage.setItem(FILTER_STORAGE_KEY, 'ALL');
-    } else {
-      setFilterState(initialFilter);
-      localStorage.setItem(FILTER_STORAGE_KEY, initialFilter);
-    }
-  }, [isAuthLoaded, isLoggedIn]);
+    // 인증 체크는 나중에 하고, 일단 URL/localStorage 값으로 설정
+    setFilterState(initialFilter);
+    isInitializedRef.current = true;
+  }, []); // 빈 배열로 최대한 빠르게 실행
 
-  // 비로그인 상태에서는 제한된 필터로 진입하지 않도록 방어
+  // 초기 필터 검증 및 동기화 (로그인 체크)
   useEffect(() => {
-    if (!isMounted || !isAuthLoaded) return; // 인증 로드 완료 후에만 체크
-    if (!isLoggedIn && isLoginRequiredFilter(filter)) {
+    if (!isAuthLoaded) return; // 인증 상태 로드 완료 대기
+    
+    // 로그인이 필요한 필터인데 비로그인 상태면 ALL로 변경
+    if (isLoginRequiredFilter(filter) && !isLoggedIn) {
       setFilterState('ALL');
-      localStorage.setItem(FILTER_STORAGE_KEY, 'ALL');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(FILTER_STORAGE_KEY, 'ALL');
+      }
     }
-  }, [filter, isLoggedIn, isAuthLoaded, isMounted]);
+  }, [isAuthLoaded, isLoggedIn, filter]);
 
   // filter 변경 시 localStorage와 URL 동기화
   const setFilter = (newFilter: FilterType) => {
