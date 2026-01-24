@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MAJOR_PRESETS } from '@/constants/presets';
+import { MAJOR_PRESETS } from '@/_lib/constants/presets';
 import { updateUserProfile, updateUserSubscriptions } from '@/api';
 
 interface OnboardingModalProps {

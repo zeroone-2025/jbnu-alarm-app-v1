@@ -11,9 +11,9 @@ import {
   toggleNoticeFavorite,
   Notice,
 } from '@/api';
-import Toast from '@/components/Toast';
-import NoticeList from '@/(home)/components/NoticeList';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import Toast from '@/_components/ui/Toast';
+import NoticeList from '@/(routes)/(home)/_components/NoticeList';
+import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
 
 function KeywordNotificationsClient() {
   const router = useRouter();

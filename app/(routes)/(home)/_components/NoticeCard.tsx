@@ -1,7 +1,7 @@
 import { Notice, incrementNoticeView } from '@/api';
-import { THEME } from '@/theme/theme';
+import { THEME } from '@/_lib/constants/theme';
 import dayjs from 'dayjs';
-import CategoryBadge from '@/components/CategoryBadge';
+import CategoryBadge from '@/_components/ui/CategoryBadge';
 import { FaStar, FaRegStar } from 'react-icons/fa';
 
 interface NoticeCardProps {
@@ -33,7 +33,7 @@ export default function NoticeCard({
   const handleClick = () => {
     // 조회수 증가 (로그인 사용자만 - 401 에러 방지)
     if (isLoggedIn) {
-      incrementNoticeView(notice.id).catch(() => {});
+      incrementNoticeView(notice.id).catch(() => { });
     }
 
     // 읽음 처리 (로그인 사용자만)

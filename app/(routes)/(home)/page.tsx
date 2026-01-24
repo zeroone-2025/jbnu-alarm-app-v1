@@ -15,15 +15,15 @@ import {
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko'; // 한국어 설정
 import relativeTime from 'dayjs/plugin/relativeTime'; // '방금 전' 기능
-import Toast from '@/components/Toast';
-import { useSelectedCategories } from '@/hooks/useSelectedCategories';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import OnboardingModal from './components/OnboardingModal';
-import NoticeList from './components/NoticeList';
-import HomeHeader from './components/HomeHeader';
-import Sidebar from '@/components/Sidebar';
-import CategoryFilter from '@/components/CategoryFilter';
-import BoardFilterModal from '@/components/BoardFilterModal';
+import Toast from '@/_components/ui/Toast';
+import { useSelectedCategories } from '@/_lib/hooks/useSelectedCategories';
+import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
+import OnboardingModal from './_components/OnboardingModal';
+import NoticeList from './_components/NoticeList';
+import HomeHeader from './_components/HomeHeader';
+import Sidebar from '@/_components/layout/Sidebar';
+import CategoryFilter from '@/_components/ui/CategoryFilter';
+import BoardFilterModal from './_components/BoardFilterModal';
 
 // Dayjs 설정
 dayjs.extend(relativeTime);
@@ -626,10 +626,10 @@ function HomeContent() {
                 overscrollBehavior: 'contain',
               }}
             >
-          <NoticeList
-            loading={isLoading || isCategoriesLoading || !isMounted}
-            selectedCategories={selectedBoardsForList}
-            filteredNotices={filteredNotices}
+              <NoticeList
+                loading={isLoading || isCategoriesLoading || !isMounted}
+                selectedCategories={selectedBoardsForList}
+                filteredNotices={filteredNotices}
                 showKeywordPrefix={filter === 'KEYWORD' || filter === 'ALL'}
                 onMarkAsRead={handleMarkAsRead}
                 onToggleFavorite={handleToggleFavorite}

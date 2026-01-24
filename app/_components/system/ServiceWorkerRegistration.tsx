@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { registerServiceWorkerUpdateHandler } from '@/lib/sw-update-handler';
+import { registerServiceWorkerUpdateHandler } from '@/_lib/utils/sw-update-handler';
 
 /**
  * Service Worker 등록을 위한 클라이언트 컴포넌트

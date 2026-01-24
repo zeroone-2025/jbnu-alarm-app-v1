@@ -1,0 +1,32 @@
+// 사용자 관련 타입 정의
+
+export interface UserProfile {
+    id: number;
+    email: string;
+    username: string | null;
+    nickname: string | null;
+    dept_code: string | null;
+    school: string;
+    profile_image: string | null;
+    created_at: string;
+}
+
+// 사용자 정보 업데이트 요청
+export interface UserProfileUpdate {
+    nickname?: string;
+    dept_code?: string;
+    fcm_token?: string;
+    profile_image?: string;
+}
+
+// 사용자 구독 정보
+export interface UserSubscription {
+    id: number;
+    board_code: string;
+}
+
+// 구독 업데이트 응답
+export interface UpdateSubscriptionsResponse {
+    message: string;
+    subscriptions: UserSubscription[];
+}

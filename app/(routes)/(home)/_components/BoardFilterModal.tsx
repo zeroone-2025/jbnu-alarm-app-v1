@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { FiX, FiInfo, FiRotateCcw } from 'react-icons/fi';
-import { BOARD_LIST, CATEGORY_ORDER, BoardCategory } from '@/constants/boards';
-import { isUserLoggedIn } from '@/lib/auth';
+import { BOARD_LIST, CATEGORY_ORDER, BoardCategory } from '@/_lib/constants/boards';
+import { isUserLoggedIn } from '@/_lib/utils/auth';
 
 interface BoardFilterModalProps {
   isOpen: boolean;

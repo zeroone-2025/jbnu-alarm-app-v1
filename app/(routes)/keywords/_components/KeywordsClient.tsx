@@ -10,7 +10,7 @@ import {
   getMyKeywords,
   Keyword,
 } from '@/api';
-import Toast from '@/components/Toast';
+import Toast from '@/_components/ui/Toast';
 import { FiArrowLeft, FiTrash2 } from 'react-icons/fi';
 
 export default function KeywordsClient() {

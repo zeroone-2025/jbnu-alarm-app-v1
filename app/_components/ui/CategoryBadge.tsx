@@ -1,4 +1,4 @@
-import { getBoardName, getBoardColor, getColorClasses } from '@/constants/boards';
+import { getBoardName, getBoardColor, getColorClasses } from '@/_lib/constants/boards';
 
 interface CategoryBadgeProps {
   boardCode: string; // category에서 boardCode로 변경

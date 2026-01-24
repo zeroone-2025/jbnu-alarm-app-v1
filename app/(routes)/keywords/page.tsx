@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import KeywordsClient from '@/keywords/keywords-client';
+import KeywordsClient from './_components/KeywordsClient';
 
 export default function KeywordsPage() {
   return (
