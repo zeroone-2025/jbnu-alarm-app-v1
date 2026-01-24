@@ -65,7 +65,8 @@ export default function NoticeCard({
     : [];
 
   return (
-    <li
+    <div
+      role="listitem"
       className="bg-white transition-all hover:bg-gray-50 md:rounded-xl md:border md:border-gray-100 md:shadow-sm md:hover:-translate-y-0.5 md:hover:shadow-md"
       style={{ opacity: styleConfig.opacity }}
     >
@@ -84,8 +85,8 @@ export default function NoticeCard({
             {/* 날짜 (YYYY-MM-DD 형식만 표시) */}
             <span className={`flex items-center gap-1 text-xs ${styleConfig.textColor}`}>
               {dayjs(notice.date).format('YYYY-MM-DD')}
-              {/* 2일 이내 게시물인 경우 New 표시 (읽음 여부 상관없이 유지) */}
-              {dayjs().diff(dayjs(notice.date), 'day') <= 2 && (
+              {/* 당일 게시물만 New 표시 */}
+              {dayjs().isSame(dayjs(notice.date), 'day') && (
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
               )}
             </span>
@@ -126,6 +127,6 @@ export default function NoticeCard({
           {notice.title}
         </h3>
       </a>
-    </li>
+    </div>
   );
 }
