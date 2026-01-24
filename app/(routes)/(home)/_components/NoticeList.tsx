@@ -1,4 +1,4 @@
-import { Notice } from '@/api';
+import { Notice } from '@/_lib/api';
 import NoticeCard from './NoticeCard';
 
 interface NoticeListProps {

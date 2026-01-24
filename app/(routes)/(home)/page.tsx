@@ -11,7 +11,7 @@ import {
   markNoticeAsRead,
   toggleNoticeFavorite,
   Notice,
-} from '@/api';
+} from '@/_lib/api';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko'; // 한국어 설정
 import relativeTime from 'dayjs/plugin/relativeTime'; // '방금 전' 기능

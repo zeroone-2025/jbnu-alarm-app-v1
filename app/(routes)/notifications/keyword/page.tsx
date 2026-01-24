@@ -10,7 +10,7 @@ import {
   markNoticeAsRead,
   toggleNoticeFavorite,
   Notice,
-} from '@/api';
+} from '@/_lib/api';
 import Toast from '@/_components/ui/Toast';
 import NoticeList from '@/(routes)/(home)/_components/NoticeList';
 import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';

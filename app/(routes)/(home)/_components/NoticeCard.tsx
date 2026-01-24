@@ -1,4 +1,4 @@
-import { Notice, incrementNoticeView } from '@/api';
+import { Notice, incrementNoticeView } from '@/_lib/api';
 import { THEME } from '@/_lib/constants/theme';
 import dayjs from 'dayjs';
 import CategoryBadge from '@/_components/ui/CategoryBadge';

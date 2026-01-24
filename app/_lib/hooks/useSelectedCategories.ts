@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BOARD_LIST, GUEST_FILTER_KEY } from '@/_lib/constants/boards';
-import { getUserSubscriptions, updateUserSubscriptions } from '@/api';
+import { getUserSubscriptions, updateUserSubscriptions } from '@/_lib/api';
 import { isUserLoggedIn } from '@/_lib/utils/auth';
 
 const USER_STORAGE_KEY = 'my_subscribed_categories'; // 로그인 사용자 캐시 키

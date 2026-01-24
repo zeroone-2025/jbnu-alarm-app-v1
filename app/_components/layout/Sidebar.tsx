@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getGoogleLoginUrl, getUserProfile, UserProfile } from '@/api';
+import { getGoogleLoginUrl, getUserProfile, UserProfile } from '@/_lib/api';
 import { FiX, FiLogIn, FiLogOut, FiUser } from 'react-icons/fi';
 
 interface SidebarProps {

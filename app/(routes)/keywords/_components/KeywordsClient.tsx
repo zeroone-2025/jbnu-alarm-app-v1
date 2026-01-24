@@ -9,7 +9,7 @@ import {
   getGoogleLoginUrl,
   getMyKeywords,
   Keyword,
-} from '@/api';
+} from '@/_lib/api';
 import Toast from '@/_components/ui/Toast';
 import { FiArrowLeft, FiTrash2 } from 'react-icons/fi';
 

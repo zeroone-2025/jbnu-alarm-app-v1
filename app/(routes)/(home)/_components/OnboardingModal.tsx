@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { MAJOR_PRESETS } from '@/_lib/constants/presets';
-import { updateUserProfile, updateUserSubscriptions } from '@/api';
+import { updateUserProfile, updateUserSubscriptions } from '@/_lib/api';
 
 interface OnboardingModalProps {
   isOpen: boolean;

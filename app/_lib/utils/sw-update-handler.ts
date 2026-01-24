@@ -50,20 +50,10 @@ export function registerServiceWorkerUpdateHandler() {
         });
 
     // Service Worker가 제어권을 가져갔을 때 (새 버전 활성화)
-    // 중요: 초기 로드 시에는 이미 controller가 있으므로 리로드하지 않음
+    // 무한 새로고침 방지를 위해 자동 리로드 제거
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-        // 이미 리프레싱 중이면 무시
-        if (refreshing) return;
-
-        // 초기 페이지 로드 시에는 이미 controller가 있을 수 있음
-        // 이 경우 controllerchange가 발생하지만 리로드할 필요 없음
-        // 실제로 새로운 SW가 활성화된 경우에만 리로드
-        const currentController = navigator.serviceWorker.controller;
-        if (!currentController) return;
-
-        refreshing = true;
-        console.log('[SW] Controller changed, reloading page...');
-        window.location.reload();
+        console.log('[SW] Controller changed. New version is active.');
+        // window.location.reload(); // 무한 루프 위험으로 제거
     });
 }
 
