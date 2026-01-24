@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthState } from '@/_lib/hooks/useAuthState';
 import FullPageModal from '@/_components/layout/FullPageModal';
 import KeywordsModalContent from '../_components/KeywordsModalContent';
+import Button from '@/_components/ui/Button';
 
 /**
  * 키워드 관리 페이지
@@ -31,12 +32,9 @@ export default function KeywordsPage() {
           <p className="mb-4 text-center text-gray-600">
             로그인 후 키워드 알림을 사용할 수 있습니다.
           </p>
-          <button
-            onClick={handleClose}
-            className="rounded-lg bg-gray-900 px-6 py-3 font-medium text-white hover:bg-gray-800"
-          >
+          <Button variant="primary" onClick={handleClose}>
             홈으로 돌아가기
-          </button>
+          </Button>
         </div>
       </FullPageModal>
     );

@@ -11,6 +11,7 @@ import {
   Notice,
 } from '@/_lib/api';
 import Toast from '@/_components/ui/Toast';
+import Button from '@/_components/ui/Button';
 import NoticeList from '@/(routes)/(home)/_components/NoticeList';
 import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
 import FullPageModal from '@/_components/layout/FullPageModal';
@@ -157,7 +158,7 @@ function NotificationsClient() {
           }}
         >
           {refreshing ? (
-            <div className="w-6 h-6 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+            <div className="w-6 h-6 border-2 border-gray-900 rounded-full animate-spin border-t-transparent"></div>
           ) : isPulling && pullDistance > 0 ? (
             <div
               className="text-sm font-medium text-gray-600"
@@ -173,12 +174,14 @@ function NotificationsClient() {
         {!isLoggedIn ? (
           <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
             <p className="text-sm text-gray-600">로그인하면 알림을 받을 수 있어요.</p>
-            <button
+            <Button
+              variant="primary"
+              size="md"
               onClick={() => (window.location.href = getGoogleLoginUrl())}
-              className="mt-4 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+              className="mt-4"
             >
               Google 계정으로 로그인
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="relative flex-1 min-h-0 overflow-hidden">

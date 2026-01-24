@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useAuthState } from '@/_lib/hooks/useAuthState';
 import { addKeyword, deleteKeyword, getGoogleLoginUrl, getMyKeywords, Keyword } from '@/_lib/api';
 import Toast from '@/_components/ui/Toast';
+import Button from '@/_components/ui/Button';
 import { FiTrash2 } from 'react-icons/fi';
 
 interface KeywordsModalContentProps {
@@ -101,12 +102,14 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
           <p className="text-sm text-gray-600">
             로그인하면 키워드를 저장하고 알림을 받을 수 있어요.
           </p>
-          <button
+          <Button
+            variant="primary"
+            size="md"
             onClick={() => (window.location.href = getGoogleLoginUrl())}
-            className="mt-4 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            className="mt-4"
           >
             Google 계정으로 로그인
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="flex h-full flex-col p-5">
@@ -118,17 +121,14 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
                   value={keywordInput}
                   onChange={(e) => setKeywordInput(e.target.value)}
                   placeholder="예) 공모전, 수강신청, 장학금 등"
-                  className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
+                  className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') handleAddKeyword();
                   }}
                 />
-                <button
-                  onClick={handleAddKeyword}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-                >
+                <Button variant="primary" size="sm" onClick={handleAddKeyword}>
                   추가
-                </button>
+                </Button>
               </div>
             </div>
 

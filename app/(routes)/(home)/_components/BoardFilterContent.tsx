@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { FiInfo, FiRotateCcw } from 'react-icons/fi';
 import { BOARD_LIST, CATEGORY_ORDER, BoardCategory } from '@/_lib/constants/boards';
 import { isUserLoggedIn } from '@/_lib/utils/auth';
+import Button from '@/_components/ui/Button';
 
 interface BoardFilterContentProps {
   selectedBoards: string[];
@@ -77,23 +78,21 @@ export default function BoardFilterContent({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header Actions */}
-      <div className="shrink-0 border-b border-gray-100 px-5 py-3">
-        <button
-          onClick={handleReset}
-          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
-          aria-label="초기화"
-        >
-          <FiRotateCcw size={16} />
-          <span>초기화</span>
-        </button>
-      </div>
-
       {/* Body - Scrollable */}
       <div className="flex-1 overflow-y-auto">
         {/* Zone A: 선택된 게시판 */}
         <div className="border-b border-gray-100 bg-blue-50/50 p-4">
-          <h3 className="mb-3 text-xs font-bold text-gray-500">선택된 게시판</h3>
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-xs font-bold text-gray-500">선택된 게시판</h3>
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+              aria-label="초기화"
+            >
+              <FiRotateCcw size={16} />
+              <span>초기화</span>
+            </button>
+          </div>
           {selectedItems.length === 0 ? (
             <p className="py-4 text-center text-sm text-gray-400">
               보고 싶은 게시판을 선택해주세요
@@ -170,18 +169,12 @@ export default function BoardFilterContent({
 
         {/* 버튼 영역 */}
         <div className="flex gap-3 px-5 py-4">
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-lg border border-gray-200 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-          >
+          <Button variant="outline" fullWidth onClick={onClose}>
             취소
-          </button>
-          <button
-            onClick={handleApply}
-            className="flex-1 rounded-lg bg-blue-600 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
-          >
+          </Button>
+          <Button variant="primary" fullWidth onClick={handleApply}>
             적용하기
-          </button>
+          </Button>
         </div>
       </div>
     </div>
