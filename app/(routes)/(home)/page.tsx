@@ -107,7 +107,6 @@ function HomeContent() {
   );
 
   // 무한 스크롤 쿼리
-  const isFavoriteFilter = filter === 'FAVORITE';
   const {
     data: noticePages,
     fetchNextPage,
@@ -116,14 +115,14 @@ function HomeContent() {
     isLoading,
     refetch,
   } = useInfiniteQuery({
-    // queryKey에서 동적으로 변하는 값들 제거
-    queryKey: ['notices', 'infinite', selectedBoardsParam],
+    // filter를 queryKey에 포함하여 필터별 독립적인 캐시 유지
+    queryKey: ['notices', 'infinite', selectedBoardsParam, filter],
     queryFn: ({ pageParam }) => fetchNoticesInfinite(
       pageParam,
       20,
       true,
       selectedBoards,
-      isFavoriteFilter
+      filter === 'FAVORITE'  // 클로저 문제 방지를 위해 직접 참조
     ),
     getNextPageParam: (lastPage) => lastPage.next_cursor,
     initialPageParam: null as string | null,
