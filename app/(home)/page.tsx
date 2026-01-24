@@ -1,9 +1,11 @@
 'use client';
 
-import { Suspense, useEffect, useState, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState, useRef, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useInView } from 'react-intersection-observer';
 import {
-  fetchNotices,
+  fetchNoticesInfinite,
   getKeywordNotices,
   getMyKeywords,
   markNoticeAsRead,
@@ -30,53 +32,142 @@ dayjs.locale('ko');
 
 function HomeContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [notices, setNotices] = useState<Notice[]>([]);
+  const queryClient = useQueryClient();
+  const [isMounted, setIsMounted] = useState(false);
   const [keywordNotices, setKeywordNotices] = useState<Notice[]>([]);
   const [keywordCount, setKeywordCount] = useState<number | null>(null);
   const [hasNewKeywordNotices, setHasNewKeywordNotices] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false); // 온보딩 모달 표시 여부
   const [showToast, setShowToast] = useState(false); // 토스트 메시지 표시 여부
   const [toastMessage, setToastMessage] = useState(''); // 토스트 메시지 내용
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // 사이드바 상태
-  const initialFilter = searchParams.get('filter') ?? 'ALL';
-  const [filter, setFilter] = useState(initialFilter); // 카테고리 필터 상태 (전체, 안읽음, 즐겨찾기, 키워드)
+  const [filter, setFilter] = useState('ALL'); // 카테고리 필터 상태 (전체, 안읽음, 즐겨찾기, 키워드)
   const [isLoggedIn, setIsLoggedIn] = useState(false); // 로그인 상태
   const [showBoardFilterModal, setShowBoardFilterModal] = useState(false); // 게시판 필터 모달
+  const loginRequiredFilters = useMemo(() => new Set(['UNREAD', 'KEYWORD', 'FAVORITE']), []);
+  const scrollPositionsRef = useRef<Record<string, number>>({});
+  const lastFilterRef = useRef<string | null>(null);
+
+  // 클라이언트 마운트 체크
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // URL 쿼리에서 초기 필터 읽기 (CSR 전용)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const initial = params.get('filter');
+    if (initial) {
+      setFilter(initial);
+    }
+  }, []);
+
+  // 비로그인 상태에서는 제한된 필터로 진입하지 않도록 방어
+  useEffect(() => {
+    if (!isMounted) return;
+    if (!isLoggedIn && loginRequiredFilters.has(filter)) {
+      setFilter('ALL');
+    }
+  }, [filter, isLoggedIn, isMounted, loginRequiredFilters]);
+
+  // 현재 필터를 URL에 반영 (새로고침 시 상태 유지)
+  useEffect(() => {
+    if (!isMounted) return;
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (filter === 'ALL') {
+      params.delete('filter');
+    } else {
+      params.set('filter', filter);
+    }
+    const query = params.toString();
+    const nextUrl = query ? `/?${query}` : '/';
+    const currentUrl = `${window.location.pathname}${window.location.search}`;
+    if (nextUrl !== currentUrl) {
+      window.history.replaceState(null, '', nextUrl);
+    }
+  }, [filter, isMounted]);
 
   // 선택된 카테고리 관리 (Guest/User 모두 사용)
-  const { selectedCategories, updateSelectedCategories } = useSelectedCategories();
+  const {
+    selectedCategories,
+    updateSelectedCategories,
+    isLoading: isCategoriesLoading
+  } = useSelectedCategories();
 
   // 게시판 목록 결정 (Guest: localStorage, User: DB/API)
   const selectedBoards = selectedCategories;
+  const selectedBoardsParam = useMemo(
+    () => (selectedBoards.length > 0 ? [...selectedBoards].sort().join(',') : undefined),
+    [selectedBoards],
+  );
 
-  // 데이터 가져오기 함수
-  const loadNotices = async () => {
-    setLoading(true);
-    try {
-      // 모든 공지를 가져옴 (includeRead = true 고정)
-      // 읽음/안읽음 필터링은 프론트엔드에서 처리
-      // IMPORTANT: limit 200으로 증가 (날짜순 정렬 시 공과대학 공지가 밀리는 문제 방지)
-      const data = await fetchNotices(0, 200, true);
-      setNotices(data);
-    } catch (error) {
-      console.error('Failed to load notices', error);
-    } finally {
-      setLoading(false);
+  // ==================== 무한 스크롤 설정 ====================
+  // useInfiniteQuery로 공지사항 데이터 가져오기
+  const isFavoriteFilter = filter === 'FAVORITE';
+  const {
+    data: noticePages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ['notices', 'infinite', selectedBoardsParam, isLoggedIn, filter],
+    queryFn: ({ pageParam }) => fetchNoticesInfinite(
+      pageParam,
+      20,
+      true,
+      selectedBoards,
+      isFavoriteFilter
+    ),
+    getNextPageParam: (lastPage) => lastPage.next_cursor,
+    initialPageParam: null as string | null,
+    enabled: isMounted, // 클라이언트 마운트 후에만 실행
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+
+  // 즐겨찾기 탭 진입 시 최신 목록으로 갱신
+  useEffect(() => {
+    if (!isMounted) return;
+    if (filter === 'FAVORITE') {
+      refetch();
     }
-  };
+  }, [filter, isMounted, refetch]);
+
+  // Intersection Observer로 스크롤 끝 감지 (500px 전에 미리 로딩)
+  const { ref: loadMoreRef, inView } = useInView({
+    rootMargin: '500px 0px 0px 0px',
+    threshold: 0,
+  });
+
+  // 스크롤이 끝에 가까워지면 다음 페이지 로드 (키워드 제외)
+  useEffect(() => {
+    if (filter !== 'KEYWORD' && inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [filter, inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // 모든 페이지의 공지사항을 하나의 배열로 합치기 (useMemo로 안정화)
+  const notices = useMemo<Notice[]>(() => {
+    const pages = noticePages?.pages;
+    if (!Array.isArray(pages)) return [];
+    return pages.flatMap((page) =>
+      Array.isArray(page?.items) ? page.items : [],
+    );
+  }, [noticePages]);
+  const safeNotices = Array.isArray(notices) ? notices : [];
 
   const loadKeywordNotices = async () => {
-    setLoading(true);
     try {
       const data = await getKeywordNotices(0, 200, true);
       setKeywordNotices(data);
     } catch (error) {
       console.error('Failed to load keyword notices', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -106,12 +197,25 @@ function HomeContent() {
     noticeId: number,
     updater: (notice: Notice) => Notice,
   ) => {
-    setNotices((prevNotices) =>
-      prevNotices.map((notice) => (notice.id === noticeId ? updater(notice) : notice)),
-    );
+    // 키워드 공지 상태 업데이트
     setKeywordNotices((prevNotices) =>
       prevNotices.map((notice) => (notice.id === noticeId ? updater(notice) : notice)),
     );
+
+    // React Query 캐시 업데이트 (일반 공지사항)
+    queryClient.setQueriesData({ queryKey: ['notices', 'infinite'] }, (oldData: any) => {
+      if (!oldData) return oldData;
+
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page: any) => ({
+          ...page,
+          items: page.items.map((notice: Notice) =>
+            notice.id === noticeId ? updater(notice) : notice
+          ),
+        })),
+      };
+    });
   };
 
   const refreshCurrentFilter = async () => {
@@ -124,17 +228,44 @@ function HomeContent() {
       await loadKeywordNotices();
       return;
     }
-    await loadNotices();
+    // 일반 공지사항 새로고침 (무한 스크롤 초기화)
+    await refetch();
   };
 
-  // Pull to Refresh 조건: KEYWORD 필터에서 키워드 0개면 비활성화
-  const pullToRefreshEnabled = !(filter === 'KEYWORD' && keywordCount === 0);
-  
+  // Pull to Refresh 조건: 모든 필터에서 허용
+  const pullToRefreshEnabled = filter !== 'KEYWORD' || keywordCount !== 0;
+
   // Pull to Refresh 훅
   const { scrollContainerRef, isPulling, pullDistance, refreshing } = usePullToRefresh({
     onRefresh: refreshCurrentFilter,
     enabled: pullToRefreshEnabled,
   });
+
+  // 필터 이동 시 스크롤 위치 저장/복원 (즐겨찾기 진입은 항상 최상단)
+  useEffect(() => {
+    if (!isMounted) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const lastFilter = lastFilterRef.current;
+    if (lastFilter) {
+      scrollPositionsRef.current[lastFilter] = container.scrollTop;
+    }
+
+    requestAnimationFrame(() => {
+      if (filter === 'FAVORITE') {
+        container.scrollTo({ top: 0, behavior: 'auto' });
+        return;
+      }
+
+      const savedTop = scrollPositionsRef.current[filter];
+      if (typeof savedTop === 'number') {
+        container.scrollTo({ top: savedTop, behavior: 'auto' });
+      }
+    });
+
+    lastFilterRef.current = filter;
+  }, [filter, isMounted, scrollContainerRef]);
 
   const getLatestKeywordNoticeAt = (items: Notice[]) => {
     if (items.length === 0) return null;
@@ -231,8 +362,8 @@ function HomeContent() {
     const loggedIn = !!token;
     setIsLoggedIn(loggedIn);
 
-    // 공지사항 로드
-    loadNotices();
+    // 공지사항은 useInfiniteQuery가 자동으로 로드
+    // 키워드 공지만 수동으로 로드
     if (loggedIn) {
       (async () => {
         const count = await loadKeywordCount();
@@ -279,7 +410,9 @@ function HomeContent() {
         const token = localStorage.getItem('accessToken');
         const loggedIn = !!token;
         setIsLoggedIn(loggedIn);
-        loadNotices();
+        if (filter === 'ALL') {
+          refetch(); // 무한 스크롤 데이터 새로고침
+        }
         // 로그인 상태이면 키워드 목록도 갱신 (ALL 탭에서 라벨 표시를 위해)
         if (loggedIn) {
           loadKeywordCount();
@@ -293,7 +426,7 @@ function HomeContent() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refetch]);
 
 
   // 온보딩 모달 자동 표시 비활성화
@@ -329,9 +462,11 @@ function HomeContent() {
 
   // 로그인 결과 처리 (쿼리 파라미터 확인)
   useEffect(() => {
-    const loginStatus = searchParams.get('login');
-    const showOnboardingParam = searchParams.get('show_onboarding');
-    const logoutStatus = searchParams.get('logout');
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const loginStatus = params.get('login');
+    const showOnboardingParam = params.get('show_onboarding');
+    const logoutStatus = params.get('logout');
 
     if (loginStatus === 'success') {
       // 온보딩 모달 표시 여부 확인
@@ -355,11 +490,19 @@ function HomeContent() {
       setShowToast(true);
       router.replace('/');
     }
-  }, [searchParams, router]);
+  }, [router]);
 
   const selectedBoardsForList = filter === 'KEYWORD' ? ['keyword'] : selectedBoards;
 
-  const boardFilteredNotices = notices.filter((notice) => selectedBoards.includes(notice.board_code));
+  // 게시판 필터링 로직 (useMemo로 안정화)
+  const boardFilteredNotices = useMemo(() => {
+    // - 로그인 사용자: 백엔드에서 이미 구독 게시판만 필터링해서 보냄
+    // - 비로그인 사용자: 백엔드에서 모든 공지 보냄 → 프론트엔드에서 selectedBoards로 필터링
+    return isLoggedIn
+      ? safeNotices
+      : safeNotices.filter((notice) => selectedBoards.includes(notice.board_code));
+  }, [safeNotices, isLoggedIn, selectedBoards]);
+
   const mergeNoticesForAll = (primary: Notice[], extra: Notice[]) => {
     const noticeMap = new Map<number, Notice>();
     primary.forEach((notice) => noticeMap.set(notice.id, notice));
@@ -376,23 +519,30 @@ function HomeContent() {
     });
   };
 
-  // 1단계: 게시판/키워드 필터링
-  let filteredNotices = boardFilteredNotices;
-  if (filter === 'KEYWORD') {
-    filteredNotices = keywordNotices;
-  } else if (filter === 'ALL') {
-    filteredNotices = mergeNoticesForAll(boardFilteredNotices, keywordNotices);
-  }
+  // 최종 필터링 (useMemo로 안정화)
+  const filteredNotices = useMemo<Notice[]>(() => {
+    // 1단계: 게시판/키워드 필터링
+    let result: Notice[] = boardFilteredNotices;
+    if (filter === 'KEYWORD') {
+      result = keywordNotices;
+    } else if (filter === 'ALL') {
+      result = mergeNoticesForAll(boardFilteredNotices, keywordNotices);
+    }
 
-  // 2단계: 카테고리 필터 적용 (전체, 안읽음, 즐겨찾기)
-  if (filter === 'UNREAD') {
-    // 안 읽음: is_read가 false인 공지만
-    filteredNotices = filteredNotices.filter((notice) => !notice.is_read);
-  } else if (filter === 'FAVORITE') {
-    // 즐겨찾기: is_favorite가 true인 공지만
-    filteredNotices = filteredNotices.filter((notice) => notice.is_favorite);
-  }
-  // 'ALL'은 모든 공지 표시 (selectedBoards 필터링만 적용)
+    // 2단계: 카테고리 필터 적용
+    if (filter === 'UNREAD') {
+      result = result.filter((notice) => !notice.is_read);
+    } else if (filter === 'FAVORITE') {
+      result = result.filter((notice) => notice.is_favorite);
+      result = [...result].sort(
+        (a, b) =>
+          new Date(b.favorite_created_at ?? 0).getTime()
+          - new Date(a.favorite_created_at ?? 0).getTime()
+      );
+    }
+
+    return result;
+  }, [boardFilteredNotices, keywordNotices, filter]);
 
   return (
     <>
@@ -476,10 +626,10 @@ function HomeContent() {
                 overscrollBehavior: 'contain',
               }}
             >
-              <NoticeList
-                loading={loading}
-                selectedCategories={selectedBoardsForList}
-                filteredNotices={filteredNotices}
+          <NoticeList
+            loading={isLoading || isCategoriesLoading || !isMounted}
+            selectedCategories={selectedBoardsForList}
+            filteredNotices={filteredNotices}
                 showKeywordPrefix={filter === 'KEYWORD' || filter === 'ALL'}
                 onMarkAsRead={handleMarkAsRead}
                 onToggleFavorite={handleToggleFavorite}
@@ -515,6 +665,28 @@ function HomeContent() {
                     : undefined
                 }
               />
+
+              {/* 무한 스크롤 로딩 인디케이터 및 감지 영역 */}
+              {filter !== 'KEYWORD' && (
+                <>
+                  {/* Intersection Observer 감지 영역 (스크롤 끝에서 500px 전에 트리거) */}
+                  <div ref={loadMoreRef} className="h-1" />
+
+                  {/* 다음 페이지 로딩 중 표시 */}
+                  {isFetchingNextPage && (
+                    <div className="flex justify-center py-8">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+                    </div>
+                  )}
+
+                  {/* 더 이상 로드할 데이터가 없을 때 */}
+                  {!hasNextPage && safeNotices.length > 0 && (
+                    <div className="py-8 text-center text-sm text-gray-400">
+                      모든 공지사항을 불러왔어요
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
 

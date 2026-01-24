@@ -36,7 +36,15 @@ export interface Notice {
   is_read: boolean; // 읽음 여부 (백엔드에서 제공)
   view: number; // 조회수
   is_favorite: boolean; // 즐겨찾기 여부
+  favorite_created_at?: string | null; // 즐겨찾기 추가 시각
   matched_keywords?: string[]; // 매칭된 키워드 목록 (삭제된 키워드 포함)
+}
+
+// 무한 스크롤 응답 타입 정의
+export interface NoticeListResponse {
+  items: Notice[];
+  next_cursor: string | null;
+  has_next: boolean;
 }
 
 // API 함수들 정리
@@ -50,6 +58,26 @@ export const fetchNotices = async (
       skip: page * limit,
       limit,
       include_read: includeRead, // Backend에 필터링 파라미터 전달
+    },
+  });
+  return response.data;
+};
+
+// 무한 스크롤용 공지사항 조회 (커서 기반)
+export const fetchNoticesInfinite = async (
+  cursor: string | null = null,
+  limit: number = 20,
+  includeRead: boolean = true,
+  boardCodes?: string[],
+  onlyFavorite?: boolean,
+) => {
+  const response = await api.get<NoticeListResponse>('/notices', {
+    params: {
+      cursor: cursor ?? undefined, // null이면 undefined로 전달 (쿼리 파라미터에서 제외)
+      limit,
+      include_read: includeRead,
+      board_codes: boardCodes && boardCodes.length > 0 ? boardCodes.join(',') : undefined,
+      only_favorite: onlyFavorite ? true : undefined,
     },
   });
   return response.data;
