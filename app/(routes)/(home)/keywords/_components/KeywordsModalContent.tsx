@@ -19,10 +19,12 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [showToast, setShowToast] = useState(false);
+  const [toastKey, setToastKey] = useState(0);
 
   const showToastMessage = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToastMessage(message);
     setToastType(type);
+    setToastKey(prev => prev + 1);
     setShowToast(true);
   };
 
@@ -94,6 +96,7 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
         isVisible={showToast}
         onClose={() => setShowToast(false)}
         type={toastType}
+        triggerKey={toastKey}
       />
 
       {!isLoggedIn ? (

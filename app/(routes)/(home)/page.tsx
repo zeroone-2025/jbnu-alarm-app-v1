@@ -36,6 +36,7 @@ function HomeContent() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
+  const [toastKey, setToastKey] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showBoardFilterModal, setShowBoardFilterModal] = useState(false);
 
@@ -226,6 +227,7 @@ function HomeContent() {
   const handleShowToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToastMessage(message);
     setToastType(type);
+    setToastKey(prev => prev + 1); // 매번 증가시켜 새 toast 트리거
     setShowToast(true);
   };
 
@@ -291,6 +293,7 @@ function HomeContent() {
         isVisible={showToast}
         onClose={() => setShowToast(false)}
         type={toastType}
+        triggerKey={toastKey}
       />
 
       <main className="h-full overflow-hidden bg-gray-50">
