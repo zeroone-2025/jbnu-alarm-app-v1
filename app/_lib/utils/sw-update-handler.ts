@@ -3,8 +3,16 @@
  * 새로운 버전의 Service Worker가 감지되면 자동으로 업데이트를 적용합니다.
  */
 
+// 전역 플래그 (함수 외부에 선언하여 재실행 시에도 유지)
+let refreshing = false;
+
 export function registerServiceWorkerUpdateHandler() {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+        return;
+    }
+
+    // 이미 등록되었으면 중복 실행 방지
+    if (refreshing) {
         return;
     }
 
@@ -42,11 +50,20 @@ export function registerServiceWorkerUpdateHandler() {
         });
 
     // Service Worker가 제어권을 가져갔을 때 (새 버전 활성화)
-    let refreshing = false;
+    // 중요: 초기 로드 시에는 이미 controller가 있으므로 리로드하지 않음
     navigator.serviceWorker.addEventListener('controllerchange', () => {
+        // 이미 리프레싱 중이면 무시
         if (refreshing) return;
+
+        // 초기 페이지 로드 시에는 이미 controller가 있을 수 있음
+        // 이 경우 controllerchange가 발생하지만 리로드할 필요 없음
+        // 실제로 새로운 SW가 활성화된 경우에만 리로드
+        const currentController = navigator.serviceWorker.controller;
+        if (!currentController) return;
+
         refreshing = true;
         console.log('[SW] Controller changed, reloading page...');
         window.location.reload();
     });
 }
+
