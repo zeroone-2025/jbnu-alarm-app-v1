@@ -361,7 +361,7 @@ function HomeContent() {
               }}
             >
               <NoticeList
-                loading={isLoading || isCategoriesLoading || !isMounted}
+                loading={isLoading || isCategoriesLoading}
                 selectedCategories={selectedBoardsForList}
                 filteredNotices={filteredNotices}
                 showKeywordPrefix={filter === 'KEYWORD' || filter === 'ALL'}
