@@ -1,4 +1,4 @@
-import { getBoardLabel, getBoardColor, getColorClasses } from '@/constants/boards';
+import { getBoardName, getBoardColor, getColorClasses } from '@/constants/boards';
 
 interface CategoryBadgeProps {
   boardCode: string; // category에서 boardCode로 변경
@@ -6,7 +6,7 @@ interface CategoryBadgeProps {
 
 export default function CategoryBadge({ boardCode }: CategoryBadgeProps) {
   const color = getBoardColor(boardCode);
-  const label = getBoardLabel(boardCode);
+  const label = getBoardName(boardCode);
   const colorClasses = getColorClasses(color);
 
   return (
