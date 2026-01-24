@@ -7,7 +7,8 @@ const withPWA = withPWAInit({
   aggressiveFrontEndNavCaching: false, // API 응답 캐싱 문제 방지
   reloadOnOnline: true,
   disable: process.env.NODE_ENV === "development",
-  register: true,
+
+  // register: true, // 수동 등록(ServiceWorkerRegistration.tsx)을 사용하므로 자동 등록 비활성화
   workboxOptions: {
     disableDevLogs: true,
     cleanupOutdatedCaches: true,
@@ -71,7 +72,6 @@ const nextConfig: NextConfig = {
   /* config options here */
   env: {
     // .env 파일에서 읽어온 값을 빌드 타임에 고정
-    NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
   },
 };
