@@ -16,7 +16,7 @@ export default function KeywordsPage() {
   const { isLoggedIn } = useAuthState();
 
   const handleClose = () => {
-    router.back();
+    router.push("/");
   };
 
   const handleUpdate = () => {
