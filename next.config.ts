@@ -7,7 +7,8 @@ const withPWA = withPWAInit({
   aggressiveFrontEndNavCaching: false, // API 응답 캐싱 문제 방지
   reloadOnOnline: true,
   disable: process.env.NODE_ENV === "development",
-  register: true,
+
+  // register: true, // 수동 등록(ServiceWorkerRegistration.tsx)을 사용하므로 자동 등록 비활성화
   workboxOptions: {
     disableDevLogs: true,
     cleanupOutdatedCaches: true,
