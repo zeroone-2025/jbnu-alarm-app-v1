@@ -1,6 +1,7 @@
 {
   "name": "ZeroTime - 전북대 알리미",
   "short_name": "ZeroTime",
+  "version": "1.0.1",
   "description": "전북대 공지사항 통합 알림 서비스",
   "start_url": "/",
   "display": "standalone",
