@@ -22,6 +22,7 @@ import HomeHeader from './_components/HomeHeader';
 import Sidebar from '@/_components/layout/Sidebar';
 import CategoryFilter from '@/_components/ui/CategoryFilter';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
+import ScrollToTop from '@/_components/ui/ScrollToTop';
 
 // Dayjs 설정
 dayjs.extend(relativeTime);
@@ -370,8 +371,8 @@ function HomeContent() {
                       ? '키워드를 등록하면 관련 공지가 모여요'
                       : '아직 키워드에 맞는 공지사항이 없어요')
                     : filter === 'UNREAD'
-                    ? '모든 공지사항을 다 읽었어요'
-                    : '표시할 공지사항이 없어요'
+                      ? '모든 공지사항을 다 읽었어요'
+                      : '표시할 공지사항이 없어요'
                 }
                 emptyDescription={
                   filter === 'KEYWORD'
@@ -401,6 +402,9 @@ function HomeContent() {
                 </>
               )}
             </div>
+
+            {/* 상단 이동 버튼 */}
+            <ScrollToTop containerRef={scrollContainerRef as React.RefObject<HTMLDivElement>} />
           </div>
 
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
