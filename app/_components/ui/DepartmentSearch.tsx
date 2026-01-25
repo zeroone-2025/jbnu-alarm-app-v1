@@ -28,7 +28,7 @@ export default function DepartmentSearch({
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 1. 모든 학과 정보 미리 가져오기 (마스터 데이터가 50개 내외로 작으므로 클라이언트 사이드 검색이 더 빠름)
+  // 1. 모든 학과 정보 미리 가져오기
   useEffect(() => {
     const fetchAll = async () => {
       try {
@@ -42,6 +42,18 @@ export default function DepartmentSearch({
     };
     fetchAll();
   }, []);
+
+  // 1-2. selectedDeptCode와 일치하는 학과 찾아서 초기값 설정
+  useEffect(() => {
+    if (selectedDeptCode && allDepartments.length > 0) {
+      const found = allDepartments.find((d) => d.dept_code === selectedDeptCode);
+      if (found) {
+        setSelectedDept(found);
+      }
+    } else if (!selectedDeptCode) {
+      setSelectedDept(null);
+    }
+  }, [selectedDeptCode, allDepartments]);
 
   // 2. 외부 클릭 시 닫기
   useEffect(() => {
