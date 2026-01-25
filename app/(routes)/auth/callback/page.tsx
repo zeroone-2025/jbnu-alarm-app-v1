@@ -3,12 +3,14 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getUserProfile } from '@/_lib/api';
+import { useUserStore } from '@/_lib/store/useUserStore';
 
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const processedRef = useRef(false);
   const [status, setStatus] = useState('로그인 처리 중...');
+  const setUser = useUserStore((state) => state.setUser);
 
   useEffect(() => {
     if (processedRef.current) return;
@@ -44,6 +46,9 @@ function AuthCallbackContent() {
 
           // 2. 사용자 정보 조회
           const userProfile = await getUserProfile();
+
+          // 3. Zustand Store 업데이트 (리다이렉트 전 즉시 반영)
+          setUser(userProfile);
 
           // 3. dept_code 확인
           if (!userProfile.dept_code) {

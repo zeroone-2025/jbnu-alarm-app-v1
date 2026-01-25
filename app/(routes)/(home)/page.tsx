@@ -11,7 +11,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import Toast from '@/_components/ui/Toast';
 import { useSelectedCategories } from '@/_lib/hooks/useSelectedCategories';
 import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
-import { useAuthState } from '@/_lib/hooks/useAuthState';
+import { useUser } from '@/_lib/hooks/useUser';
 import { useFilterState } from './_hooks/useFilterState';
 import { useKeywordNotices } from './_hooks/useKeywordNotices';
 import { useNoticeActions } from './_hooks/useNoticeActions';
@@ -44,7 +44,7 @@ function HomeContent() {
   }, []);
 
   // Custom Hooks
-  const { isLoggedIn, isAuthLoaded, checkAuthState } = useAuthState();
+  const { isLoggedIn, isAuthLoaded, refetch: refetchUser } = useUser();
   const {
     selectedCategories,
     updateSelectedCategories,
@@ -197,7 +197,7 @@ function HomeContent() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        checkAuthState();
+        refetchUser(); // 유저 상태 및 로그인 정보 동기화
         if (filter === 'ALL') {
           refetch();
         }
@@ -212,7 +212,7 @@ function HomeContent() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [filter, isLoggedIn, refetch, checkAuthState, loadKeywordCount, loadKeywordNoticesSilent]);
+  }, [filter, isLoggedIn, refetch, refetchUser, loadKeywordCount, loadKeywordNoticesSilent]);
 
   // 온보딩 완료 핸들러
   const handleOnboardingComplete = (categories: string[]) => {
