@@ -24,7 +24,8 @@ export default function Logo({ className = "h-6 w-auto" }: { className?: string 
             </text>
 
             {/* Design Detail: Brand Accent Dot (Square) */}
-            <rect x="119" y="14.5" width="5.5" height="5.5" fill="#3B82F6" transform="skewX(-6)" />
+            {/* Baseline alignment: Text y=22.5, Rect height=5.5 -> y=17 */}
+            <rect x="119" y="17" width="5.5" height="5.5" fill="#3B82F6" transform="skewX(-6)" />
         </svg>
     );
 }
