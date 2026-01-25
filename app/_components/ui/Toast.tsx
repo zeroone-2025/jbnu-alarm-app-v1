@@ -40,15 +40,15 @@ export default function Toast({ message, isVisible, onClose, duration = 3000, ty
     const id = `${Date.now()}-${Math.random()}`;
     const newToast: ToastMessage = { id, message, type };
 
-    // 새 toast를 맨 앞에 추가 (화면상 가장 아래)
-    setToasts(prev => [newToast, ...prev]);
+    // 새 toast를 맨 앞에 추가 (최대 5개 제한)
+    setToasts(prev => [newToast, ...prev].slice(0, 5));
 
     // duration 후에 자동으로 제거 (타이머를 Map에 저장)
     const timer = setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
       timersRef.current.delete(id);
     }, duration);
-    
+
     timersRef.current.set(id, timer);
   }, [isVisible, message, type, duration, triggerKey]);
 
@@ -84,7 +84,7 @@ export default function Toast({ message, isVisible, onClose, duration = 3000, ty
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-28 left-1/2 z-50 -translate-x-1/2 flex flex-col-reverse gap-2">
+    <div className="fixed bottom-28 left-1/2 z-[100] -translate-x-1/2 flex flex-col-reverse gap-2">
       {toasts.map((toast) => (
         <div
           key={toast.id}

@@ -134,20 +134,16 @@ export default function NotificationsClient() {
 
   return (
     <>
-      <Toast
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-        type={toastType}
-        triggerKey={toastKey}
-      />
-
       <FullPageModal isOpen={true} onClose={() => router.back()} title="알림">
         <KeywordSettingsBar
           keywordCount={keywordCountLabel}
-          onSettingsClick={() =>
-            router.push('/keywords')
-          }
+          onSettingsClick={() => {
+            if (!isLoggedIn) {
+              showToastMessage('로그인 후 키워드 설정을 사용할 수 있습니다.', 'info');
+              return;
+            }
+            router.push('/keywords');
+          }}
         />
 
         {/* Pull to Refresh 인디케이터 */}
@@ -212,6 +208,14 @@ export default function NotificationsClient() {
           </div>
         )}
       </FullPageModal>
+
+      <Toast
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        type={toastType}
+        triggerKey={toastKey}
+      />
     </>
   );
 }
