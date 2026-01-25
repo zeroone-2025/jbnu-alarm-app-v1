@@ -9,6 +9,7 @@ import {
   markNoticeAsRead,
   toggleNoticeFavorite,
   Notice,
+  getAccessToken,
 } from '@/api';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko'; // 한국어 설정
@@ -226,8 +227,8 @@ function HomeContent() {
 
   // 초기화: 로그인 상태 확인 및 공지사항 로드
   useEffect(() => {
-    // 로그인 상태 확인
-    const token = localStorage.getItem('accessToken');
+    // 로그인 상태 확인 (메모리에서 Access Token 확인)
+    const token = getAccessToken();
     const loggedIn = !!token;
     setIsLoggedIn(loggedIn);
 
@@ -276,7 +277,7 @@ function HomeContent() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         // 페이지가 다시 보이게 되면 로그인 상태 재확인 및 데이터 새로고침
-        const token = localStorage.getItem('accessToken');
+        const token = getAccessToken();
         const loggedIn = !!token;
         setIsLoggedIn(loggedIn);
         loadNotices();

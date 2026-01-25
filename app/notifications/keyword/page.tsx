@@ -10,6 +10,7 @@ import {
   markNoticeAsRead,
   toggleNoticeFavorite,
   Notice,
+  getAccessToken,
 } from '@/api';
 import Toast from '@/components/Toast';
 import NoticeList from '@/(home)/components/NoticeList';
@@ -111,7 +112,7 @@ function KeywordNotificationsClient() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = getAccessToken();
     const loggedIn = !!token;
     setIsLoggedIn(loggedIn);
     if (loggedIn) {

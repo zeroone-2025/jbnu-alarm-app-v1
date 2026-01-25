@@ -9,6 +9,7 @@ import {
   getGoogleLoginUrl,
   getMyKeywords,
   Keyword,
+  getAccessToken,
 } from '@/api';
 import Toast from '@/components/Toast';
 import { FiArrowLeft, FiTrash2 } from 'react-icons/fi';
@@ -44,7 +45,7 @@ export default function KeywordsClient() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = getAccessToken();
     const loggedIn = !!token;
     setIsLoggedIn(loggedIn);
     if (loggedIn) {

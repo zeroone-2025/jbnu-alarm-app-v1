@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getGoogleLoginUrl, getUserProfile, UserProfile } from '@/api';
+import { getGoogleLoginUrl, getUserProfile, UserProfile, getAccessToken } from '@/api';
 import { FiX, FiLogIn, FiLogOut, FiUser } from 'react-icons/fi';
 
 interface SidebarProps {
@@ -16,7 +16,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   // 로그인 상태 체크 및 프로필 로드
   useEffect(() => {
     if (isOpen) {
-      const token = localStorage.getItem('accessToken');
+      const token = getAccessToken();
       setIsLoggedIn(!!token);
 
       // 로그인되어 있으면 프로필 로드
@@ -40,9 +40,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     window.location.href = getGoogleLoginUrl();
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // 백엔드 로그아웃 API 호출
+      const { logout, clearAccessToken } = await import('@/api');
+      await logout();
+      clearAccessToken();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+
     // localStorage 정리
-    localStorage.removeItem('accessToken');
     localStorage.removeItem('my_subscribed_categories');
 
     setIsLoggedIn(false);
