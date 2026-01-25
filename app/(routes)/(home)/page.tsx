@@ -39,6 +39,8 @@ function HomeContent() {
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [toastKey, setToastKey] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Infinite scroll root element state
+  const [scrollRoot, setScrollRoot] = useState<HTMLElement | null>(null);
 
   // 클라이언트 마운트 체크
   useEffect(() => {
@@ -159,12 +161,12 @@ function HomeContent() {
 
   // Intersection Observer로 스크롤 끝 감지
   const { ref: loadMoreRef, inView } = useInView({
-    rootMargin: '500px 0px 0px 0px',
+    root: scrollRoot, // 스크롤 컨테이너를 root로 명시
+    rootMargin: '0px 0px 2000px 0px', // 하단 2000px 미리 감지
     threshold: 0,
   });
 
-  // 중복 요청 방지를 위한 ref
-  const fetchingRef = useRef(false);
+
 
   // 스크롤이 끝에 가까워지면 다음 페이지 로드
   useEffect(() => {
@@ -174,16 +176,8 @@ function HomeContent() {
     if (!inView) return;
     if (!hasNextPage) return;
     if (isFetchingNextPage) return;
-    if (fetchingRef.current) return; // 이미 요청 중이면 무시
-
     // 요청 시작
-    fetchingRef.current = true;
-    fetchNextPage().finally(() => {
-      // 요청 완료 후 플래그 해제 (약간의 딜레이 추가)
-      setTimeout(() => {
-        fetchingRef.current = false;
-      }, 500);
-    });
+    fetchNextPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, isLoading, inView, hasNextPage, isFetchingNextPage]);
 
@@ -328,10 +322,20 @@ function HomeContent() {
             refreshing={refreshing}
           />
 
+          <ScrollToTop containerRef={scrollContainerRef as React.RefObject<HTMLElement>} />
+
           {/* 공지사항 리스트 */}
           <div className="relative flex-1 min-h-0 overflow-hidden">
             <div
-              ref={scrollContainerRef as React.RefObject<HTMLDivElement>}
+              ref={(node) => {
+                // scrollContainerRef와 scrollRoot 모두 업데이트
+                if (scrollContainerRef && 'current' in scrollContainerRef) {
+                  (scrollContainerRef as React.MutableRefObject<HTMLElement | null>).current = node;
+                }
+                if (node !== scrollRoot) {
+                  setScrollRoot(node);
+                }
+              }}
               className="h-full overflow-y-auto"
               style={{
                 touchAction: 'pan-y',
@@ -371,13 +375,27 @@ function HomeContent() {
               {/* 무한 스크롤 */}
               {filter !== 'KEYWORD' && (
                 <>
-                  <div ref={loadMoreRef} className="h-1" />
+                  {/* 로딩 감지 및 수동 로드 영역 */}
+                  <div
+                    ref={loadMoreRef}
+                    className="py-4 text-center cursor-pointer text-gray-400 text-sm hover:text-gray-600 active:scale-95 transition-transform"
+                    onClick={() => {
+                      if (!isFetchingNextPage && hasNextPage) {
+                        fetchNextPage();
+                      }
+                    }}
+                  >
+                    {isFetchingNextPage ? (
+                      <div className="flex justify-center items-center gap-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                        <span>불러오는 중...</span>
+                      </div>
+                    ) : (
+                      <span>더 불러오려면 터치하세요</span>
+                    )}
+                  </div>
 
-                  {isFetchingNextPage && (
-                    <div className="flex justify-center py-8">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-                    </div>
-                  )}
+
 
                   {!hasNextPage && filteredNotices.length > 0 && (
                     <div className="py-8 text-center text-sm text-gray-400">

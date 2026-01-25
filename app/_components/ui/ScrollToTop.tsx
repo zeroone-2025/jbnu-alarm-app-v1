@@ -39,11 +39,38 @@ export default function ScrollToTop({ containerRef, threshold = 400 }: ScrollToT
     }, [containerRef, toggleVisibility]);
 
     const scrollToTop = () => {
-        const target = containerRef?.current || window;
-        target.scrollTo({
-            top: 0,
-            behavior: 'smooth',
-        });
+        const isWindow = !containerRef?.current;
+        const startPosition = isWindow ? window.scrollY : containerRef!.current!.scrollTop;
+
+        if (startPosition === 0) return;
+
+        const duration = 2000; // 2000ms = 2초
+        let startTime: number | null = null;
+
+        // Easing function: easeOutCubic
+        // 1 - (1 - t)^3
+        const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+        const animation = (currentTime: number) => {
+            if (startTime === null) startTime = currentTime;
+            const timeElapsed = currentTime - startTime;
+            const progress = Math.min(timeElapsed / duration, 1);
+            const ease = easeOutCubic(progress);
+
+            const nextScroll = startPosition * (1 - ease);
+
+            if (isWindow) {
+                window.scrollTo(0, nextScroll);
+            } else {
+                containerRef!.current!.scrollTop = nextScroll;
+            }
+
+            if (timeElapsed < duration) {
+                requestAnimationFrame(animation);
+            }
+        };
+
+        requestAnimationFrame(animation);
     };
 
     return (
