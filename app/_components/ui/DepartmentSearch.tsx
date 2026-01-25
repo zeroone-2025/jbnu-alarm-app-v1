@@ -10,12 +10,14 @@ interface DepartmentSearchProps {
   onSelect: (dept: Department | null) => void;
   selectedDeptCode?: string | null;
   placeholder?: string;
+  isReadonly?: boolean;
 }
 
 export default function DepartmentSearch({
   onSelect,
   selectedDeptCode,
   placeholder = '학과를 검색하세요 (예: 컴퓨터, 경영)',
+  isReadonly = false,
 }: DepartmentSearchProps) {
   const [query, setQuery] = useState('');
   const [allDepartments, setAllDepartments] = useState<Department[]>([]);
@@ -23,7 +25,7 @@ export default function DepartmentSearch({
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDept, setSelectedDept] = useState<Department | null>(null);
-  
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // 1. 모든 학과 정보 미리 가져오기 (마스터 데이터가 50개 내외로 작으므로 클라이언트 사이드 검색이 더 빠름)
@@ -80,19 +82,28 @@ export default function DepartmentSearch({
   return (
     <div className="relative w-full" ref={dropdownRef}>
       {selectedDept ? (
-        <div className="flex w-full items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-5 py-4">
+        <div className={`flex w-full items-center justify-between rounded-xl px-4 py-3 border transition-all ${isReadonly
+          ? 'bg-gray-100 border-gray-200 cursor-not-allowed'
+          : 'bg-blue-50 border-blue-200'
+          }`}>
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-blue-900">{selectedDept.dept_name}</span>
+            <span className={`font-semibold ${isReadonly ? 'text-gray-500' : 'text-blue-900'}`}>{selectedDept.dept_name}</span>
             {selectedDept.college_name && (
-              <span className="text-sm font-medium text-blue-600">{selectedDept.college_name}</span>
+              <span className={`text-xs font-medium ${isReadonly ? 'text-gray-400' : 'text-blue-600'}`}>{selectedDept.college_name}</span>
             )}
           </div>
-          <button
-            onClick={handleClear}
-            className="rounded-full p-2 text-blue-400 hover:bg-blue-100 hover:text-blue-600 transition-colors"
-          >
-            <FiX size={20} />
-          </button>
+          {!isReadonly && (
+            <button
+              onClick={handleClear}
+              className="rounded-full p-2 text-blue-400 hover:bg-blue-100 hover:text-blue-600 transition-colors"
+            >
+              <FiX size={20} />
+            </button>
+          )}
+        </div>
+      ) : isReadonly ? (
+        <div className="w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-gray-400 text-sm italic">
+          미설정
         </div>
       ) : (
         <div className="relative">
@@ -101,7 +112,7 @@ export default function DepartmentSearch({
           </div>
           <input
             type="text"
-            className="w-full rounded-xl border border-gray-300 bg-white py-4 pl-12 pr-12 text-lg font-medium text-gray-900 transition-all focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 placeholder:text-gray-400"
+            className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-10 pr-10 text-base font-medium text-gray-900 transition-all focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 placeholder:text-gray-400"
             placeholder={placeholder}
             value={query}
             onChange={(e) => {

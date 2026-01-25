@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { MAJOR_PRESETS } from '@/_lib/constants/presets';
 import { completeOnboarding } from '@/_lib/api';
-import DepartmentSearch from '@/_components/ui/DepartmentSearch';
+import UserInfoForm, { UserInfoFormData } from '@/_components/auth/UserInfoForm';
 import type { Department } from '@/_types/department';
 
 interface OnboardingModalProps {
@@ -12,8 +12,13 @@ interface OnboardingModalProps {
 }
 
 export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
-  const [selectedDept, setSelectedDept] = useState<Department | null>(null);
-  const [admissionYear, setAdmissionYear] = useState<string>('');
+  const [formData, setFormData] = useState<UserInfoFormData>({
+    nickname: '',
+    school: '전북대',
+    dept_code: '',
+    dept_name: '',
+    admission_year: '',
+  });
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   if (!isOpen) return null;
@@ -23,26 +28,26 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
 
     // 구독할 게시판 결정
     let boardCodes: string[] = ['home_campus']; // 기본값: 본부 공지
-    
-    if (selectedDept) {
+
+    if (formData.dept_code) {
       // 프리셋이 있는지 확인 (라벨 또는 코드 매칭)
       const preset = MAJOR_PRESETS.find(
-        (p) => p.label === selectedDept.dept_name || p.id === selectedDept.dept_code.replace('dept_', '')
+        (p) => p.label === formData.dept_name || p.id === formData.dept_code.replace('dept_', '')
       );
-      
+
       if (preset) {
         boardCodes = preset.categories;
       } else {
         // 프리셋 없으면 해당 학과 게시판 추가
-        boardCodes.push(selectedDept.dept_code);
+        boardCodes.push(formData.dept_code);
       }
     }
 
     try {
       const result = await completeOnboarding({
-        school: '전북대',
-        dept_code: selectedDept?.dept_code || undefined,
-        admission_year: admissionYear ? parseInt(admissionYear) : undefined,
+        school: formData.school,
+        dept_code: formData.dept_code || undefined,
+        admission_year: formData.admission_year ? parseInt(formData.admission_year) : undefined,
         board_codes: boardCodes,
       });
 
@@ -61,7 +66,7 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
 
   const handleSkip = async () => {
     if (!confirm('학과 정보를 입력하지 않고 시작할까요?\n나중에 설정에서 언제든지 변경할 수 있습니다.')) return;
-    
+
     setIsSubmitting(true);
     try {
       const defaultBoards = ['home_campus'];
@@ -69,7 +74,7 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
         school: '전북대',
         board_codes: defaultBoards,
       });
-      
+
       localStorage.setItem('my_subscribed_categories', JSON.stringify(defaultBoards));
       onComplete(defaultBoards);
     } catch (error) {
@@ -94,40 +99,12 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
         </div>
 
         <div className="space-y-6">
-          {/* 학교 선택 (고정) */}
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">
-              학교
-            </label>
-            <div className="w-full rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 text-lg font-medium text-gray-500">
-              전북대학교
-            </div>
-          </div>
-
-          {/* 학과 선택 */}
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">
-              학과 (선택사항)
-            </label>
-            <DepartmentSearch onSelect={setSelectedDept} />
-          </div>
-
-          {/* 학번/입학년도 선택 */}
-          <div>
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-gray-400">
-              학번 (선택사항)
-            </label>
-            <select
-              value={admissionYear}
-              onChange={(e) => setAdmissionYear(e.target.value)}
-              className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-5 py-4 text-lg font-medium text-gray-900 transition-all focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10"
-            >
-              <option value="">-- 학번을 선택하세요 --</option>
-              {Array.from({ length: 17 }, (_, i) => 26 - i).map((year) => (
-                <option key={year} value={year}>{year}학번</option>
-              ))}
-            </select>
-          </div>
+          <UserInfoForm
+            formData={formData}
+            onChange={(data) => setFormData((prev: UserInfoFormData) => ({ ...prev, ...data }))}
+            showNickname={false}
+            isReadonlySchool={true}
+          />
         </div>
 
         {/* 하단 버튼 영역 */}

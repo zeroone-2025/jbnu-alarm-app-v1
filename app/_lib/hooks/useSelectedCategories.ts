@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BOARD_LIST, GUEST_FILTER_KEY } from '@/_lib/constants/boards';
 import { getUserSubscriptions, updateUserSubscriptions } from '@/_lib/api';
-import { isUserLoggedIn } from '@/_lib/utils/auth';
+import { useUser } from '@/_lib/hooks/useUser';
 
 const USER_STORAGE_KEY = 'my_subscribed_categories'; // 로그인 사용자 캐시 키
 const GUEST_FIXED_BOARD = 'home_campus';
@@ -23,17 +23,19 @@ export function useSelectedCategories() {
   // SSR-safe: 서버와 클라이언트의 초기 상태를 동일하게 유지
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { isLoggedIn, isAuthLoaded } = useUser();
 
   // 초기 로딩: 로그인 여부에 따라 다른 저장소 사용
   useEffect(() => {
     const loadCategories = async () => {
+      // 인증 상태 확인이 안 되었다면 대기
+      if (!isAuthLoaded) return;
+
       // 클라이언트에서만 실행
       if (typeof window === 'undefined') {
         setIsLoading(false);
         return;
       }
-
-      const isLoggedIn = isUserLoggedIn();
 
       if (isLoggedIn) {
         // ✅ User: 백엔드 API에서 구독 정보 가져오기
@@ -77,12 +79,11 @@ export function useSelectedCategories() {
     };
 
     loadCategories();
-  }, []);
+  }, [isAuthLoaded, isLoggedIn]);
 
   // 선택 변경: 로그인 여부에 따라 다른 저장소에 저장
   const updateSelectedCategories = async (categories: string[]) => {
     const previousCategories = selectedCategories;
-    const isLoggedIn = isUserLoggedIn();
 
     const normalizedCategories = isLoggedIn
       ? categories
