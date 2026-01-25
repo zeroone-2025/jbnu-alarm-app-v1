@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { getUserProfile, UserProfile } from '@/_lib/api';
-import { FiX, FiLogOut, FiUser } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { FiX, FiUser, FiChevronRight } from 'react-icons/fi';
+import { useUserStore } from '@/_lib/store/useUserStore';
+import { useUser } from '@/_lib/hooks/useUser';
 import GoogleLoginButton from '@/_components/auth/GoogleLoginButton';
 
 interface SidebarProps {
@@ -11,57 +13,28 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const router = useRouter();
+  // useUserStore에서 user를 가져오는 대신, useUser 훅에서 모든 관련 상태를 가져옵니다.
+  const { user, isLoggedIn, isAuthLoaded, isLoading } = useUser();
 
-  // 로그인 상태 체크 및 프로필 로드
-  useEffect(() => {
-    if (isOpen) {
-      const token = localStorage.getItem('accessToken');
-      setIsLoggedIn(!!token);
-
-      // 로그인되어 있으면 프로필 로드
-      if (token) {
-        getUserProfile()
-          .then((profile) => setUser(profile))
-          .catch(() => {
-            // 토큰이 만료되었거나 에러 발생 시
-            setIsLoggedIn(false);
-            setUser(null);
-          });
-      } else {
-        setUser(null);
-      }
-    }
-  }, [isOpen]);
-
-  const handleLogout = () => {
-    // localStorage 정리
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('my_subscribed_categories');
-
-    setIsLoggedIn(false);
+  const handleProfileClick = () => {
     onClose();
-
-    // 홈으로 이동하면서 토스트 표시
-    window.location.href = '/?logout=success';
+    router.push('/profile');
   };
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 z-40 bg-black/50 transition-all duration-300 ${
-          isOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
-        }`}
+        className={`absolute inset-0 z-40 bg-black/50 transition-all duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
+          }`}
         onClick={onClose}
       />
 
       {/* Sidebar */}
       <div
-        className={`absolute inset-y-0 left-0 z-50 w-72 transform bg-white shadow-xl transition-all duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0 visible' : '-translate-x-full invisible'
-        }`}
+        className={`absolute inset-y-0 left-0 z-50 w-72 transform bg-white shadow-xl transition-all duration-300 ease-in-out ${isOpen ? 'translate-x-0 visible' : '-translate-x-full invisible'
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -79,8 +52,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex-1 p-5 overflow-y-auto">
             <div className="mb-8">
               <h3 className="mb-3 text-xs font-semibold text-gray-400 uppercase">계정</h3>
-              
-              {!isLoggedIn ? (
+
+              {!isAuthLoaded || (isLoading && !user) ? (
+                // 인증 확인 중이거나 로그인 상태지만 유저 데이터 로딩 중인 경우
+                <div className="w-full p-4 border border-gray-100 bg-gray-50/50 rounded-xl animate-pulse h-[72px]" />
+              ) : !isLoggedIn ? (
                 <>
                   <GoogleLoginButton onLoginStart={onClose} fullWidth />
                   <p className="px-1 mt-2 text-xs text-gray-500">
@@ -88,34 +64,33 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   </p>
                 </>
               ) : (
-                <div className="p-4 border border-gray-100 rounded-xl">
-                  <div className="flex items-center gap-3 mb-4">
-                    {user?.profile_image ? (
-                      <img
-                        src={user.profile_image}
-                        alt={user.nickname || '사용자'}
-                        className="object-cover w-10 h-10 rounded-full"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center w-10 h-10 text-blue-600 bg-blue-100 rounded-full">
-                        <FiUser size={20} />
+                <button
+                  onClick={handleProfileClick}
+                  className="w-full p-4 text-left transition-all border border-gray-100 bg-gray-50/50 rounded-xl hover:bg-gray-100 active:scale-[0.98]"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {user?.profile_image ? (
+                        <img
+                          src={user.profile_image}
+                          alt={user.nickname || '사용자'}
+                          className="object-cover w-10 h-10 rounded-full"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center w-10 h-10 text-blue-600 bg-blue-100 rounded-full">
+                          <FiUser size={20} />
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-sm font-bold text-gray-800">
+                          {user?.nickname || '사용자'} 님
+                        </p>
+                        <p className="text-[11px] text-gray-400">프로필 관리하기</p>
                       </div>
-                    )}
-                    <div>
-                      <p className="text-sm font-bold text-gray-800">
-                        {user?.nickname || '사용자'} 님
-                      </p>
-                      {/* <p className="text-xs text-gray-500">로그인되었습니다</p> */}
                     </div>
+                    <FiChevronRight className="text-gray-400" size={18} />
                   </div>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center justify-center w-full gap-2 py-2 text-sm font-medium text-red-500 transition-colors border border-red-100 rounded-lg hover:bg-red-50"
-                  >
-                    <FiLogOut size={16} />
-                    로그아웃
-                  </button>
-                </div>
+                </button>
               )}
             </div>
           </div>

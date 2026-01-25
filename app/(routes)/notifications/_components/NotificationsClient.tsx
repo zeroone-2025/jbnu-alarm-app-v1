@@ -15,10 +15,11 @@ import NoticeList from '@/(routes)/(home)/_components/NoticeList';
 import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
 import FullPageModal from '@/_components/layout/FullPageModal';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
+import { useUser } from '@/_lib/hooks/useUser';
 
 export default function NotificationsClient() {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn } = useUser();
   const [keywordCount, setKeywordCount] = useState<number | null>(null);
   const [keywordNotices, setKeywordNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(false);
@@ -113,10 +114,7 @@ export default function NotificationsClient() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const loggedIn = !!token;
-    setIsLoggedIn(loggedIn);
-    if (loggedIn) {
+    if (isLoggedIn) {
       (async () => {
         const count = await loadKeywordCount();
         if (count === 0) {
@@ -126,8 +124,7 @@ export default function NotificationsClient() {
         await loadKeywordNotices();
       })();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isLoggedIn]);
 
 
   const keywordCountLabel = keywordCount ?? 0;

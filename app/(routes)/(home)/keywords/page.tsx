@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthState } from '@/_lib/hooks/useAuthState';
+import { useUser } from '@/_lib/hooks/useUser';
 import FullPageModal from '@/_components/layout/FullPageModal';
 import KeywordsModalContent from './_components/KeywordsModalContent';
 import Button from '@/_components/ui/Button';
+import { useRouter } from 'next/navigation'; // Added missing import for useRouter
+import { useEffect } from 'react'; // Added missing import for useEffect
 
 /**
  * 키워드 관리 페이지
@@ -14,7 +14,7 @@ import Button from '@/_components/ui/Button';
  */
 export default function KeywordsPage() {
   const router = useRouter();
-  const { isLoggedIn, isAuthLoaded } = useAuthState();
+  const { isLoggedIn, isAuthLoaded } = useUser();
 
   useEffect(() => {
     if (isAuthLoaded && !isLoggedIn) {

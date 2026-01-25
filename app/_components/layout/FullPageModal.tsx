@@ -47,7 +47,7 @@ export default function FullPageModal({
     <div className="fixed inset-0 z-50 animate-fadeIn bg-gray-50">
       {/* 전체 화면 컨테이너 */}
       <div className="relative mx-auto flex h-full w-full max-w-md flex-col overflow-hidden border-x border-gray-100 bg-white shadow-xl md:max-w-4xl">
-        {/* 헤더 - 뒤로가기 좌측 상단 */}
+        {/* 헤더 */}
         <div className="shrink-0 border-b border-gray-100 px-5 py-4">
           <div className="flex items-center gap-3">
             <button
@@ -60,7 +60,6 @@ export default function FullPageModal({
             <h1 className="text-lg font-bold text-gray-800">{title}</h1>
           </div>
         </div>
-
         {/* 컨텐츠 영역 */}
         <div className="flex-1 overflow-y-auto">{children}</div>
       </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FiInfo, FiRotateCcw } from 'react-icons/fi';
 import { BOARD_LIST, CATEGORY_ORDER, BoardCategory } from '@/_lib/constants/boards';
-import { isUserLoggedIn } from '@/_lib/utils/auth';
+import { useUser } from '@/_lib/hooks/useUser';
 import Button from '@/_components/ui/Button';
 
 interface BoardFilterContentProps {
@@ -18,15 +18,18 @@ export default function BoardFilterContent({
   onClose,
 }: BoardFilterContentProps) {
   const [tempSelection, setTempSelection] = useState<Set<string>>(new Set());
-  const isLoggedIn = isUserLoggedIn();
+  const { isLoggedIn, isAuthLoaded } = useUser(); // isAuthLoaded 추가
   const isGuest = !isLoggedIn;
   const isFixedGuestBoard = (boardId: string) => isGuest && boardId === 'home_campus';
 
   // 초기화
   useEffect(() => {
+    // isAuthLoaded가 true가 될 때까지 기다립니다.
+    if (!isAuthLoaded) return;
+
     const initial = isGuest ? [...selectedBoards, 'home_campus'] : selectedBoards;
     setTempSelection(new Set(initial));
-  }, [selectedBoards, isGuest]);
+  }, [selectedBoards, isGuest, isAuthLoaded]); // isAuthLoaded를 의존성 배열에 추가
 
   // 선택된 게시판과 미선택 게시판 분리
   const selectedItems = BOARD_LIST.filter((board) => tempSelection.has(board.id));

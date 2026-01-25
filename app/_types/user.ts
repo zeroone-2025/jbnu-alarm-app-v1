@@ -7,6 +7,7 @@ export interface UserProfile {
     nickname: string | null;
     dept_code: string | null;
     school: string;
+    admission_year: number | null;
     profile_image: string | null;
     created_at: string;
 }
@@ -14,9 +15,19 @@ export interface UserProfile {
 // 사용자 정보 업데이트 요청
 export interface UserProfileUpdate {
     nickname?: string;
+    school?: string;
     dept_code?: string;
+    admission_year?: number;
     fcm_token?: string;
     profile_image?: string;
+}
+
+// 온보딩 완료 요청
+export interface OnboardingRequest {
+    school: string;
+    dept_code?: string;
+    admission_year?: number;
+    board_codes: string[];
 }
 
 // 사용자 구독 정보

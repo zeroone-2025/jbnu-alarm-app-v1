@@ -8,6 +8,8 @@ interface HomeHeaderProps {
   onMenuClick: () => void;
 }
 
+import Logo from '@/_components/ui/Logo';
+
 export default function HomeHeader({ onNotificationClick, showNotificationBadge, onMenuClick }: HomeHeaderProps) {
   return (
     <header className="relative flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white px-5">
@@ -18,13 +20,13 @@ export default function HomeHeader({ onNotificationClick, showNotificationBadge,
           className="rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
           aria-label="메뉴 열기"
         >
-          <FiUser size={24} />
+          <FiUser size={19} />
         </button>
       </div>
 
       {/* Center: Logo */}
       <div className="absolute left-1/2 -translate-x-1/2 transform">
-        <h1 className="text-xl font-bold text-gray-800">ZeroTime</h1>
+        <Logo className="h-7 w-auto text-gray-900" />
       </div>
 
       {/* Right: Notification */}
@@ -34,7 +36,7 @@ export default function HomeHeader({ onNotificationClick, showNotificationBadge,
           className="relative rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
           aria-label="알림"
         >
-          <FiBell size={24} />
+          <FiBell size={19} />
           {showNotificationBadge && (
             <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
           )}
