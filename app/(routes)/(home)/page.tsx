@@ -21,7 +21,6 @@ import NoticeList from './_components/NoticeList';
 import HomeHeader from './_components/HomeHeader';
 import Sidebar from '@/_components/layout/Sidebar';
 import CategoryFilter from '@/_components/ui/CategoryFilter';
-import BoardFilterModal from './_components/BoardFilterModal';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
 
 // Dayjs 설정
@@ -38,7 +37,6 @@ function HomeContent() {
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [toastKey, setToastKey] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showBoardFilterModal, setShowBoardFilterModal] = useState(false);
 
   // 클라이언트 마운트 체크
   useEffect(() => {
@@ -230,7 +228,7 @@ function HomeContent() {
     setShowToast(true);
   };
 
-  // 게시판 필터 적용
+  // 게시판 필터 적용 (필요 시 유지하되, 현재는 /filter 페이지에서 처리)
   const handleBoardFilterApply = async (boards: string[]) => {
     await updateSelectedCategories(boards);
     if (filter === 'KEYWORD') {
@@ -280,13 +278,6 @@ function HomeContent() {
     <>
       <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
 
-      <BoardFilterModal
-        isOpen={showBoardFilterModal}
-        onClose={() => setShowBoardFilterModal(false)}
-        selectedBoards={selectedBoards}
-        onApply={handleBoardFilterApply}
-      />
-
       <Toast
         message={toastMessage}
         isVisible={showToast}
@@ -315,7 +306,7 @@ function HomeContent() {
               activeFilter={filter}
               onFilterChange={(f) => setFilter(f as any)}
               isLoggedIn={isLoggedIn}
-              onSettingsClick={() => setShowBoardFilterModal(true)}
+              onSettingsClick={() => router.push('/filter')}
               onShowToast={handleShowToast}
             />
           </div>
@@ -371,7 +362,7 @@ function HomeContent() {
                 onToggleFavorite={handleToggleFavorite}
                 isInFavoriteTab={filter === 'FAVORITE'}
                 isLoggedIn={isLoggedIn}
-                onOpenBoardFilter={() => setShowBoardFilterModal(true)}
+                onOpenBoardFilter={() => router.push('/filter')}
                 onShowToast={handleShowToast}
                 emptyMessage={
                   filter === 'KEYWORD'
