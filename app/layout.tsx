@@ -9,13 +9,20 @@ import ServiceWorkerRegistration from './_components/system/ServiceWorkerRegistr
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'ZeroTime - 전북대 알리미',
-  description: 'ZeroTime - 전북대 공지사항 통합 알림 서비스',
-  manifest: '/manifest.json',
+  title: '제로타임 - 전북대 공지사항 통합 알리미',
+  description: '전북대학교(JBNU)의 모든 공지사항을 한눈에. 학사, 장학, 취업 정보를 놓치지 않고 제로타임(ZeroTime)에서 확인하세요.',
+  keywords: ['제로타임', 'ZeroTime', '전북대', '전북대학교', 'JBNU', '공지사항', '알림', '알리미', '대학생활', '전주', '취업', '장학금'],
+  openGraph: {
+    title: '제로타임 - 전북대 공지사항 통합 알림',
+    description: '놓치기 쉬운 학교 공지, 제로타임으로 완벽하게 확인하세요.',
+    siteName: '제로타임 (ZeroTime)',
+    locale: 'ko_KR',
+    type: 'website',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'ZeroTime',
+    title: '제로타임',
   },
   formatDetection: {
     telephone: false,
@@ -40,8 +47,7 @@ export default async function RootLayout({
   return (
     <html lang="ko">
       <head>
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/logo-192x192.png" />
+        {isDevHost && <meta name="robots" content="noindex, nofollow" />}
         {isDevHost && <meta name="robots" content="noindex, nofollow" />}
         <Script async src="https://www.googletagmanager.com/gtag/js?id=G-SMF31V39T9" />
         <Script id="ga-init">

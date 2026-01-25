@@ -375,28 +375,29 @@ function HomeContent() {
               {/* 무한 스크롤 */}
               {filter !== 'KEYWORD' && (
                 <>
-                  {/* 로딩 감지 및 수동 로드 영역 */}
-                  <div
-                    ref={loadMoreRef}
-                    className="py-4 text-center cursor-pointer text-gray-400 text-sm hover:text-gray-600 active:scale-95 transition-transform"
-                    onClick={() => {
-                      if (!isFetchingNextPage && hasNextPage) {
-                        fetchNextPage();
-                      }
-                    }}
-                  >
-                    {isFetchingNextPage ? (
-                      <div className="flex justify-center items-center gap-2">
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
-                        <span>불러오는 중...</span>
-                      </div>
-                    ) : (
-                      <span>더 불러오려면 터치하세요</span>
-                    )}
-                  </div>
+                  {/* 로딩 감지 및 수동 로드 영역 - 다음 페이지가 있을 때만 표시 */}
+                  {hasNextPage && (
+                    <div
+                      ref={loadMoreRef}
+                      className="py-4 text-center cursor-pointer text-gray-400 text-sm hover:text-gray-600 active:scale-95 transition-transform"
+                      onClick={() => {
+                        if (!isFetchingNextPage) {
+                          fetchNextPage();
+                        }
+                      }}
+                    >
+                      {isFetchingNextPage ? (
+                        <div className="flex justify-center items-center gap-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                          <span>불러오는 중...</span>
+                        </div>
+                      ) : (
+                        <span>더 불러오려면 터치하세요</span>
+                      )}
+                    </div>
+                  )}
 
-
-
+                  {/* 모든 데이터 로드 완료 메시지 - 다음 페이지가 없을 때만 표시 */}
                   {!hasNextPage && filteredNotices.length > 0 && (
                     <div className="py-8 text-center text-sm text-gray-400">
                       모든 공지사항을 불러왔어요
