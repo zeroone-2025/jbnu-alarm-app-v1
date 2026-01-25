@@ -14,7 +14,6 @@ export const contentType = 'image/png';
 export default function Icon() {
     return new ImageResponse(
         (
-            // ImageResponse JSX
             <div
                 style={{
                     width: '100%',
@@ -23,36 +22,50 @@ export default function Icon() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     background: 'white',
-                    borderRadius: 0, // PWA icons are generally square, OS handles rounded corners
                 }}
             >
-                {/* Container for centering the skew transform */}
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transform: 'skewX(-6deg)',
-                    }}
+                {/* 
+            Single SVG handling everything to ensure perfect alignment and transform.
+            viewBox="0 0 100 100" maps to the 512x512 canvas.
+        */}
+                <svg
+                    width="400"
+                    height="400"
+                    viewBox="0 0 100 100"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
                 >
-                    {/* "Z" Shape constructed with divs for guaranteed rendering without font loading */}
-                    {/* Using a rough geometric approximation of a heavy sans-serif "Z" */}
-                    <svg width="320" height="320" viewBox="0 0 100 100" fill="currentColor" color="#111827">
-                        <path d="M10 20 H90 V35 L35 75 H90 V90 H10 V75 L65 35 H10 V20 Z" />
-                    </svg>
+                    {/* Centered Group with Skew */}
+                    {/* 
+              Origin is roughly center (50 50) to apply skew evenly.
+              However, native SVG transform uses top-left.
+              We'll translate to center, skew, then translate back.
+          */}
+                    <g transform="translate(50, 50) skewX(-6) translate(-50, -50)">
+                        {/* Z Symbol - "ZeroTime" Heavy Z */}
+                        {/* Re-drawing path to be vertically balanced and not too wide */}
+                        {/* 
+                Top Bar: 20,20 to 80,20 (Width 60)
+                Bottom Bar: 20,80 to 80,80 (Width 60)
+                Diagonal: Connecting
+            */}
+                        <path
+                            d="M20 20 H80 V32 L40 68 H80 V80 H20 V68 L60 32 H20 V20 Z"
+                            fill="#111827"
+                        />
 
-                    {/* Accent Dot */}
-                    <div
-                        style={{
-                            position: 'absolute',
-                            right: '-40px',
-                            bottom: '80px', // Adjusted to align with the baseline of Z
-                            width: '30px',
-                            height: '30px',
-                            background: '#3B82F6',
-                        }}
-                    />
-                </div>
+                        {/* Accent Dot - Blue Square */}
+                        {/* Positioned at bottom right of the Z */}
+                        {/* Z bottom is 80. Square height is 10. So y must be 70 to align bottoms. */}
+                        <rect
+                            x="84"
+                            y="70"
+                            width="10"
+                            height="10"
+                            fill="#3B82F6"
+                        />
+                    </g>
+                </svg>
             </div>
         ),
         {
