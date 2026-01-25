@@ -104,11 +104,10 @@ export default function BoardFilterContent({
                   key={board.id}
                   onClick={() => toggleBoard(board.id)}
                   disabled={isFixedGuestBoard(board.id)}
-                  className={`rounded-full border-2 border-gray-900 bg-white px-4 py-2 text-sm font-bold text-gray-900 shadow-md transition-all ${
-                    isFixedGuestBoard(board.id)
+                  className={`rounded-full border-2 border-gray-900 bg-white px-4 py-2 text-sm font-bold text-gray-900 shadow-md transition-all ${isFixedGuestBoard(board.id)
                       ? 'cursor-not-allowed opacity-60'
                       : 'hover:bg-gray-50 active:scale-95'
-                  }`}
+                    }`}
                 >
                   {board.name}
                 </button>
@@ -135,11 +134,10 @@ export default function BoardFilterContent({
                           key={board.id}
                           onClick={() => toggleBoard(board.id)}
                           disabled={isFixedGuestBoard(board.id)}
-                          className={`rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-all ${
-                            isFixedGuestBoard(board.id)
+                          className={`rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-all ${isFixedGuestBoard(board.id)
                               ? 'cursor-not-allowed opacity-60'
                               : 'hover:bg-gray-100 active:scale-95'
-                          }`}
+                            }`}
                         >
                           {board.name}
                         </button>
