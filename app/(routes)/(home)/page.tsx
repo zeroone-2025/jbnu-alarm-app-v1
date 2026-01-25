@@ -369,6 +369,8 @@ function HomeContent() {
                     ? (keywordCount === 0
                       ? '키워드를 등록하면 관련 공지가 모여요'
                       : '아직 키워드에 맞는 공지사항이 없어요')
+                    : filter === 'UNREAD'
+                    ? '모든 공지사항을 다 읽었어요'
                     : '표시할 공지사항이 없어요'
                 }
                 emptyDescription={
@@ -391,7 +393,7 @@ function HomeContent() {
                     </div>
                   )}
 
-                  {!hasNextPage && notices.length > 0 && (
+                  {!hasNextPage && filteredNotices.length > 0 && (
                     <div className="py-8 text-center text-sm text-gray-400">
                       모든 공지사항을 불러왔어요
                     </div>

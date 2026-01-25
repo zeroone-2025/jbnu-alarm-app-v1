@@ -22,6 +22,14 @@ export interface UserProfileUpdate {
     profile_image?: string;
 }
 
+// 온보딩 완료 요청
+export interface OnboardingRequest {
+    school: string;
+    dept_code?: string;
+    admission_year?: number;
+    board_codes: string[];
+}
+
 // 사용자 구독 정보
 export interface UserSubscription {
     id: number;
