@@ -16,7 +16,11 @@ export * from './auth';
 // User
 export * from './user';
 
+// Departments
+export * from './departments';
+
 // Types re-export for convenience
 export type { Notice, NoticeListResponse } from '@/_types/notice';
 export type { Keyword } from '@/_types/keyword';
-export type { UserProfile, UserSubscription } from '@/_types/user';
+export type { UserProfile, UserSubscription, OnboardingRequest } from '@/_types/user';
+export type { Department, DepartmentSearchResponse } from '@/_types/department';
