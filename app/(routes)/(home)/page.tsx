@@ -23,6 +23,7 @@ import Sidebar from '@/_components/layout/Sidebar';
 import CategoryFilter from '@/_components/ui/CategoryFilter';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
 import ScrollToTop from '@/_components/ui/ScrollToTop';
+import PullToRefreshIndicator from '@/_components/ui/PullToRefreshIndicator';
 
 // Dayjs 설정
 dayjs.extend(relativeTime);
@@ -321,27 +322,11 @@ function HomeContent() {
           )}
 
           {/* Pull to Refresh 인디케이터 */}
-          <div
-            className="shrink-0 flex items-center justify-center bg-linear-to-b from-gray-50 to-transparent overflow-hidden"
-            style={{
-              height: refreshing ? '64px' : isPulling ? `${pullDistance}px` : '0px',
-              opacity: refreshing ? 1 : isPulling ? Math.min(pullDistance / 50, 1) : 0,
-              transition: (isPulling || refreshing) ? 'none' : 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out',
-            }}
-          >
-            {refreshing ? (
-              <div className="w-6 h-6 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
-            ) : isPulling && pullDistance > 0 ? (
-              <div
-                className="text-sm font-medium text-gray-600"
-                style={{
-                  transform: `scale(${Math.min(pullDistance / 40, 1)})`,
-                }}
-              >
-                {pullDistance > 30 ? '↓ 놓아서 새로고침' : '↓ 당겨서 새로고침'}
-              </div>
-            ) : null}
-          </div>
+          <PullToRefreshIndicator
+            isPulling={isPulling}
+            pullDistance={pullDistance}
+            refreshing={refreshing}
+          />
 
           {/* 공지사항 리스트 */}
           <div className="relative flex-1 min-h-0 overflow-hidden">
@@ -402,9 +387,6 @@ function HomeContent() {
                 </>
               )}
             </div>
-
-            {/* 상단 이동 버튼 */}
-            <ScrollToTop containerRef={scrollContainerRef as React.RefObject<HTMLDivElement>} />
           </div>
 
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />

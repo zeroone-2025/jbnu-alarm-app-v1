@@ -49,9 +49,9 @@ export default function ScrollToTop({ containerRef, threshold = 400 }: ScrollToT
     return (
         <button
             onClick={scrollToTop}
-            className={`absolute bottom-6 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-white text-blue-600 shadow-xl border border-gray-100 transition-all active:scale-95 md:h-12 md:w-12 ${isVisible
-                    ? 'opacity-100 translate-y-0 pointer-events-auto'
-                    : 'opacity-0 translate-y-4 pointer-events-none'
+            className={`absolute bottom-14 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-white text-gray-900 shadow-xl border border-gray-100 transition-all active:scale-95 md:h-12 md:w-12 ${isVisible
+                ? 'opacity-100 translate-y-0 pointer-events-auto'
+                : 'opacity-0 translate-y-4 pointer-events-none'
                 }`}
             aria-label="맨 위로 이동"
         >
