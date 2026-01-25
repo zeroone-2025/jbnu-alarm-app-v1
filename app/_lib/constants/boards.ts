@@ -22,7 +22,20 @@ export interface BoardMeta {
  * ✅ Active 게시판 (크롤러 구현 완료)
  */
 export const BOARD_MAP: Record<string, BoardMeta> = {
+  // 전북대 본부 공지
   home_campus: { name: "교내공지", color: "blue", category: "전북대" },
+  home_student: { name: "학생공지", color: "blue", category: "전북대" },
+  home_lecture: { name: "특강&세미나", color: "blue", category: "전북대" },
+  home_news: { name: "JBNU News", color: "blue", category: "전북대" },
+  home_newsplus: { name: "JBNU Newsplus", color: "blue", category: "전북대" },
+  home_policy: { name: "교육정책/주요대학소식", color: "blue", category: "전북대" },
+  home_contest: { name: "공모/스터디", color: "blue", category: "전북대" },
+  home_parttime: { name: "아르바이트", color: "blue", category: "전북대" },
+  home_housing: { name: "자취/하숙", color: "blue", category: "전북대" },
+  home_lostandfound: { name: "분실/습득", color: "blue", category: "전북대" },
+  home_poster: { name: "전자대자보", color: "blue", category: "전북대" },
+
+  // 단과대
   college_nursing: { name: "간호대학", color: "gray", category: "단과대" },
   college_cbe: { name: "경상대학", color: "gray", category: "단과대" },
   college_eng: { name: "공과대학", color: "gray", category: "단과대" },
@@ -78,19 +91,6 @@ export const BOARD_MAP: Record<string, BoardMeta> = {
   dept_accounting: { name: "회계학과", color: "orange", category: "학과" },
   agency_sw: { name: "SW중심대학사업단", color: "green", category: "사업단" },
 };
-
-/**
- * 🚧 Pending 게시판 (크롤러 구현 대기 중)
- * 백엔드 크롤러 구현 후 BOARD_MAP에 추가하세요.
- */
-// export const PENDING_BOARDS: Record<string, BoardMeta> = {
-//   home_student: { name: "학생공지", color: "blue", category: "전북대" },
-//   home_recruitment: { name: "교내채용", color: "blue", category: "전북대" },
-//   home_special: { name: "특강/세미나", color: "blue", category: "전북대" },
-//   dept_elet: { name: "전자공학부", color: "indigo", category: "학과" },
-//   dept_chmi: { name: "화학공학부", color: "indigo", category: "학과" },
-//   dept_civl: { name: "토목공학부", color: "indigo", category: "학과" },
-// };
 
 /**
  * 게시판 코드로 전체 이름 조회
