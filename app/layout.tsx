@@ -5,7 +5,8 @@ import { headers } from 'next/headers';
 import './globals.css';
 import Providers from './providers';
 import ServiceWorkerRegistration from './_components/system/ServiceWorkerRegistration';
-import GlobalExternalLinkHandler from './_components/system/GlobalExternalLinkHandler';
+import InAppBrowserGuideModal from './_components/system/InAppBrowserGuideModal';
+import { InAppBrowserProvider } from './_context/InAppBrowserContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -58,11 +59,13 @@ gtag('config', 'G-SMF31V39T9');`}
         </Script>
       </head>
       <body className={`${inter.className} flex h-screen flex-col bg-gray-50 text-gray-900`}>
-        {/* <GlobalExternalLinkHandler /> */}
-        <ServiceWorkerRegistration />
-        <Providers>
-          <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
-        </Providers>
+        <InAppBrowserProvider>
+          <InAppBrowserGuideModal />
+          <ServiceWorkerRegistration />
+          <Providers>
+            <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
+          </Providers>
+        </InAppBrowserProvider>
       </body>
     </html>
   );

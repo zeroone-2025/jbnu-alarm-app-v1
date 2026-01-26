@@ -1,54 +1,32 @@
 // In-App Browser Detection & Redirection Utility
 
-export const openLinkInExternalBrowser = (url: string) => {
-    if (typeof window === 'undefined') return;
+export type UserSystemType = 'android' | 'ios' | 'pc' | 'unknown';
 
+export const getSystemType = (): UserSystemType => {
+    if (typeof window === 'undefined') return 'unknown';
     const userAgent = navigator.userAgent.toLowerCase();
-    console.log('[ExternalBrowser] Current UserAgent:', userAgent);
 
-    // Ensure URL is absolute (Intent needs exact scheme)
-    const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
+    if (/android/.test(userAgent)) return 'android';
+    if (/iphone|ipad|ipod/.test(userAgent)) return 'ios';
+    return 'pc';
+};
 
-    // 1. Android Detection
-    if (/android/.test(userAgent)) {
-        // Detect common in-app browsers + generic WebView (; wv)
-        if (
-            /everytimeapp|kakaotalk|naver|instagram|fbav|line|daum|wv/i.test(userAgent) ||
-            userAgent.includes('; wv')
-        ) {
-            console.log('[ExternalBrowser] Android In-App Browser detected. Attempting redirect via Intent.');
+export const isInAppBrowser = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    const userAgent = navigator.userAgent.toLowerCase();
 
-            const urlWithoutProtocol = fullUrl.replace(/^https?:\/\//, '');
-            // Use Android Intent to force open in Chrome
-            // package=com.android.chrome ensures Chrome if available, but might fail if not installed.
-            const intentUrl = `intent://${urlWithoutProtocol}#Intent;scheme=https;package=com.android.chrome;end;`;
+    // Common In-App Browser keywords
+    // KakaoTalk, Naver, EverytimeApp, Instagram, Facebook, Line, Daum
+    // generic 'wv' (WebView) often used by Android
+    const inAppKeywords = [
+        'kakaotalk', 'naver', 'everytimeapp', 'instagram',
+        'fbav', 'line', 'daum', 'wv', 'trill' // trill = tiktok? just covering potential bases
+    ];
 
-            window.location.href = intentUrl;
-            return;
-        }
-    }
+    const isKnownInApp = inAppKeywords.some(keyword => userAgent.includes(keyword));
 
-    // 2. iOS Detection
-    else if (/iphone|ipad|ipod/.test(userAgent)) {
-        // Detect In-App browsers
-        if (
-            /everytimeapp|kakaotalk|naver|instagram|fbav|line|daum/i.test(userAgent)
-        ) {
-            console.log('[ExternalBrowser] iOS In-App Browser detected.');
-            // iOS text-based apps often treat window.open as a new window request.
-            // However, some WebViews block this.
-            // Try opening in a new context.
-            const newWindow = window.open(fullUrl, '_system');
-            if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-                // If popup blocked or failed, fallback to standard link
-                window.location.href = fullUrl;
-            }
-            return;
-        }
-    }
+    // Android specific checks for "; wv"
+    const isAndroidWebView = /android/.test(userAgent) && userAgent.includes('; wv');
 
-    // 3. Desktop / Standard Browser
-    console.log('[ExternalBrowser] Standard browser detected. No action taken.');
-    // Do NOTHING here to prevent infinite loop on standard browsers.
-    // window.location.href = fullUrl; <--- This caused the loop
+    return isKnownInApp || isAndroidWebView;
 };

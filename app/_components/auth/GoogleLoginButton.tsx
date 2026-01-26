@@ -2,6 +2,8 @@
 
 import { FiLogIn } from 'react-icons/fi';
 import { getGoogleLoginUrl } from '@/_lib/api';
+import { useInAppBrowser } from '@/_context/InAppBrowserContext';
+import { isInAppBrowser } from '@/_lib/utils/external-browser';
 
 interface GoogleLoginButtonProps {
   onLoginStart?: () => void;
@@ -12,7 +14,13 @@ export default function GoogleLoginButton({
   onLoginStart,
   fullWidth = false
 }: GoogleLoginButtonProps) {
+  const { openModal } = useInAppBrowser();
+
   const handleLogin = () => {
+    if (isInAppBrowser()) {
+      openModal();
+      return;
+    }
     onLoginStart?.();
     window.location.href = getGoogleLoginUrl();
   };
