@@ -1,33 +1,53 @@
+// In-App Browser Detection & Redirection Utility
+
 export const openLinkInExternalBrowser = (url: string) => {
     if (typeof window === 'undefined') return;
 
     const userAgent = navigator.userAgent.toLowerCase();
+    console.log('[ExternalBrowser] Current UserAgent:', userAgent);
 
-    // Android In-App Browser Detection & Redirection
+    // Ensure URL is absolute (Intent needs exact scheme)
+    const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
+
+    // 1. Android Detection
     if (/android/.test(userAgent)) {
-        // Common In-App Browsers in Korea
-        if (/everytimeapp|kakaotalk|naver|instagram|fbav|line|daum/i.test(userAgent)) {
-            const urlWithoutProtocol = url.replace(/^https?:\/\//, '');
+        // Detect common in-app browsers + generic WebView (; wv)
+        if (
+            /everytimeapp|kakaotalk|naver|instagram|fbav|line|daum|wv/i.test(userAgent) ||
+            userAgent.includes('; wv')
+        ) {
+            console.log('[ExternalBrowser] Android In-App Browser detected. Attempting redirect via Intent.');
+
+            const urlWithoutProtocol = fullUrl.replace(/^https?:\/\//, '');
             // Use Android Intent to force open in Chrome
-            // This is the standard way to "break out" of a WebView on Android
-            window.location.href = `intent://${urlWithoutProtocol}#Intent;scheme=https;package=com.android.chrome;end;`;
+            // package=com.android.chrome ensures Chrome if available, but might fail if not installed.
+            const intentUrl = `intent://${urlWithoutProtocol}#Intent;scheme=https;package=com.android.chrome;end;`;
+
+            window.location.href = intentUrl;
             return;
         }
     }
 
-    // iOS In-App Browser Detection & Redirection
+    // 2. iOS Detection
     else if (/iphone|ipad|ipod/.test(userAgent)) {
-        // For iOS, detected In-App browsers
-        if (/everytimeapp|kakaotalk|naver|instagram|fbav|line|daum/i.test(userAgent)) {
-            // Attempt to open in a new tab/window, which often triggers external browser or SFSafariVC
-            // depending on the host app's policy. 
-            // Note: If the app strictly blocks this, there is no programmatic way from the web side 
-            // other than asking the user.
-            window.open(url, '_external');
+        // Detect In-App browsers
+        if (
+            /everytimeapp|kakaotalk|naver|instagram|fbav|line|daum/i.test(userAgent)
+        ) {
+            console.log('[ExternalBrowser] iOS In-App Browser detected.');
+            // iOS text-based apps often treat window.open as a new window request.
+            // However, some WebViews block this.
+            // Try opening in a new context.
+            const newWindow = window.open(fullUrl, '_system');
+            if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                // If popup blocked or failed, fallback to standard link
+                window.location.href = fullUrl;
+            }
             return;
         }
     }
 
-    // Default behavior: Standard navigation
-    window.location.href = url;
+    // 3. Desktop / Standard Browser
+    console.log('[ExternalBrowser] Standard browser detected. Navigating normally.');
+    window.location.href = fullUrl;
 };
