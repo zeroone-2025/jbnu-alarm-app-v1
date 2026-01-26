@@ -3,8 +3,6 @@
 import { FiLogIn } from 'react-icons/fi';
 import { getGoogleLoginUrl } from '@/_lib/api';
 
-import { openLinkInExternalBrowser } from '@/_lib/utils/external-browser';
-
 interface GoogleLoginButtonProps {
   onLoginStart?: () => void;
   fullWidth?: boolean;
@@ -16,8 +14,7 @@ export default function GoogleLoginButton({
 }: GoogleLoginButtonProps) {
   const handleLogin = () => {
     onLoginStart?.();
-    const loginUrl = getGoogleLoginUrl();
-    openLinkInExternalBrowser(loginUrl);
+    window.location.href = getGoogleLoginUrl();
   };
 
   return (
