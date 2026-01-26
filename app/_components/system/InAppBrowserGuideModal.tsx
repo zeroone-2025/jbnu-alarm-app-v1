@@ -81,7 +81,7 @@ export default function InAppBrowserGuideModal() {
                                 <PiExport size={24} />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900">1. 공유 버튼 클릭</h3>
+                                <h3 className="font-semibold text-gray-900">1. 외부 브라우저 버튼 클릭</h3>
                                 <p className="text-sm text-gray-500 mt-0.5">
                                     화면 상단나 하단의 <span className="font-medium text-gray-700">공유 아이콘</span>(네모 위 화살표)을 눌러주세요.
                                 </p>
