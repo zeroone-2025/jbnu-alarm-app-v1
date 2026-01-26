@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PiDotsThreeOutlineVerticalFill, PiCompassFill, PiShareNetworkFill } from 'react-icons/pi';
+import { PiDotsThreeOutlineVerticalFill, PiCompassFill, PiShareNetworkFill, PiExport } from 'react-icons/pi';
 import { FiCopy, FiCheck } from 'react-icons/fi';
 import { getSystemType, isInAppBrowser, UserSystemType } from '@/_lib/utils/external-browser';
 
@@ -78,12 +78,12 @@ export default function InAppBrowserGuideModal() {
                     {systemType === 'ios' && (
                         <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
                             <div className="flex-shrink-0 p-2 bg-white rounded-lg shadow-sm text-gray-600">
-                                <PiCompassFill size={24} />
+                                <PiExport size={24} />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-gray-900">1. 사파리/브라우저로 열기</h3>
+                                <h3 className="font-semibold text-gray-900">1. 공유 버튼 클릭</h3>
                                 <p className="text-sm text-gray-500 mt-0.5">
-                                    하단나 상단의 <span className="font-medium text-gray-700">사파리 아이콘</span>이나 <span className="font-medium text-gray-700">공유/메뉴</span> 버튼을 눌러주세요.
+                                    화면 상단나 하단의 <span className="font-medium text-gray-700">공유 아이콘</span>(네모 위 화살표)을 눌러주세요.
                                 </p>
                             </div>
                         </div>
