@@ -48,6 +48,7 @@ export const openLinkInExternalBrowser = (url: string) => {
     }
 
     // 3. Desktop / Standard Browser
-    console.log('[ExternalBrowser] Standard browser detected. Navigating normally.');
-    window.location.href = fullUrl;
+    console.log('[ExternalBrowser] Standard browser detected. No action taken.');
+    // Do NOTHING here to prevent infinite loop on standard browsers.
+    // window.location.href = fullUrl; <--- This caused the loop
 };
