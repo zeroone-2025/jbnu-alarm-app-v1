@@ -1,5 +1,3 @@
-'use client';
-
 import { FiSliders } from 'react-icons/fi';
 
 interface CategoryFilterProps {

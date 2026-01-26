@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
@@ -416,5 +416,17 @@ function HomeContent() {
 }
 
 export default function Home() {
-  return <HomeContent />;
+  return (
+    <Suspense fallback={
+      <main className="h-full overflow-hidden bg-gray-50">
+        <div className="relative flex flex-col w-full h-full max-w-md mx-auto overflow-hidden bg-white border-gray-100 shadow-xl border-x md:max-w-4xl">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
+          </div>
+        </div>
+      </main>
+    }>
+      <HomeContent />
+    </Suspense>
+  );
 }
