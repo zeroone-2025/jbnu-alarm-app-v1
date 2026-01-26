@@ -1,7 +1,6 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { useEffect, useState } from 'react';
 import { useUser } from '@/_lib/hooks/useUser';
 
@@ -52,11 +51,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
-      <QueryClientProvider client={queryClient}>
-        <UserHydrator />
-        {children}
-      </QueryClientProvider>
-    </GoogleOAuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <UserHydrator />
+      {children}
+    </QueryClientProvider>
   );
 }
