@@ -58,7 +58,7 @@ gtag('config', 'G-SMF31V39T9');`}
         </Script>
       </head>
       <body className={`${inter.className} flex h-screen flex-col bg-gray-50 text-gray-900`}>
-        <GlobalExternalLinkHandler />
+        {/* <GlobalExternalLinkHandler /> */}
         <ServiceWorkerRegistration />
         <Providers>
           <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
