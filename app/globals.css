@@ -52,3 +52,18 @@ body {
 .animate-slide-up {
   animation: slideUp 0.3s ease-out;
 }
+@keyframes blink-orange {
+  0% {
+    background-color: #fff7ed; /* bg-orange-50 */
+  }
+  50% {
+    background-color: white;
+  }
+  100% {
+    background-color: #fff7ed; /* bg-orange-50 */
+  }
+}
+
+.animate-blink-orange {
+  animation: blink-orange 3s ease-in-out 3 forwards;
+}

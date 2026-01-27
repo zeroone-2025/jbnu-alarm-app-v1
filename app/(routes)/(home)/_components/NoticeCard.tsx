@@ -12,6 +12,7 @@ interface NoticeCardProps {
   isInFavoriteTab?: boolean; // 즐겨찾기 탭 여부 (항상 unread 스타일 표시)
   isLoggedIn?: boolean; // 로그인 여부
   onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void; // 토스트 메시지 표시
+  isHighlighted?: boolean; // 신규 알림 강조 여부
 }
 
 export default function NoticeCard({
@@ -22,6 +23,7 @@ export default function NoticeCard({
   isInFavoriteTab,
   isLoggedIn,
   onShowToast,
+  isHighlighted,
 }: NoticeCardProps) {
   // 읽음 상태에 따른 스타일 결정
   // 즐겨찾기 탭에서는 항상 unread 스타일 표시
@@ -67,7 +69,7 @@ export default function NoticeCard({
   return (
     <div
       role="listitem"
-      className="bg-white transition-all hover:bg-gray-50 md:rounded-xl md:border md:border-gray-100 md:shadow-sm md:hover:-translate-y-0.5 md:hover:shadow-md"
+      className={`transition-all hover:bg-gray-50 md:rounded-xl md:border md:border-gray-100 md:shadow-sm md:hover:-translate-y-0.5 md:hover:shadow-md ${isHighlighted && !notice.is_read ? 'bg-orange-50 animate-blink-orange' : 'bg-white'}`}
       style={{ opacity: styleConfig.opacity }}
     >
       <a
