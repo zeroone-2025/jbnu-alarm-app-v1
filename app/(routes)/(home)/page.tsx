@@ -94,6 +94,7 @@ function HomeContent() {
     keywordNotices,
     keywordCount,
     hasNewKeywordNotices,
+    newKeywordCount, // 훅에서 반환한 값 사용
     loadKeywordNotices,
     loadKeywordNoticesSilent,
     loadKeywordCount,
@@ -289,10 +290,12 @@ function HomeContent() {
             <HomeHeader
               onMenuClick={() => setIsSidebarOpen(true)}
               onNotificationClick={() => {
+                // 이전 확인 시간을 쿼리 파라미터로 전달
+                const lastSeen = localStorage.getItem('keyword_notice_seen_at');
                 markKeywordNoticesSeen(keywordNotices);
-                router.push('/notifications');
+                router.push(lastSeen ? `/notifications?last_seen=${encodeURIComponent(lastSeen)}` : '/notifications');
               }}
-              showNotificationBadge={isLoggedIn && hasNewKeywordNotices}
+              notificationCount={newKeywordCount}
             />
           </div>
 
