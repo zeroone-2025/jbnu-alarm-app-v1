@@ -96,8 +96,22 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
 
           {/* Footer */}
-          <div className="p-5 border-t border-gray-100">
-            <p className="text-xs text-center text-gray-400">ZeroTime v0.1.0</p>
+          <div className="p-5 border-t border-gray-100 bg-gray-50/30">
+            <div className="flex flex-col gap-4 text-center">
+              <p className="text-[11px] leading-relaxed text-gray-400 break-keep">
+                이 프로젝트는 전북대학교
+                <br />
+                컴퓨터인공지능학부, 경영학과 학생들이 협력하여
+                <br />
+                개발 중인 베타 서비스입니다.
+              </p>
+
+              <div className="space-y-0.5">
+                <p className="text-[10px] font-semibold text-gray-400 tracking-wide">
+                  Powered by <span className="text-[#034286]">JEduTools</span>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
