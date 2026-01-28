@@ -19,7 +19,7 @@ export const isInAppBrowser = (): boolean => {
     // KakaoTalk, Naver, EverytimeApp, Instagram, Facebook, Line, Daum
     // generic 'wv' (WebView) often used by Android
     const inAppKeywords = [
-        'kakaotalk', 'naver', 'everytimeapp', 'instagram',
+        'kakaotalk', 'everytimeapp', 'instagram',
         'fbav', 'line', 'daum', 'wv', 'trill' // trill = tiktok? just covering potential bases
     ];
 
