@@ -2,11 +2,13 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getUserProfile, setAccessToken } from '@/api';
+import { getUserProfile } from '@/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { login } = useAuth();
   const processedRef = useRef(false);
   const [status, setStatus] = useState('로그인 처리 중...');
 
@@ -38,8 +40,8 @@ function AuthCallbackContent() {
     if (accessToken) {
       const processLogin = async () => {
         try {
-          // 1. 백엔드에서 전달받은 JWT를 메모리에 저장
-          setAccessToken(accessToken);
+          // 1. 백엔드에서 전달받은 JWT를 메모리에 저장 및 AuthContext 업데이트
+          login(accessToken);
           setStatus('로그인 성공! 사용자 정보를 확인하는 중...');
 
           // 2. 사용자 정보 조회

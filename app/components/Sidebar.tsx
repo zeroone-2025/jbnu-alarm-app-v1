@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getGoogleLoginUrl, getUserProfile, UserProfile, getAccessToken } from '@/api';
+import { getGoogleLoginUrl, getUserProfile, UserProfile, logout as apiLogout } from '@/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { FiX, FiLogIn, FiLogOut, FiUser } from 'react-icons/fi';
 
 interface SidebarProps {
@@ -10,29 +11,24 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { authStatus, logout } = useAuth();
   const [user, setUser] = useState<UserProfile | null>(null);
+  const isLoggedIn = authStatus === 'authenticated';
 
   // 로그인 상태 체크 및 프로필 로드
   useEffect(() => {
-    if (isOpen) {
-      const token = getAccessToken();
-      setIsLoggedIn(!!token);
-
+    if (isOpen && isLoggedIn) {
       // 로그인되어 있으면 프로필 로드
-      if (token) {
-        getUserProfile()
-          .then((profile) => setUser(profile))
-          .catch(() => {
-            // 토큰이 만료되었거나 에러 발생 시
-            setIsLoggedIn(false);
-            setUser(null);
-          });
-      } else {
-        setUser(null);
-      }
+      getUserProfile()
+        .then((profile) => setUser(profile))
+        .catch(() => {
+          // 토큰이 만료되었거나 에러 발생 시
+          setUser(null);
+        });
+    } else {
+      setUser(null);
     }
-  }, [isOpen]);
+  }, [isOpen, isLoggedIn]);
 
   const handleLogin = () => {
     onClose();
@@ -43,17 +39,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const handleLogout = async () => {
     try {
       // 백엔드 로그아웃 API 호출
-      const { logout, clearAccessToken } = await import('@/api');
-      await logout();
-      clearAccessToken();
+      await apiLogout();
     } catch (error) {
       console.error('Logout error:', error);
     }
 
+    // AuthContext 로그아웃 (메모리 토큰 삭제 및 상태 업데이트)
+    logout();
+
     // localStorage 정리
     localStorage.removeItem('my_subscribed_categories');
 
-    setIsLoggedIn(false);
     onClose();
 
     // 홈으로 이동하면서 토스트 표시
