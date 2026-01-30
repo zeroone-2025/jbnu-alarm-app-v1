@@ -16,6 +16,16 @@ export const isAuthReady = () => isAuthInitialized;
 // 토큰 존재 여부 확인
 export const checkHasToken = () => hasAccessToken();
 
+// Refresh Token 쿠키 존재 여부 확인 (경량 체크)
+export const checkRefreshToken = async (): Promise<boolean> => {
+    try {
+        const response = await authApi.get<{ hasToken: boolean }>('/auth/check');
+        return response.data.hasToken;
+    } catch (error) {
+        return false;
+    }
+};
+
 // Refresh Token으로 새 Access Token 발급
 export const refreshAccessToken = async (): Promise<string | null> => {
     try {
@@ -47,6 +57,16 @@ export const initializeAuth = async (): Promise<boolean> => {
 
     initializationPromise = (async () => {
         try {
+            // 1. 먼저 refresh token 쿠키가 있는지 확인 (경량 체크)
+            const hasRefreshToken = await checkRefreshToken();
+
+            // 2. 쿠키가 없으면 refresh 요청하지 않음 (401 에러 방지)
+            if (!hasRefreshToken) {
+                isAuthInitialized = true;
+                return false;
+            }
+
+            // 3. 쿠키가 있으면 refresh 요청
             const token = await refreshAccessToken();
             isAuthInitialized = true;
             return !!token;
