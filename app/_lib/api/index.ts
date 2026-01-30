@@ -2,7 +2,7 @@
 // 이 파일을 통해 모든 API 함수를 import 할 수 있습니다
 
 // Client
-export { default as api, API_BASE_URL } from './client';
+export { default as api, API_BASE_URL, authApi } from './client';
 
 // Notices
 export * from './notices';

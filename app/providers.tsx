@@ -1,14 +1,49 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { useUser } from '@/_lib/hooks/useUser';
+import { initializeAuth, isAuthReady } from '@/_lib/api';
 
 // QueryClient 인스턴스를 외부에서 접근할 수 있도록 export
 let globalQueryClient: QueryClient | null = null;
 
 export function getQueryClient() {
   return globalQueryClient;
+}
+
+// 인증 초기화 상태 Context
+const AuthInitContext = createContext<boolean>(false);
+
+export function useAuthInitialized() {
+  return useContext(AuthInitContext);
+}
+
+/**
+ * 앱 시작 시 세션 복구를 담당하는 컴포넌트
+ * - refresh token(HttpOnly 쿠키)으로 access token 재발급 시도
+ */
+function AuthInitializer({ children }: { children: React.ReactNode }) {
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    // 이미 초기화되었으면 스킵
+    if (isAuthReady()) {
+      setIsInitialized(true);
+      return;
+    }
+
+    // 세션 복구 시도
+    initializeAuth().finally(() => {
+      setIsInitialized(true);
+    });
+  }, []);
+
+  return (
+    <AuthInitContext.Provider value={isInitialized}>
+      {children}
+    </AuthInitContext.Provider>
+  );
 }
 
 /**
@@ -52,8 +87,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <UserHydrator />
-      {children}
+      <AuthInitializer>
+        <UserHydrator />
+        {children}
+      </AuthInitializer>
     </QueryClientProvider>
   );
 }

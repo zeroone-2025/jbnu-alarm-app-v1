@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getUserProfile } from '@/_lib/api';
 import { useUserStore } from '@/_lib/store/useUserStore';
+import { setAccessToken } from '@/_lib/auth/tokenStore';
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -40,8 +41,8 @@ function AuthCallbackContent() {
     if (accessToken) {
       const processLogin = async () => {
         try {
-          // 1. 백엔드에서 전달받은 JWT를 localStorage에 저장
-          localStorage.setItem('accessToken', accessToken);
+          // 1. 백엔드에서 전달받은 JWT를 메모리에 저장
+          setAccessToken(accessToken);
           setStatus('로그인 성공! 사용자 정보를 확인하는 중...');
 
           // 2. 사용자 정보 조회
@@ -50,7 +51,7 @@ function AuthCallbackContent() {
           // 3. Zustand Store 업데이트 (리다이렉트 전 즉시 반영)
           setUser(userProfile);
 
-          // 3. dept_code 확인
+          // 4. dept_code 확인
           if (!userProfile.dept_code) {
             // 신규 사용자: 온보딩 모달 표시
             setStatus('환영합니다! 학과 정보를 입력해주세요.');
@@ -84,7 +85,7 @@ function AuthCallbackContent() {
         router.replace('/');
       }, 2000);
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, setUser]);
 
   return (
     <div className="flex h-screen w-full items-center justify-center bg-white">
