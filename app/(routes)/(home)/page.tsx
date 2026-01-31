@@ -41,6 +41,8 @@ function HomeContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Infinite scroll root element state
   const [scrollRoot, setScrollRoot] = useState<HTMLElement | null>(null);
+  // 초기 마운트 시 visibilitychange 무시를 위한 ref
+  const isInitialMount = useRef(true);
 
   // 클라이언트 마운트 체크
   useEffect(() => {
@@ -193,6 +195,12 @@ function HomeContent() {
   // 페이지 visibility 변경 시 새로고침
   useEffect(() => {
     const handleVisibilityChange = () => {
+      // 초기 마운트 시에는 무시 (새로고침 시 중복 요청 방지)
+      if (isInitialMount.current) {
+        isInitialMount.current = false;
+        return;
+      }
+
       if (document.visibilityState === 'visible') {
         refetchUser(); // 유저 상태 및 로그인 정보 동기화
         if (filter === 'ALL') {
