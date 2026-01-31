@@ -38,7 +38,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between h-16 px-5 border-b border-gray-100">
+          <div className="flex items-center justify-between shrink-0 h-[calc(4rem+var(--safe-area-top))] pt-safe px-5 border-b border-gray-100">
             <h2 className="text-lg font-bold text-gray-800">메뉴</h2>
             <button
               onClick={onClose}

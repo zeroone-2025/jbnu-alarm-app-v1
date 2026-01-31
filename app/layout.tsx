@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { Inter } from 'next/font/google';
-import { headers } from 'next/headers';
 import './globals.css';
 import Providers from './providers';
 import ServiceWorkerRegistration from './_components/system/ServiceWorkerRegistration';
 import InAppBrowserGuideModal from './_components/system/InAppBrowserGuideModal';
+import DevHostMetaTag from './_components/system/DevHostMetaTag';
 import { InAppBrowserProvider } from './_context/InAppBrowserContext';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -36,20 +36,18 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   themeColor: '#3b82f6',
+  viewportFit: 'cover',
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const host = (await headers()).get('host') ?? '';
-  const isDevHost = host === 'dev.zerotime.kr' || host.startsWith('dev.zerotime.kr:');
-
   return (
     <html lang="ko">
       <head>
-        {isDevHost && <meta name="robots" content="noindex, nofollow" />}
+        <DevHostMetaTag />
         <Script async src="https://www.googletagmanager.com/gtag/js?id=G-SMF31V39T9" />
         <Script id="ga-init">
           {`window.dataLayer = window.dataLayer || [];

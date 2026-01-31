@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+:root {
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-bottom: env(safe-area-inset-bottom);
+}
+
+/* Safe Area Utilities */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.mt-safe {
+  margin-top: env(safe-area-inset-top);
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
 html,
 body {
   height: 100%;
@@ -15,13 +37,16 @@ body {
 /* 스크롤바 숨기기 (스크롤 가능한 탭 바용) */
 .scrollbar-hide,
 .no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar,
 .no-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
 /* 애니메이션 */
@@ -29,6 +54,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -43,6 +69,7 @@ body {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -52,15 +79,20 @@ body {
 .animate-slide-up {
   animation: slideUp 0.3s ease-out;
 }
+
 @keyframes blink-orange {
   0% {
-    background-color: #fff7ed; /* bg-orange-50 */
+    background-color: #fff7ed;
+    /* bg-orange-50 */
   }
+
   50% {
     background-color: white;
   }
+
   100% {
-    background-color: #fff7ed; /* bg-orange-50 */
+    background-color: #fff7ed;
+    /* bg-orange-50 */
   }
 }
 

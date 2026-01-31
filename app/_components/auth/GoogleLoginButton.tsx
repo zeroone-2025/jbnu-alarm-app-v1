@@ -1,6 +1,8 @@
 'use client';
 
 import { FiLogIn } from 'react-icons/fi';
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 import { getGoogleLoginUrl } from '@/_lib/api';
 import { useInAppBrowser } from '@/_context/InAppBrowserContext';
 import { isInAppBrowser } from '@/_lib/utils/external-browser';
@@ -16,13 +18,28 @@ export default function GoogleLoginButton({
 }: GoogleLoginButtonProps) {
   const { openModal } = useInAppBrowser();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (isInAppBrowser()) {
       openModal();
       return;
     }
+
     onLoginStart?.();
-    window.location.href = getGoogleLoginUrl();
+
+    // 플랫폼 감지 (web, android, ios)
+    const platform = Capacitor.getPlatform();
+    const loginUrl = `${getGoogleLoginUrl()}?platform=${platform}`;
+
+    if (Capacitor.isNativePlatform()) {
+      // Android/iOS: 외부 브라우저로 열기
+      await Browser.open({
+        url: loginUrl,
+        presentationStyle: 'popover' // iOS: 모달, Android: 외부 브라우저
+      });
+    } else {
+      // Web: 기존 방식 유지
+      window.location.href = loginUrl;
+    }
   };
 
   return (

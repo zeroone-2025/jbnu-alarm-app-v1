@@ -12,7 +12,7 @@ import Logo from '@/_components/ui/Logo';
 
 export default function HomeHeader({ onNotificationClick, notificationCount = 0, onMenuClick }: HomeHeaderProps) {
   return (
-    <header className="relative flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white px-5">
+    <header className="relative flex min-h-[calc(4rem+var(--safe-area-top))] shrink-0 items-end justify-between border-b border-gray-100 bg-white px-5 pb-4 pt-safe">
       {/* Left: User Icon (Menu) */}
       <div className="flex w-20 justify-start">
         <button

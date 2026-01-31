@@ -6,7 +6,7 @@ const withPWA = withPWAInit({
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: false, // API 응답 캐싱 문제 방지
   reloadOnOnline: true,
-  disable: process.env.NODE_ENV === "development",
+  disable: process.env.NODE_ENV === "development" || process.env.CAPACITOR_BUILD === "true",
 
   // register: true, // 수동 등록(ServiceWorkerRegistration.tsx)을 사용하므로 자동 등록 비활성화
   workboxOptions: {
@@ -70,6 +70,11 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   /* config options here */
+  output: 'export', // Capacitor용 정적 빌드
+  trailingSlash: true,
+  images: {
+    unoptimized: true, // Static export에서는 이미지 최적화 비활성화
+  },
   env: {
     // .env 파일에서 읽어온 값을 빌드 타임에 고정
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,

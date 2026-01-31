@@ -48,7 +48,7 @@ export default function FullPageModal({
       {/* 전체 화면 컨테이너 */}
       <div className="relative mx-auto flex h-full w-full max-w-md flex-col overflow-hidden border-x border-gray-100 bg-white shadow-xl md:max-w-4xl">
         {/* 헤더 */}
-        <div className="shrink-0 border-b border-gray-100 px-5 py-4">
+        <div className="shrink-0 border-b border-gray-100 px-5 pb-4 pt-safe">
           <div className="flex items-center gap-3">
             <button
               onClick={onClose}
