@@ -10,6 +10,12 @@ export const getGoogleLoginUrl = () => {
     return `${API_BASE_URL}/auth/google/login`;
 };
 
+// 구글 로그인 URL 가져오기 (비동기) - iOS 외부 브라우저용
+export const fetchGoogleLoginUrl = async (platform: string): Promise<string> => {
+    const response = await authApi.get<{ url: string }>(`/auth/google/login/url?platform=${platform}`);
+    return response.data.url;
+};
+
 // 인증 초기화 여부 확인
 export const isAuthReady = () => isAuthInitialized;
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { MAJOR_PRESETS } from '@/_lib/constants/presets';
 import { completeOnboarding } from '@/_lib/api';
 import UserInfoForm, { UserInfoFormData } from '@/_components/auth/UserInfoForm';
+import FullPageModal from '@/_components/layout/FullPageModal';
 import type { Department } from '@/_types/department';
 
 interface OnboardingModalProps {
@@ -20,8 +21,6 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
     admission_year: '',
   });
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -85,8 +84,12 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="mx-4 w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl">
+    <FullPageModal
+      isOpen={isOpen}
+      onClose={() => { }} // 온보딩은 닫기 불가
+      title="환영합니다!"
+    >
+      <div className="flex min-h-full flex-col px-5 py-8">
         {/* 헤더 */}
         <div className="mb-8 text-center">
           <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-3xl">🎓</div>
@@ -98,7 +101,7 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
           </p>
         </div>
 
-        <div className="space-y-6">
+        <div className="flex-1 space-y-6">
           <UserInfoForm
             formData={formData}
             onChange={(data) => setFormData((prev: UserInfoFormData) => ({ ...prev, ...data }))}
@@ -107,8 +110,8 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
           />
         </div>
 
-        {/* 하단 버튼 영역 */}
-        <div className="mt-10 flex flex-col gap-3">
+        {/* 하단 버튼 영역 - Safe area 고려 */}
+        <div className="mt-10 flex flex-col gap-3 pb-safe">
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
@@ -125,6 +128,6 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
           </button>
         </div>
       </div>
-    </div>
+    </FullPageModal>
   );
 }
