@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
@@ -11,7 +11,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import Toast from '@/_components/ui/Toast';
 import { useSelectedCategories } from '@/_lib/hooks/useSelectedCategories';
 import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
-import { useAuthState } from '@/_lib/hooks/useAuthState';
+import { useUser } from '@/_lib/hooks/useUser';
 import { useFilterState } from './_hooks/useFilterState';
 import { useKeywordNotices } from './_hooks/useKeywordNotices';
 import { useNoticeActions } from './_hooks/useNoticeActions';
@@ -21,8 +21,9 @@ import NoticeList from './_components/NoticeList';
 import HomeHeader from './_components/HomeHeader';
 import Sidebar from '@/_components/layout/Sidebar';
 import CategoryFilter from '@/_components/ui/CategoryFilter';
-import BoardFilterModal from './_components/BoardFilterModal';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
+import ScrollToTop from '@/_components/ui/ScrollToTop';
+import PullToRefreshIndicator from '@/_components/ui/PullToRefreshIndicator';
 
 // Dayjs 설정
 dayjs.extend(relativeTime);
@@ -36,8 +37,10 @@ function HomeContent() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
+  const [toastKey, setToastKey] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showBoardFilterModal, setShowBoardFilterModal] = useState(false);
+  // Infinite scroll root element state
+  const [scrollRoot, setScrollRoot] = useState<HTMLElement | null>(null);
 
   // 클라이언트 마운트 체크
   useEffect(() => {
@@ -45,7 +48,7 @@ function HomeContent() {
   }, []);
 
   // Custom Hooks
-  const { isLoggedIn, isAuthLoaded, checkAuthState } = useAuthState();
+  const { isLoggedIn, isAuthLoaded, refetch: refetchUser } = useUser();
   const {
     selectedCategories,
     updateSelectedCategories,
@@ -91,6 +94,7 @@ function HomeContent() {
     keywordNotices,
     keywordCount,
     hasNewKeywordNotices,
+    newKeywordCount, // 훅에서 반환한 값 사용
     loadKeywordNotices,
     loadKeywordNoticesSilent,
     loadKeywordCount,
@@ -106,7 +110,6 @@ function HomeContent() {
   );
 
   // 무한 스크롤 쿼리
-  const isFavoriteFilter = filter === 'FAVORITE';
   const {
     data: noticePages,
     fetchNextPage,
@@ -115,14 +118,14 @@ function HomeContent() {
     isLoading,
     refetch,
   } = useInfiniteQuery({
-    // queryKey에서 동적으로 변하는 값들 제거
-    queryKey: ['notices', 'infinite', selectedBoardsParam],
+    // filter를 queryKey에 포함하여 필터별 독립적인 캐시 유지
+    queryKey: ['notices', 'infinite', selectedBoardsParam, filter],
     queryFn: ({ pageParam }) => fetchNoticesInfinite(
       pageParam,
       20,
       true,
       selectedBoards,
-      isFavoriteFilter
+      filter === 'FAVORITE'  // 클로저 문제 방지를 위해 직접 참조
     ),
     getNextPageParam: (lastPage) => lastPage.next_cursor,
     initialPageParam: null as string | null,
@@ -159,12 +162,12 @@ function HomeContent() {
 
   // Intersection Observer로 스크롤 끝 감지
   const { ref: loadMoreRef, inView } = useInView({
-    rootMargin: '500px 0px 0px 0px',
+    root: scrollRoot, // 스크롤 컨테이너를 root로 명시
+    rootMargin: '0px 0px 2000px 0px', // 하단 2000px 미리 감지
     threshold: 0,
   });
 
-  // 중복 요청 방지를 위한 ref
-  const fetchingRef = useRef(false);
+
 
   // 스크롤이 끝에 가까워지면 다음 페이지 로드
   useEffect(() => {
@@ -174,16 +177,8 @@ function HomeContent() {
     if (!inView) return;
     if (!hasNextPage) return;
     if (isFetchingNextPage) return;
-    if (fetchingRef.current) return; // 이미 요청 중이면 무시
-
     // 요청 시작
-    fetchingRef.current = true;
-    fetchNextPage().finally(() => {
-      // 요청 완료 후 플래그 해제 (약간의 딜레이 추가)
-      setTimeout(() => {
-        fetchingRef.current = false;
-      }, 500);
-    });
+    fetchNextPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, isLoading, inView, hasNextPage, isFetchingNextPage]);
 
@@ -199,7 +194,7 @@ function HomeContent() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        checkAuthState();
+        refetchUser(); // 유저 상태 및 로그인 정보 동기화
         if (filter === 'ALL') {
           refetch();
         }
@@ -214,7 +209,7 @@ function HomeContent() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [filter, isLoggedIn, refetch, checkAuthState, loadKeywordCount, loadKeywordNoticesSilent]);
+  }, [filter, isLoggedIn, refetch, refetchUser, loadKeywordCount, loadKeywordNoticesSilent]);
 
   // 온보딩 완료 핸들러
   const handleOnboardingComplete = (categories: string[]) => {
@@ -226,10 +221,11 @@ function HomeContent() {
   const handleShowToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToastMessage(message);
     setToastType(type);
+    setToastKey(prev => prev + 1); // 매번 증가시켜 새 toast 트리거
     setShowToast(true);
   };
 
-  // 게시판 필터 적용
+  // 게시판 필터 적용 (필요 시 유지하되, 현재는 /filter 페이지에서 처리)
   const handleBoardFilterApply = async (boards: string[]) => {
     await updateSelectedCategories(boards);
     if (filter === 'KEYWORD') {
@@ -279,18 +275,12 @@ function HomeContent() {
     <>
       <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
 
-      <BoardFilterModal
-        isOpen={showBoardFilterModal}
-        onClose={() => setShowBoardFilterModal(false)}
-        selectedBoards={selectedBoards}
-        onApply={handleBoardFilterApply}
-      />
-
       <Toast
         message={toastMessage}
         isVisible={showToast}
         onClose={() => setShowToast(false)}
         type={toastType}
+        triggerKey={toastKey}
       />
 
       <main className="h-full overflow-hidden bg-gray-50">
@@ -300,10 +290,12 @@ function HomeContent() {
             <HomeHeader
               onMenuClick={() => setIsSidebarOpen(true)}
               onNotificationClick={() => {
+                // 이전 확인 시간을 쿼리 파라미터로 전달
+                const lastSeen = localStorage.getItem('keyword_notice_seen_at');
                 markKeywordNoticesSeen(keywordNotices);
-                router.push('/notifications');
+                router.push(lastSeen ? `/notifications?last_seen=${encodeURIComponent(lastSeen)}` : '/notifications');
               }}
-              showNotificationBadge={isLoggedIn && hasNewKeywordNotices}
+              notificationCount={newKeywordCount}
             />
           </div>
 
@@ -313,7 +305,7 @@ function HomeContent() {
               activeFilter={filter}
               onFilterChange={(f) => setFilter(f as any)}
               isLoggedIn={isLoggedIn}
-              onSettingsClick={() => setShowBoardFilterModal(true)}
+              onSettingsClick={() => router.push('/filter')}
               onShowToast={handleShowToast}
             />
           </div>
@@ -327,32 +319,26 @@ function HomeContent() {
           )}
 
           {/* Pull to Refresh 인디케이터 */}
-          <div
-            className="shrink-0 flex items-center justify-center bg-linear-to-b from-gray-50 to-transparent overflow-hidden"
-            style={{
-              height: refreshing ? '64px' : isPulling ? `${pullDistance}px` : '0px',
-              opacity: refreshing ? 1 : isPulling ? Math.min(pullDistance / 50, 1) : 0,
-              transition: (isPulling || refreshing) ? 'none' : 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out',
-            }}
-          >
-            {refreshing ? (
-              <div className="w-6 h-6 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
-            ) : isPulling && pullDistance > 0 ? (
-              <div
-                className="text-sm font-medium text-gray-600"
-                style={{
-                  transform: `scale(${Math.min(pullDistance / 40, 1)})`,
-                }}
-              >
-                {pullDistance > 30 ? '↓ 놓아서 새로고침' : '↓ 당겨서 새로고침'}
-              </div>
-            ) : null}
-          </div>
+          <PullToRefreshIndicator
+            isPulling={isPulling}
+            pullDistance={pullDistance}
+            refreshing={refreshing}
+          />
+
+          <ScrollToTop containerRef={scrollContainerRef as React.RefObject<HTMLElement>} />
 
           {/* 공지사항 리스트 */}
           <div className="relative flex-1 min-h-0 overflow-hidden">
             <div
-              ref={scrollContainerRef as React.RefObject<HTMLDivElement>}
+              ref={(node) => {
+                // scrollContainerRef와 scrollRoot 모두 업데이트
+                if (scrollContainerRef && 'current' in scrollContainerRef) {
+                  (scrollContainerRef as React.MutableRefObject<HTMLElement | null>).current = node;
+                }
+                if (node !== scrollRoot) {
+                  setScrollRoot(node);
+                }
+              }}
               className="h-full overflow-y-auto"
               style={{
                 touchAction: 'pan-y',
@@ -369,14 +355,16 @@ function HomeContent() {
                 onToggleFavorite={handleToggleFavorite}
                 isInFavoriteTab={filter === 'FAVORITE'}
                 isLoggedIn={isLoggedIn}
-                onOpenBoardFilter={() => setShowBoardFilterModal(true)}
+                onOpenBoardFilter={() => router.push('/filter')}
                 onShowToast={handleShowToast}
                 emptyMessage={
                   filter === 'KEYWORD'
                     ? (keywordCount === 0
                       ? '키워드를 등록하면 관련 공지가 모여요'
                       : '아직 키워드에 맞는 공지사항이 없어요')
-                    : '표시할 공지사항이 없어요'
+                    : filter === 'UNREAD'
+                      ? '모든 공지사항을 다 읽었어요'
+                      : '표시할 공지사항이 없어요'
                 }
                 emptyDescription={
                   filter === 'KEYWORD'
@@ -390,15 +378,30 @@ function HomeContent() {
               {/* 무한 스크롤 */}
               {filter !== 'KEYWORD' && (
                 <>
-                  <div ref={loadMoreRef} className="h-1" />
-
-                  {isFetchingNextPage && (
-                    <div className="flex justify-center py-8">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+                  {/* 로딩 감지 및 수동 로드 영역 - 다음 페이지가 있을 때만 표시 */}
+                  {hasNextPage && (
+                    <div
+                      ref={loadMoreRef}
+                      className="py-4 text-center cursor-pointer text-gray-400 text-sm hover:text-gray-600 active:scale-95 transition-transform"
+                      onClick={() => {
+                        if (!isFetchingNextPage) {
+                          fetchNextPage();
+                        }
+                      }}
+                    >
+                      {isFetchingNextPage ? (
+                        <div className="flex justify-center items-center gap-2">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                          <span>불러오는 중...</span>
+                        </div>
+                      ) : (
+                        <span>더 불러오려면 터치하세요</span>
+                      )}
                     </div>
                   )}
 
-                  {!hasNextPage && notices.length > 0 && (
+                  {/* 모든 데이터 로드 완료 메시지 - 다음 페이지가 없을 때만 표시 */}
+                  {!hasNextPage && filteredNotices.length > 0 && (
                     <div className="py-8 text-center text-sm text-gray-400">
                       모든 공지사항을 불러왔어요
                     </div>
@@ -416,5 +419,17 @@ function HomeContent() {
 }
 
 export default function Home() {
-  return <HomeContent />;
+  return (
+    <Suspense fallback={
+      <main className="h-full overflow-hidden bg-gray-50">
+        <div className="relative flex flex-col w-full h-full max-w-md mx-auto overflow-hidden bg-white border-gray-100 shadow-xl border-x md:max-w-4xl">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
+          </div>
+        </div>
+      </main>
+    }>
+      <HomeContent />
+    </Suspense>
+  );
 }

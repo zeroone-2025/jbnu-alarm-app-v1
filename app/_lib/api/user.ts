@@ -4,6 +4,7 @@ import type {
     UserProfileUpdate,
     UserSubscription,
     UpdateSubscriptionsResponse,
+    OnboardingRequest, // 추가
 } from '@/_types/user';
 
 // 내 정보 조회
@@ -29,5 +30,14 @@ export const updateUserSubscriptions = async (boardCodes: string[]) => {
     const response = await api.put<UpdateSubscriptionsResponse>('/users/me/subscriptions', {
         board_codes: boardCodes,
     });
+    return response.data;
+};
+
+// 온보딩 완료 처리
+export const completeOnboarding = async (data: OnboardingRequest) => {
+    const response = await api.post<{ message: string; user: UserProfile; subscribed_boards: string[] }>(
+        '/users/me/onboarding',
+        data
+    );
     return response.data;
 };

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FiInfo, FiRotateCcw } from 'react-icons/fi';
 import { BOARD_LIST, CATEGORY_ORDER, BoardCategory } from '@/_lib/constants/boards';
-import { isUserLoggedIn } from '@/_lib/utils/auth';
+import { useUser } from '@/_lib/hooks/useUser';
 import Button from '@/_components/ui/Button';
 
 interface BoardFilterContentProps {
@@ -18,15 +18,18 @@ export default function BoardFilterContent({
   onClose,
 }: BoardFilterContentProps) {
   const [tempSelection, setTempSelection] = useState<Set<string>>(new Set());
-  const isLoggedIn = isUserLoggedIn();
+  const { isLoggedIn, isAuthLoaded } = useUser(); // isAuthLoaded 추가
   const isGuest = !isLoggedIn;
   const isFixedGuestBoard = (boardId: string) => isGuest && boardId === 'home_campus';
 
   // 초기화
   useEffect(() => {
+    // isAuthLoaded가 true가 될 때까지 기다립니다.
+    if (!isAuthLoaded) return;
+
     const initial = isGuest ? [...selectedBoards, 'home_campus'] : selectedBoards;
     setTempSelection(new Set(initial));
-  }, [selectedBoards, isGuest]);
+  }, [selectedBoards, isGuest, isAuthLoaded]); // isAuthLoaded를 의존성 배열에 추가
 
   // 선택된 게시판과 미선택 게시판 분리
   const selectedItems = BOARD_LIST.filter((board) => tempSelection.has(board.id));
@@ -67,13 +70,11 @@ export default function BoardFilterContent({
     }
   };
 
-  // 적용하기
   const handleApply = () => {
     const applied = isGuest
       ? Array.from(new Set([...tempSelection, 'home_campus']))
       : Array.from(tempSelection);
     onApply(applied);
-    onClose();
   };
 
   return (
@@ -104,11 +105,10 @@ export default function BoardFilterContent({
                   key={board.id}
                   onClick={() => toggleBoard(board.id)}
                   disabled={isFixedGuestBoard(board.id)}
-                  className={`rounded-full border-2 border-gray-900 bg-white px-4 py-2 text-sm font-bold text-gray-900 shadow-md transition-all ${
-                    isFixedGuestBoard(board.id)
-                      ? 'cursor-not-allowed opacity-60'
-                      : 'hover:bg-gray-50 active:scale-95'
-                  }`}
+                  className={`rounded-full border-2 border-gray-900 bg-white px-4 py-2 text-sm font-bold text-gray-900 shadow-md transition-all ${isFixedGuestBoard(board.id)
+                    ? 'cursor-not-allowed opacity-60'
+                    : 'hover:bg-gray-50 active:scale-95'
+                    }`}
                 >
                   {board.name}
                 </button>
@@ -135,11 +135,10 @@ export default function BoardFilterContent({
                           key={board.id}
                           onClick={() => toggleBoard(board.id)}
                           disabled={isFixedGuestBoard(board.id)}
-                          className={`rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-all ${
-                            isFixedGuestBoard(board.id)
-                              ? 'cursor-not-allowed opacity-60'
-                              : 'hover:bg-gray-100 active:scale-95'
-                          }`}
+                          className={`rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition-all ${isFixedGuestBoard(board.id)
+                            ? 'cursor-not-allowed opacity-60'
+                            : 'hover:bg-gray-100 active:scale-95'
+                            }`}
                         >
                           {board.name}
                         </button>

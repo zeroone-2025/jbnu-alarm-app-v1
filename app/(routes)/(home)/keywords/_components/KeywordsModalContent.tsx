@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuthState } from '@/_lib/hooks/useAuthState';
 import { addKeyword, deleteKeyword, getMyKeywords, Keyword } from '@/_lib/api';
+import { useUser } from '@/_lib/hooks/useUser';
 import Toast from '@/_components/ui/Toast';
 import Button from '@/_components/ui/Button';
 import GoogleLoginButton from '@/_components/auth/GoogleLoginButton';
@@ -12,17 +12,19 @@ interface KeywordsModalContentProps {
 }
 
 export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentProps) {
-  const { isLoggedIn } = useAuthState();
+  const { isLoggedIn } = useUser();
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordsLoading, setKeywordsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [showToast, setShowToast] = useState(false);
+  const [toastKey, setToastKey] = useState(0);
 
   const showToastMessage = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToastMessage(message);
     setToastType(type);
+    setToastKey(prev => prev + 1);
     setShowToast(true);
   };
 
@@ -94,6 +96,7 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
         isVisible={showToast}
         onClose={() => setShowToast(false)}
         type={toastType}
+        triggerKey={toastKey}
       />
 
       {!isLoggedIn ? (
@@ -102,7 +105,7 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
           <p className="mt-4 text-sm text-gray-600">
             로그인하면 키워드를 저장하고 알림을 받을 수 있어요.
           </p>
-          
+
         </div>
       ) : (
         <div className="flex h-full flex-col p-5">

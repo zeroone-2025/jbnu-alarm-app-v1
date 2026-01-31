@@ -16,6 +16,7 @@ interface NoticeListProps {
   emptyDescription?: string;
   emptyActionLabel?: string;
   onEmptyActionClick?: () => void;
+  highlightedIds?: number[]; // 강조 표시할 공지 ID 목록
 }
 
 export default function NoticeList({
@@ -33,6 +34,7 @@ export default function NoticeList({
   emptyDescription,
   emptyActionLabel,
   onEmptyActionClick,
+  highlightedIds = [],
 }: NoticeListProps) {
   return (
     <div className="min-h-full p-0 bg-gray-50 md:p-5" role="list">
@@ -72,6 +74,7 @@ export default function NoticeList({
               isInFavoriteTab={isInFavoriteTab}
               isLoggedIn={isLoggedIn}
               onShowToast={onShowToast}
+              isHighlighted={highlightedIds.includes(notice.id)}
             />
           ))
         ) : (

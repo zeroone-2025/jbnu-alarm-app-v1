@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   getKeywordNotices,
   getMyKeywords,
@@ -15,20 +15,23 @@ import NoticeList from '@/(routes)/(home)/_components/NoticeList';
 import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
 import FullPageModal from '@/_components/layout/FullPageModal';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
+import { useUser } from '@/_lib/hooks/useUser';
 
 export default function NotificationsClient() {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn } = useUser();
   const [keywordCount, setKeywordCount] = useState<number | null>(null);
   const [keywordNotices, setKeywordNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [showToast, setShowToast] = useState(false);
+  const [toastKey, setToastKey] = useState(0);
 
   const showToastMessage = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToastMessage(message);
     setToastType(type);
+    setToastKey(prev => prev + 1);
     setShowToast(true);
   };
 
@@ -110,11 +113,29 @@ export default function NotificationsClient() {
     }
   };
 
+  const searchParams = useSearchParams();
+  const lastSeenParam = searchParams.get('last_seen');
+
+  const highlightedIds = useMemo(() => {
+    if (!lastSeenParam || keywordNotices.length === 0) return [];
+    try {
+      const lastSeenTime = new Date(lastSeenParam).getTime();
+      const ids = keywordNotices
+        .filter(notice => {
+          // created_at이 있으면 우선 사용, 없으면 date 사용
+          const noticeTime = new Date(notice.created_at || notice.date).getTime();
+          // 기준 시점(마지막으로 확인한 시점)보다 나중에 올라온 공지만 강조
+          return noticeTime > lastSeenTime;
+        })
+        .map(notice => notice.id);
+      return ids;
+    } catch (e) {
+      return [];
+    }
+  }, [keywordNotices, lastSeenParam]);
+
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const loggedIn = !!token;
-    setIsLoggedIn(loggedIn);
-    if (loggedIn) {
+    if (isLoggedIn) {
       (async () => {
         const count = await loadKeywordCount();
         if (count === 0) {
@@ -124,27 +145,23 @@ export default function NotificationsClient() {
         await loadKeywordNotices();
       })();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isLoggedIn]);
 
 
   const keywordCountLabel = keywordCount ?? 0;
 
   return (
     <>
-      <Toast
-        message={toastMessage}
-        isVisible={showToast}
-        onClose={() => setShowToast(false)}
-        type={toastType}
-      />
-
       <FullPageModal isOpen={true} onClose={() => router.back()} title="알림">
         <KeywordSettingsBar
           keywordCount={keywordCountLabel}
-          onSettingsClick={() =>
-            router.push('/keywords')
-          }
+          onSettingsClick={() => {
+            if (!isLoggedIn) {
+              showToastMessage('로그인 후 키워드 설정을 사용할 수 있습니다.', 'info');
+              return;
+            }
+            router.push('/keywords');
+          }}
         />
 
         {/* Pull to Refresh 인디케이터 */}
@@ -204,11 +221,20 @@ export default function NotificationsClient() {
                     ? '상단 설정 버튼에서 키워드를 추가해 주세요'
                     : '새로운 알림이 오면 여기에 표시돼요'
                 }
+                highlightedIds={highlightedIds}
               />
             </div>
           </div>
         )}
       </FullPageModal>
+
+      <Toast
+        message={toastMessage}
+        isVisible={showToast}
+        onClose={() => setShowToast(false)}
+        type={toastType}
+        triggerKey={toastKey}
+      />
     </>
   );
 }

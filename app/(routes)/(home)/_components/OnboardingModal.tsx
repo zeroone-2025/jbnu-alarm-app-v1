@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { MAJOR_PRESETS } from '@/_lib/constants/presets';
-import { updateUserProfile, updateUserSubscriptions } from '@/_lib/api';
+import { completeOnboarding } from '@/_lib/api';
+import UserInfoForm, { UserInfoFormData } from '@/_components/auth/UserInfoForm';
+import type { Department } from '@/_types/department';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -10,37 +12,73 @@ interface OnboardingModalProps {
 }
 
 export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
-  const [selectedMajor, setSelectedMajor] = useState<string>('');
+  const [formData, setFormData] = useState<UserInfoFormData>({
+    nickname: '',
+    school: '전북대',
+    dept_code: '',
+    dept_name: '',
+    admission_year: '',
+  });
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
-    if (!selectedMajor) {
-      alert('학과를 선택해주세요!');
-      return;
-    }
-
-    const preset = MAJOR_PRESETS.find((p) => p.id === selectedMajor);
-    if (!preset) return;
-
     setIsSubmitting(true);
 
+    // 구독할 게시판 결정
+    let boardCodes: string[] = ['home_campus']; // 기본값: 본부 공지
+
+    if (formData.dept_code) {
+      // 프리셋이 있는지 확인 (라벨 또는 코드 매칭)
+      const preset = MAJOR_PRESETS.find(
+        (p) => p.label === formData.dept_name || p.id === formData.dept_code.replace('dept_', '')
+      );
+
+      if (preset) {
+        boardCodes = preset.categories;
+      } else {
+        // 프리셋 없으면 해당 학과 게시판 추가
+        boardCodes.push(formData.dept_code);
+      }
+    }
+
     try {
-      // 1. 백엔드 users.dept_code 업데이트
-      await updateUserProfile({ dept_code: selectedMajor });
+      const result = await completeOnboarding({
+        school: formData.school,
+        dept_code: formData.dept_code || undefined,
+        admission_year: formData.admission_year ? parseInt(formData.admission_year) : undefined,
+        board_codes: boardCodes,
+      });
 
-      // 2. 백엔드 user_subscriptions에 구독 카테고리 저장
-      await updateUserSubscriptions(preset.categories);
+      // localStorage 캐시 저장
+      localStorage.setItem('my_subscribed_categories', JSON.stringify(result.subscribed_boards));
 
-      // 3. localStorage에도 캐시 저장
-      localStorage.setItem('my_subscribed_categories', JSON.stringify(preset.categories));
-
-      // 4. 부모 컴포넌트에 알림
-      onComplete(preset.categories);
+      // 부모 컴포넌트에 알림
+      onComplete(result.subscribed_boards);
     } catch (error) {
-      console.error('학과 정보 저장 실패:', error);
-      alert('학과 정보 저장에 실패했습니다. 다시 시도해주세요.');
+      console.error('온보딩 처리 실패:', error);
+      alert('정보 저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    if (!confirm('학과 정보를 입력하지 않고 시작할까요?\n나중에 설정에서 언제든지 변경할 수 있습니다.')) return;
+
+    setIsSubmitting(true);
+    try {
+      const defaultBoards = ['home_campus'];
+      await completeOnboarding({
+        school: '전북대',
+        board_codes: defaultBoards,
+      });
+
+      localStorage.setItem('my_subscribed_categories', JSON.stringify(defaultBoards));
+      onComplete(defaultBoards);
+    } catch (error) {
+      console.error('건너뛰기 실패:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -48,68 +86,44 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+      <div className="mx-4 w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl">
         {/* 헤더 */}
-        <div className="mb-6 text-center">
-          <div className="mb-3 text-4xl">🎓</div>
+        <div className="mb-8 text-center">
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-3xl">🎓</div>
           <h2 className="mb-2 text-2xl font-bold text-gray-900">
             ZeroTime에 오신 것을 환영합니다!
           </h2>
-          <p className="text-sm text-gray-600">
-            학과를 선택하시면 필수 공지사항을 자동으로 구독해 드려요!
+          <p className="text-sm text-gray-500">
+            소속 정보를 알려주시면<br />맞춤형 공지사항을 자동으로 구독해 드려요!
           </p>
         </div>
 
-        {/* 학과 선택 */}
-        <div className="mb-6">
-          <label htmlFor="major-select" className="mb-2 block text-sm font-medium text-gray-700">
-            학과 선택
-          </label>
-          <select
-            id="major-select"
-            value={selectedMajor}
-            onChange={(e) => setSelectedMajor(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          >
-            <option value="">-- 학과를 선택하세요 --</option>
-            {MAJOR_PRESETS.map((preset) => (
-              <option key={preset.id} value={preset.id}>
-                {preset.label}
-              </option>
-            ))}
-          </select>
+        <div className="space-y-6">
+          <UserInfoForm
+            formData={formData}
+            onChange={(data) => setFormData((prev: UserInfoFormData) => ({ ...prev, ...data }))}
+            showNickname={false}
+            isReadonlySchool={true}
+          />
         </div>
 
-        {/* 선택된 학과 미리보기 */}
-        {selectedMajor && (
-          <div className="mb-6 rounded-lg bg-blue-50 p-4">
-            <p className="mb-2 text-xs font-semibold text-blue-900">구독할 카테고리:</p>
-            <div className="flex flex-wrap gap-2">
-              {MAJOR_PRESETS.find((p) => p.id === selectedMajor)?.categories.map((catId) => (
-                <span
-                  key={catId}
-                  className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700"
-                >
-                  {catId}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 버튼 */}
-        <button
-          onClick={handleSubmit}
-          disabled={!selectedMajor || isSubmitting}
-          className="w-full rounded-lg bg-blue-500 py-3 font-semibold text-white transition-all hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
-        >
-          {isSubmitting ? '저장 중...' : '시작하기'}
-        </button>
-
-        {/* 안내 문구 */}
-        <p className="mt-4 text-center text-xs text-gray-500">
-          나중에 설정에서 구독 카테고리를 변경할 수 있어요
-        </p>
+        {/* 하단 버튼 영역 */}
+        <div className="mt-10 flex flex-col gap-3">
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="w-full rounded-xl bg-gray-900 py-4 font-bold text-white transition-all hover:bg-gray-800 disabled:bg-gray-300"
+          >
+            {isSubmitting ? '준비 중...' : '시작하기'}
+          </button>
+          <button
+            onClick={handleSkip}
+            disabled={isSubmitting}
+            className="w-full py-2 text-sm font-medium text-gray-400 transition-all hover:text-gray-600"
+          >
+            건너뛰기
+          </button>
+        </div>
       </div>
     </div>
   );
