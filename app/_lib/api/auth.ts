@@ -7,7 +7,7 @@ let initializationPromise: Promise<boolean> | null = null;
 
 // 구글 로그인 URL 생성 (리다이렉트용)
 export const getGoogleLoginUrl = () => {
-    return `${API_BASE_URL}/auth/google/login`;
+    return `${API_BASE_URL}/auth/google/login?redirect_to=user`;
 };
 
 // 인증 초기화 여부 확인
