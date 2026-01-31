@@ -40,10 +40,11 @@ export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedI
       {/* 좌측 고정 설정 버튼 */}
       <button
         onClick={handleSettingsClick}
-        className="shrink-0 rounded-full bg-gray-100 p-1.5 text-gray-700 transition-colors hover:bg-gray-200"
+        className="shrink-0 flex items-center gap-1.5 rounded-full bg-gray-600 p-1.5 text-white transition-colors hover:bg-gray-300"
         aria-label="필터 설정"
       >
         <FiSliders size={18} />
+        <span className="text-sm font-medium">필터</span>
       </button>
 
       {/* 필터 칩 목록 (왼쪽부터 일정 간격으로 배치) */}

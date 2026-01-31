@@ -1,10 +1,11 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getUserProfile, updateUserProfile } from '@/_lib/api/user';
+import { getUserProfile, updateUserProfile, checkHasToken } from '@/_lib/api';
 import { useUserStore } from '@/_lib/store/useUserStore';
 import type { UserProfileUpdate } from '@/_types/user';
 import { useEffect, useState } from 'react';
+import { useAuthInitialized } from '@/providers';
 
 /**
  * 유저 프로필 조회 및 관리 훅
@@ -14,8 +15,10 @@ export function useUser() {
     const user = useUserStore((state) => state.user);
     const setUser = useUserStore((state) => state.setUser);
     const [isInternalLoaded, setIsInternalLoaded] = useState(false);
+    const isAuthInitialized = useAuthInitialized();
 
-    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('accessToken');
+    // 인증 초기화 완료 후 메모리의 토큰 확인
+    const hasToken = isAuthInitialized && checkHasToken();
 
     const query = useQuery({
         queryKey: ['user', 'profile'],
@@ -33,18 +36,18 @@ export function useUser() {
         } else if (query.isError) {
             setUser(null);
             setIsInternalLoaded(true);
-        } else if (!hasToken) {
-            // 토큰이 없으면 즉시 로딩 완료 처리
+        } else if (isAuthInitialized && !hasToken) {
+            // 인증 초기화 완료 + 토큰 없음 = 비로그인 상태
             setUser(null);
             setIsInternalLoaded(true);
         }
-    }, [query.data, query.isError, hasToken, setUser]);
+    }, [query.data, query.isError, hasToken, isAuthInitialized, setUser]);
 
     return {
         ...query,
         user,
         isLoggedIn: !!user,
-        isAuthLoaded: isInternalLoaded && !query.isFetching,
+        isAuthLoaded: isAuthInitialized && isInternalLoaded && !query.isFetching,
     };
 }
 
