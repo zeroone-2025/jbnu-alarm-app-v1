@@ -93,6 +93,7 @@ export default function ProfilePage() {
 
         // 2. localStorage 정리 (구독 카테고리 등)
         localStorage.removeItem('my_subscribed_categories');
+        localStorage.removeItem('access_token'); // 이전 로직의 잔재 제거
 
         // 3. Zustand Store 정리
         clearUser();

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { PiDotsThreeOutlineVerticalFill, PiCompassFill, PiShareNetworkFill, PiExport } from 'react-icons/pi';
 import { FiCopy, FiCheck } from 'react-icons/fi';
 import { getSystemType, isInAppBrowser, UserSystemType } from '@/_lib/utils/external-browser';
@@ -12,6 +13,11 @@ export default function InAppBrowserGuideModal() {
     const SITE_URL = 'https://zerotime.kr';
 
     useEffect(() => {
+        // Capacitor 네이티브 앱에서는 표시하지 않음
+        if (Capacitor.isNativePlatform()) {
+            return;
+        }
+
         if (isInAppBrowser()) {
             setSystemType(getSystemType());
             setIsVisible(true);
