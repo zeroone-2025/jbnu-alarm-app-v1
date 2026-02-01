@@ -99,12 +99,12 @@ export default function GoogleLoginButton({
     if (Capacitor.isNativePlatform()) {
       if (platform === 'ios') {
         try {
-          // iOS: 백엔드에서 직접 구글 로그인 URL을 받아와서 오픈
-          // Browser.open의 windowName: '_system'으로 외부 Safari 앱 실행
+          // iOS: In-App Browser (SFSafariViewController) 사용
+          // Deep Link로 앱으로 돌아올 수 있도록 in-app browser 사용
           const googleUrl = await fetchGoogleLoginUrl(platform);
           await Browser.open({
             url: googleUrl,
-            windowName: '_system'  // 외부 브라우저로 열기
+            presentationStyle: 'fullscreen'  // In-app browser로 열기
           });
         } catch (error) {
           console.error('Failed to get login URL:', error);
@@ -112,7 +112,7 @@ export default function GoogleLoginButton({
           const loginUrl = `${getGoogleLoginUrl()}?platform=${platform}`;
           await Browser.open({
             url: loginUrl,
-            windowName: '_system'
+            presentationStyle: 'fullscreen'
           });
         }
       } else {

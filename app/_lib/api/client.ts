@@ -15,8 +15,8 @@ const getApiBaseUrl = () => {
             const { Capacitor } = (window as any);
 
             if (Capacitor.isNativePlatform()) {
-                // Android/iOS: 네트워크 IP 사용
-                return process.env.NEXT_PUBLIC_API_BASE_URL_NATIVE || 'http://10.55.0.135:8080';
+                // Android/iOS: 원격 개발 서버 사용
+                return process.env.NEXT_PUBLIC_API_BASE_URL_NATIVE || 'https://dev-api.zerotime.kr:18181';
             }
         }
     } catch (e) {
@@ -27,7 +27,7 @@ const getApiBaseUrl = () => {
     return process.env.NEXT_PUBLIC_API_BASE_URL_WEB || 'http://localhost:8080';
 };
 
-// 백엔드 API 주소
+// 백엔드 API 주소 (런타임에 평가)
 export const API_BASE_URL = getApiBaseUrl();
 
 // 인증용 Axios 인스턴스 (refresh 요청 등 - 인터셉터 없음)
