@@ -1,5 +1,8 @@
 import { ImageResponse } from 'next/og';
 
+// Static export를 위한 설정
+export const dynamic = 'force-static';
+
 // Image metadata
 export const alt = '제로타임 - 전북대 공지사항 통합 알림';
 export const size = {

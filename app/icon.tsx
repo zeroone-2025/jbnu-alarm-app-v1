@@ -3,9 +3,6 @@ import { ImageResponse } from 'next/og';
 // Static export를 위한 설정
 export const dynamic = 'force-static';
 
-// Route segment config
-export const runtime = 'edge';
-
 // Image metadata
 export const size = {
     width: 512,
