@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { registerServiceWorkerUpdateHandler } from '@/_lib/utils/sw-update-handler';
 
 /**
@@ -9,6 +10,11 @@ import { registerServiceWorkerUpdateHandler } from '@/_lib/utils/sw-update-handl
  */
 export default function ServiceWorkerRegistration() {
     useEffect(() => {
+        // 네이티브 앱에서는 Service Worker 사용 안함
+        if (Capacitor.isNativePlatform()) {
+            return;
+        }
+
         // 프로덕션 환경에서만 Service Worker 등록
         if (process.env.NODE_ENV === 'production') {
             registerServiceWorkerUpdateHandler();

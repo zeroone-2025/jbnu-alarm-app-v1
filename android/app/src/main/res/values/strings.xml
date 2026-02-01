@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="title_activity_main">제로타임 - 전북대 공지 알리미</string>
+    <string name="package_name">kr.zerotime.app</string>
+    <string name="custom_url_scheme">kr.zerotime.app</string>
+</resources>

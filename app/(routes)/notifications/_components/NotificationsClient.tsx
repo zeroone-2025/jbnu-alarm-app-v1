@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   getKeywordNotices,
   getMyKeywords,
@@ -113,6 +113,27 @@ export default function NotificationsClient() {
     }
   };
 
+  const searchParams = useSearchParams();
+  const lastSeenParam = searchParams.get('last_seen');
+
+  const highlightedIds = useMemo(() => {
+    if (!lastSeenParam || keywordNotices.length === 0) return [];
+    try {
+      const lastSeenTime = new Date(lastSeenParam).getTime();
+      const ids = keywordNotices
+        .filter(notice => {
+          // created_at이 있으면 우선 사용, 없으면 date 사용
+          const noticeTime = new Date(notice.created_at || notice.date).getTime();
+          // 기준 시점(마지막으로 확인한 시점)보다 나중에 올라온 공지만 강조
+          return noticeTime > lastSeenTime;
+        })
+        .map(notice => notice.id);
+      return ids;
+    } catch (e) {
+      return [];
+    }
+  }, [keywordNotices, lastSeenParam]);
+
   useEffect(() => {
     if (isLoggedIn) {
       (async () => {
@@ -200,6 +221,7 @@ export default function NotificationsClient() {
                     ? '상단 설정 버튼에서 키워드를 추가해 주세요'
                     : '새로운 알림이 오면 여기에 표시돼요'
                 }
+                highlightedIds={highlightedIds}
               />
             </div>
           </div>

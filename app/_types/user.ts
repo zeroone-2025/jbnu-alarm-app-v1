@@ -9,6 +9,7 @@ export interface UserProfile {
     school: string;
     admission_year: number | null;
     profile_image: string | null;
+    role: string; // "user" | "admin" | "super_admin"
     created_at: string;
 }
 

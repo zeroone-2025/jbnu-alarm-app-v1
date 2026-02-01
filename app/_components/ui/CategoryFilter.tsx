@@ -1,5 +1,3 @@
-'use client';
-
 import { FiSliders } from 'react-icons/fi';
 
 interface CategoryFilterProps {
@@ -42,14 +40,15 @@ export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedI
       {/* 좌측 고정 설정 버튼 */}
       <button
         onClick={handleSettingsClick}
-        className="shrink-0 rounded-full bg-gray-100 p-1.5 text-gray-700 transition-colors hover:bg-gray-200"
+        className="shrink-0 flex items-center gap-1.5 rounded-full bg-gray-600 p-1.5 text-white transition-colors hover:bg-gray-300"
         aria-label="필터 설정"
       >
         <FiSliders size={18} />
+        <span className="text-sm font-medium">필터</span>
       </button>
 
-      {/* 필터 칩 목록 (왼쪽부터 일정 간격으로 배치) */}
-      <div className="flex flex-1 flex-wrap justify-start gap-2">
+      {/* 필터 칩 목록 (가로 스크롤 가능) */}
+      <div className="flex flex-1 overflow-x-auto no-scrollbar justify-start gap-2 py-0.5">
         {ALL_FILTERS.map((filter) => {
           const isActive = activeFilter === filter.key;
 
@@ -57,11 +56,10 @@ export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedI
             <button
               key={filter.key}
               onClick={() => handleFilterClick(filter.key)}
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                isActive
+              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-colors ${isActive
                   ? 'bg-gray-900 text-white'
                   : 'bg-white text-gray-900 hover:bg-gray-200'
-              }`}
+                }`}
             >
               {filter.label}
             </button>

@@ -9,6 +9,7 @@ import { FiLogOut, FiEdit3 } from 'react-icons/fi';
 import { useUserStore } from '@/_lib/store/useUserStore';
 import Button from '@/_components/ui/Button';
 import Toast from '@/_components/ui/Toast';
+import { logoutUser } from '@/_lib/api';
 
 export default function ProfilePage() {
     const router = useRouter();
@@ -84,17 +85,20 @@ export default function ProfilePage() {
         });
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         if (!confirm('로그아웃 하시겠습니까?')) return;
 
-        // 1. localStorage 정리
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('my_subscribed_categories');
+        // 1. 백엔드에 로그아웃 요청 (refresh token 폐기 + 메모리 토큰 삭제)
+        await logoutUser();
 
-        // 2. Zustand Store 정리
+        // 2. localStorage 정리 (구독 카테고리 등)
+        localStorage.removeItem('my_subscribed_categories');
+        localStorage.removeItem('access_token'); // 이전 로직의 잔재 제거
+
+        // 3. Zustand Store 정리
         clearUser();
 
-        // 3. 홈으로 이동
+        // 4. 홈으로 이동
         window.location.href = '/?logout=success';
     };
 

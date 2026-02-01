@@ -3,16 +3,16 @@ import { FiUser, FiBell } from 'react-icons/fi';
 interface HomeHeaderProps {
   // 알림 버튼 클릭 핸들러 (추후 구현)
   onNotificationClick?: () => void;
-  showNotificationBadge?: boolean;
+  notificationCount?: number;
   // 메뉴 버튼 클릭 핸들러
   onMenuClick: () => void;
 }
 
 import Logo from '@/_components/ui/Logo';
 
-export default function HomeHeader({ onNotificationClick, showNotificationBadge, onMenuClick }: HomeHeaderProps) {
+export default function HomeHeader({ onNotificationClick, notificationCount = 0, onMenuClick }: HomeHeaderProps) {
   return (
-    <header className="relative flex h-16 shrink-0 items-center justify-between border-b border-gray-100 bg-white px-5">
+    <header className="relative flex min-h-[calc(4rem+var(--safe-area-top))] shrink-0 items-end justify-between border-b border-gray-100 bg-white px-5 pb-4 pt-safe">
       {/* Left: User Icon (Menu) */}
       <div className="flex w-20 justify-start">
         <button
@@ -37,8 +37,10 @@ export default function HomeHeader({ onNotificationClick, showNotificationBadge,
           aria-label="알림"
         >
           <FiBell size={19} />
-          {showNotificationBadge && (
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
+          {notificationCount > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white">
+              {notificationCount > 99 ? '99+' : notificationCount}
+            </span>
           )}
         </button>
       </div>

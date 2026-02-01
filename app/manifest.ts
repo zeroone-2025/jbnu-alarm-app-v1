@@ -1,4 +1,8 @@
-import { MetadataRoute } from 'next';
+import type { MetadataRoute } from 'next';
+
+// Static export를 위한 설정
+export const dynamic = 'force-static';
+
 
 export default function manifest(): MetadataRoute.Manifest {
     return {

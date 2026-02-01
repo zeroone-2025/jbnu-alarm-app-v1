@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
@@ -41,6 +41,8 @@ function HomeContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   // Infinite scroll root element state
   const [scrollRoot, setScrollRoot] = useState<HTMLElement | null>(null);
+  // 초기 마운트 시 visibilitychange 무시를 위한 ref
+  const isInitialMount = useRef(true);
 
   // 클라이언트 마운트 체크
   useEffect(() => {
@@ -94,6 +96,7 @@ function HomeContent() {
     keywordNotices,
     keywordCount,
     hasNewKeywordNotices,
+    newKeywordCount, // 훅에서 반환한 값 사용
     loadKeywordNotices,
     loadKeywordNoticesSilent,
     loadKeywordCount,
@@ -192,6 +195,12 @@ function HomeContent() {
   // 페이지 visibility 변경 시 새로고침
   useEffect(() => {
     const handleVisibilityChange = () => {
+      // 초기 마운트 시에는 무시 (새로고침 시 중복 요청 방지)
+      if (isInitialMount.current) {
+        isInitialMount.current = false;
+        return;
+      }
+
       if (document.visibilityState === 'visible') {
         refetchUser(); // 유저 상태 및 로그인 정보 동기화
         if (filter === 'ALL') {
@@ -289,10 +298,12 @@ function HomeContent() {
             <HomeHeader
               onMenuClick={() => setIsSidebarOpen(true)}
               onNotificationClick={() => {
+                // 이전 확인 시간을 쿼리 파라미터로 전달
+                const lastSeen = localStorage.getItem('keyword_notice_seen_at');
                 markKeywordNoticesSeen(keywordNotices);
-                router.push('/notifications');
+                router.push(lastSeen ? `/notifications?last_seen=${encodeURIComponent(lastSeen)}` : '/notifications');
               }}
-              showNotificationBadge={isLoggedIn && hasNewKeywordNotices}
+              notificationCount={newKeywordCount}
             />
           </div>
 
@@ -416,5 +427,17 @@ function HomeContent() {
 }
 
 export default function Home() {
-  return <HomeContent />;
+  return (
+    <Suspense fallback={
+      <main className="h-full overflow-hidden bg-gray-50">
+        <div className="relative flex flex-col w-full h-full max-w-md mx-auto overflow-hidden bg-white border-gray-100 shadow-xl border-x md:max-w-4xl">
+          <div className="flex-1 flex items-center justify-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
+          </div>
+        </div>
+      </main>
+    }>
+      <HomeContent />
+    </Suspense>
+  );
 }

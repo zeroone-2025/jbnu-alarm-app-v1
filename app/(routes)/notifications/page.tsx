@@ -1,5 +1,10 @@
+import { Suspense } from 'react';
 import NotificationsClient from './_components/NotificationsClient';
 
 export default function NotificationsPage() {
-  return <NotificationsClient />;
+  return (
+    <Suspense fallback={null}>
+      <NotificationsClient />
+    </Suspense>
+  );
 }
