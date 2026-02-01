@@ -1,9 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiX, FiUser, FiChevronRight } from 'react-icons/fi';
-import { useUserStore } from '@/_lib/store/useUserStore';
+import { FiX, FiUser, FiChevronRight, FiSettings } from 'react-icons/fi';
 import { useUser } from '@/_lib/hooks/useUser';
 import GoogleLoginButton from '@/_components/auth/GoogleLoginButton';
 
@@ -21,6 +19,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     onClose();
     router.push('/profile');
   };
+
+  const handleAdminClick = () => {
+    onClose();
+    // admin_fed는 별도 포트에서 실행되므로 전체 URL로 이동
+    const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3001';
+    window.location.href = `${adminUrl}/dashboard`;
+  };
+
+  // admin 또는 super_admin 권한 체크 (일반 user는 false)
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
   return (
     <>
@@ -64,40 +72,79 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   </p>
                 </>
               ) : (
-                <button
-                  onClick={handleProfileClick}
-                  className="w-full p-4 text-left transition-all border border-gray-100 bg-gray-50/50 rounded-xl hover:bg-gray-100 active:scale-[0.98]"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {user?.profile_image ? (
-                        <img
-                          src={user.profile_image}
-                          alt={user.nickname || '사용자'}
-                          className="object-cover w-10 h-10 rounded-full"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center w-10 h-10 text-blue-600 bg-blue-100 rounded-full">
-                          <FiUser size={20} />
+                <div className="space-y-3">
+                  <button
+                    onClick={handleProfileClick}
+                    className="w-full p-4 text-left transition-all border border-gray-100 bg-gray-50/50 rounded-xl hover:bg-gray-100 active:scale-[0.98]"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {user?.profile_image ? (
+                          <img
+                            src={user.profile_image}
+                            alt={user.nickname || '사용자'}
+                            className="object-cover w-10 h-10 rounded-full"
+                          />
+                        ) : (
+                          <div className="flex items-center justify-center w-10 h-10 text-blue-600 bg-blue-100 rounded-full">
+                            <FiUser size={20} />
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-bold text-gray-800">
+                            {user?.nickname || '사용자'} 님
+                          </p>
+                          <p className="text-[11px] text-gray-400">프로필 관리하기</p>
                         </div>
-                      )}
-                      <div>
-                        <p className="text-sm font-bold text-gray-800">
-                          {user?.nickname || '사용자'} 님
-                        </p>
-                        <p className="text-[11px] text-gray-400">프로필 관리하기</p>
                       </div>
+                      <FiChevronRight className="text-gray-400" size={18} />
                     </div>
-                    <FiChevronRight className="text-gray-400" size={18} />
-                  </div>
-                </button>
+                  </button>
+
+                  {/* Admin 페이지 버튼 (admin, super_admin만 표시) */}
+                  {isAdmin && (
+                    <button
+                      onClick={handleAdminClick}
+                      className="w-full p-4 text-left transition-all border border-purple-100 bg-purple-50/50 rounded-xl hover:bg-purple-100 active:scale-[0.98]"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-10 h-10 text-purple-600 bg-purple-100 rounded-full">
+                            <FiSettings size={20} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-800">
+                              관리자 페이지
+                            </p>
+                            <p className="text-[11px] text-purple-600">Admin Dashboard</p>
+                          </div>
+                        </div>
+                        <FiChevronRight className="text-purple-400" size={18} />
+                      </div>
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
 
           {/* Footer */}
-          <div className="p-5 border-t border-gray-100">
-            <p className="text-xs text-center text-gray-400">ZeroTime v0.1.0</p>
+          <div className="p-5 border-t border-gray-100 bg-gray-50/30">
+            <div className="flex flex-col gap-4 text-center">
+              <p className="text-[11px] leading-relaxed text-gray-400 break-keep">
+                이 프로젝트는 전북대학교
+                <br />
+                컴퓨터인공지능학부, 경영학과 학생들이 협력하여
+                <br />
+                개발 중인 베타 서비스입니다.
+              </p>
+
+              <div className="space-y-0.5">
+                <p className="text-[10px] font-semibold text-gray-400 tracking-wide">
+                  Powered by <span className="text-[#034286]">JEduTools</span>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

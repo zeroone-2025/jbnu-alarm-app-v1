@@ -7,7 +7,7 @@ let initializationPromise: Promise<boolean> | null = null;
 
 // 구글 로그인 URL 생성 (리다이렉트용)
 export const getGoogleLoginUrl = () => {
-    return `${API_BASE_URL}/auth/google/login`;
+    return `${API_BASE_URL}/auth/google/login?redirect_to=user`;
 };
 
 // 구글 로그인 URL 가져오기 (비동기) - iOS 외부 브라우저용
