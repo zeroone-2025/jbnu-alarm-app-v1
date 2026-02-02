@@ -126,6 +126,33 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </div>
               )}
             </div>
+
+            {/* 친바 서비스 섹션 */}
+            <div className="mb-8">
+              <h3 className="mb-3 text-xs font-semibold text-gray-400 uppercase">서비스</h3>
+              <button
+                onClick={() => {
+                  onClose();
+                  router.push('/chinba');
+                }}
+                className="w-full p-4 text-left transition-all border border-blue-100 bg-blue-50/50 rounded-xl hover:bg-blue-100 active:scale-[0.98]"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-10 h-10 text-white bg-gradient-to-br from-blue-500 to-blue-600 rounded-full font-bold text-sm">
+                      친
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800">
+                        친바 서비스
+                      </p>
+                      <p className="text-[11px] text-blue-600">시간 조율 도구</p>
+                    </div>
+                  </div>
+                  <FiChevronRight className="text-blue-400" size={18} />
+                </div>
+              </button>
+            </div>
           </div>
 
           {/* Footer */}
