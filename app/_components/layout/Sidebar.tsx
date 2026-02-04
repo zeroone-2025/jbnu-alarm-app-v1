@@ -27,6 +27,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     window.location.href = `${adminUrl}/dashboard`;
   };
 
+  const handleChinbaClick = () => {
+    onClose();
+    router.push('/chinba');
+  };
+
   // admin 또는 super_admin 권한 체크 (일반 user는 false)
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
@@ -73,6 +78,30 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </>
               ) : (
                 <div className="space-y-3">
+                  
+                  {/* Admin 페이지 버튼 (admin, super_admin만 표시) */}
+                  {isAdmin && (
+                    <button
+                      onClick={handleAdminClick}
+                      className="w-full p-4 text-left transition-all border border-purple-100 bg-purple-50/50 rounded-xl hover:bg-purple-100 active:scale-[0.98]"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-10 h-10 text-purple-600 bg-purple-100 rounded-full">
+                            <FiSettings size={20} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-800">
+                              관리자 페이지
+                            </p>
+                            <p className="text-[11px] text-purple-600">Admin Dashboard</p>
+                          </div>
+                        </div>
+                        <FiChevronRight className="text-purple-400" size={18} />
+                      </div>
+                    </button>
+                  )}
+
                   <button
                     onClick={handleProfileClick}
                     className="w-full p-4 text-left transition-all border border-gray-100 bg-gray-50/50 rounded-xl hover:bg-gray-100 active:scale-[0.98]"
@@ -100,31 +129,25 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       <FiChevronRight className="text-gray-400" size={18} />
                     </div>
                   </button>
-
-                  {/* Admin 페이지 버튼 (admin, super_admin만 표시) */}
-                  {isAdmin && (
-                    <button
-                      onClick={handleAdminClick}
-                      className="w-full p-4 text-left transition-all border border-purple-100 bg-purple-50/50 rounded-xl hover:bg-purple-100 active:scale-[0.98]"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 text-purple-600 bg-purple-100 rounded-full">
-                            <FiSettings size={20} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-gray-800">
-                              관리자 페이지
-                            </p>
-                            <p className="text-[11px] text-purple-600">Admin Dashboard</p>
-                          </div>
-                        </div>
-                        <FiChevronRight className="text-purple-400" size={18} />
-                      </div>
-                    </button>
-                  )}
+                  
                 </div>
               )}
+            </div>
+
+            <div className="mb-8">
+              <h3 className="mb-3 text-xs font-semibold text-gray-400 uppercase">서비스</h3>
+              <button
+                onClick={handleChinbaClick}
+                className="w-full p-4 text-left transition-all border border-gray-100 bg-gray-50/50 rounded-xl hover:bg-gray-100 active:scale-[0.98]"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-gray-800">친바 서비스</p>
+                    <p className="text-[11px] text-gray-400">일정 조율 보드</p>
+                  </div>
+                  <FiChevronRight className="text-gray-400" size={18} />
+                </div>
+              </button>
             </div>
           </div>
 
