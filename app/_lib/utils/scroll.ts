@@ -19,6 +19,21 @@ export const scrollToTop = ({
     return;
   }
 
+  const supportsSmoothScroll =
+    typeof document !== 'undefined' && 'scrollBehavior' in document.documentElement.style;
+
+  if (supportsSmoothScroll) {
+    if (isWindow) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      container.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    if (onComplete) {
+      window.setTimeout(onComplete, duration);
+    }
+    return;
+  }
+
   let startTime: number | null = null;
 
   const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
