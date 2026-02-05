@@ -80,22 +80,23 @@ body {
   animation: slideUp 0.3s ease-out;
 }
 
-@keyframes blink-orange {
+@keyframes soft-glow-orange {
   0% {
     background-color: #fff7ed;
-    /* bg-orange-50 */
+    box-shadow: 0 0 0 rgba(251, 146, 60, 0);
   }
 
   50% {
-    background-color: white;
+    background-color: #ffedd5;
+    box-shadow: 0 0 14px rgba(251, 146, 60, 0.25);
   }
 
   100% {
     background-color: #fff7ed;
-    /* bg-orange-50 */
+    box-shadow: 0 0 0 rgba(251, 146, 60, 0);
   }
 }
 
 .animate-blink-orange {
-  animation: blink-orange 3s ease-in-out 3 forwards;
+  animation: soft-glow-orange 2.8s ease-in-out infinite;
 }
