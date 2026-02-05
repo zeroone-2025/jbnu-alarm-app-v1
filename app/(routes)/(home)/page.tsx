@@ -69,22 +69,20 @@ function HomeContent() {
     }
   }, [isMounted, isAuthLoaded, isCategoriesLoading, selectedCategories.length]);
 
-  const refreshContent = useCallback(async () => {
-    if (filter === 'KEYWORD') {
-      const count = await loadKeywordCount();
-      if (count === 0) {
-        setKeywordNotices([]);
-        return;
-      }
-      await loadKeywordNotices();
-      return;
-    }
-    await refetch();
-  }, [filter, loadKeywordCount, loadKeywordNotices, refetch, setKeywordNotices]);
-
   // Pull to Refresh용 스크롤 컨테이너 ref 초기화
   const { scrollContainerRef, isPulling, pullDistance, refreshing } = usePullToRefresh({
-    onRefresh: refreshContent,
+    onRefresh: async () => {
+      if (filter === 'KEYWORD') {
+        const count = await loadKeywordCount();
+        if (count === 0) {
+          setKeywordNotices([]);
+          return;
+        }
+        await loadKeywordNotices();
+        return;
+      }
+      await refetch();
+    },
     enabled: true,
   });
 
@@ -106,6 +104,19 @@ function HomeContent() {
     markKeywordNoticesSeen,
     setKeywordNotices,
   } = useKeywordNotices(isLoggedIn, filter);
+
+  const refreshContent = useCallback(async () => {
+    if (filter === 'KEYWORD') {
+      const count = await loadKeywordCount();
+      if (count === 0) {
+        setKeywordNotices([]);
+        return;
+      }
+      await loadKeywordNotices();
+      return;
+    }
+    await refetch();
+  }, [filter, loadKeywordCount, loadKeywordNotices, refetch, setKeywordNotices]);
 
   const handleLogoClick = useCallback(() => {
     scrollToTop({
