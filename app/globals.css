@@ -88,7 +88,7 @@ body {
 
   50% {
     background-color: #ffedd5;
-    box-shadow: 0 0 14px rgba(251, 146, 60, 0.25);
+    box-shadow: 0 0 8px rgba(251, 146, 60, 0.18);
   }
 
   100% {
@@ -98,5 +98,5 @@ body {
 }
 
 .animate-blink-orange {
-  animation: soft-glow-orange 2.8s ease-in-out infinite;
+  animation: soft-glow-orange 2.8s ease-in-out 3 forwards;
 }
