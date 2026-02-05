@@ -105,28 +105,6 @@ function HomeContent() {
     setKeywordNotices,
   } = useKeywordNotices(isLoggedIn, filter);
 
-  const refreshContent = useCallback(async () => {
-    if (filter === 'KEYWORD') {
-      const count = await loadKeywordCount();
-      if (count === 0) {
-        setKeywordNotices([]);
-        return;
-      }
-      await loadKeywordNotices();
-      return;
-    }
-    await refetch();
-  }, [filter, loadKeywordCount, loadKeywordNotices, refetch, setKeywordNotices]);
-
-  const handleLogoClick = useCallback(() => {
-    scrollToTop({
-      container: scrollContainerRef.current ?? undefined,
-      onComplete: () => {
-        void refreshContent();
-      },
-    });
-  }, [refreshContent, scrollContainerRef]);
-
   // 게시판 목록
   const selectedBoards = selectedCategories;
   const selectedBoardsParam = useMemo(
@@ -160,6 +138,28 @@ function HomeContent() {
     refetchOnMount: false,
     refetchOnReconnect: false,
   });
+
+  const refreshContent = useCallback(async () => {
+    if (filter === 'KEYWORD') {
+      const count = await loadKeywordCount();
+      if (count === 0) {
+        setKeywordNotices([]);
+        return;
+      }
+      await loadKeywordNotices();
+      return;
+    }
+    await refetch();
+  }, [filter, loadKeywordCount, loadKeywordNotices, refetch, setKeywordNotices]);
+
+  const handleLogoClick = useCallback(() => {
+    scrollToTop({
+      container: scrollContainerRef.current ?? undefined,
+      onComplete: () => {
+        void refreshContent();
+      },
+    });
+  }, [refreshContent, scrollContainerRef]);
 
   // 모든 페이지의 공지사항을 하나의 배열로 합치기
   const notices = useMemo<Notice[]>(() => {
