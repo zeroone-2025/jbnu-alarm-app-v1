@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
@@ -24,6 +24,7 @@ import CategoryFilter from '@/_components/ui/CategoryFilter';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
 import ScrollToTop from '@/_components/ui/ScrollToTop';
 import PullToRefreshIndicator from '@/_components/ui/PullToRefreshIndicator';
+import { scrollToTop } from '@/_lib/utils/scroll';
 
 // Dayjs 설정
 dayjs.extend(relativeTime);
@@ -68,20 +69,22 @@ function HomeContent() {
     }
   }, [isMounted, isAuthLoaded, isCategoriesLoading, selectedCategories.length]);
 
-  // Pull to Refresh용 스크롤 컨테이너 ref 초기화
-  const { scrollContainerRef, isPulling, pullDistance, refreshing } = usePullToRefresh({
-    onRefresh: async () => {
-      if (filter === 'KEYWORD') {
-        const count = await loadKeywordCount();
-        if (count === 0) {
-          setKeywordNotices([]);
-          return;
-        }
-        await loadKeywordNotices();
+  const refreshContent = useCallback(async () => {
+    if (filter === 'KEYWORD') {
+      const count = await loadKeywordCount();
+      if (count === 0) {
+        setKeywordNotices([]);
         return;
       }
-      await refetch();
-    },
+      await loadKeywordNotices();
+      return;
+    }
+    await refetch();
+  }, [filter, loadKeywordCount, loadKeywordNotices, refetch, setKeywordNotices]);
+
+  // Pull to Refresh용 스크롤 컨테이너 ref 초기화
+  const { scrollContainerRef, isPulling, pullDistance, refreshing } = usePullToRefresh({
+    onRefresh: refreshContent,
     enabled: true,
   });
 
@@ -103,6 +106,15 @@ function HomeContent() {
     markKeywordNoticesSeen,
     setKeywordNotices,
   } = useKeywordNotices(isLoggedIn, filter);
+
+  const handleLogoClick = useCallback(() => {
+    scrollToTop({
+      container: scrollContainerRef.current ?? undefined,
+      onComplete: () => {
+        void refreshContent();
+      },
+    });
+  }, [refreshContent, scrollContainerRef]);
 
   // 게시판 목록
   const selectedBoards = selectedCategories;
@@ -304,6 +316,7 @@ function HomeContent() {
                 router.push(lastSeen ? `/notifications?last_seen=${encodeURIComponent(lastSeen)}` : '/notifications');
               }}
               notificationCount={newKeywordCount}
+              onLogoClick={handleLogoClick}
             />
           </div>
 

@@ -6,11 +6,18 @@ interface HomeHeaderProps {
   notificationCount?: number;
   // 메뉴 버튼 클릭 핸들러
   onMenuClick: () => void;
+  // 로고 클릭 핸들러
+  onLogoClick?: () => void;
 }
 
 import Logo from '@/_components/ui/Logo';
 
-export default function HomeHeader({ onNotificationClick, notificationCount = 0, onMenuClick }: HomeHeaderProps) {
+export default function HomeHeader({
+  onNotificationClick,
+  notificationCount = 0,
+  onMenuClick,
+  onLogoClick,
+}: HomeHeaderProps) {
   return (
     <header className="relative flex min-h-[calc(4rem+var(--safe-area-top))] shrink-0 items-end justify-between border-b border-gray-100 bg-white px-5 pb-4 pt-safe">
       {/* Left: User Icon (Menu) */}
@@ -26,7 +33,14 @@ export default function HomeHeader({ onNotificationClick, notificationCount = 0,
 
       {/* Center: Logo */}
       <div className="absolute left-1/2 -translate-x-1/2 transform">
-        <Logo className="h-7 w-auto text-gray-900" />
+        <button
+          type="button"
+          onClick={onLogoClick}
+          className="rounded-md transition-opacity hover:opacity-80"
+          aria-label="제로타임 로고"
+        >
+          <Logo className="h-7 w-auto text-gray-900" />
+        </button>
       </div>
 
       {/* Right: Notification */}

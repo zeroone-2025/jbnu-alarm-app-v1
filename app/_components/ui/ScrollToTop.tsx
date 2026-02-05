@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { FiArrowUp } from 'react-icons/fi';
+import { scrollToTop } from '@/_lib/utils/scroll';
 
 interface ScrollToTopProps {
     containerRef?: React.RefObject<HTMLElement | null>;
@@ -38,44 +39,13 @@ export default function ScrollToTop({ containerRef, threshold = 400 }: ScrollToT
         return () => target.removeEventListener('scroll', toggleVisibility);
     }, [containerRef, toggleVisibility]);
 
-    const scrollToTop = () => {
-        const isWindow = !containerRef?.current;
-        const startPosition = isWindow ? window.scrollY : containerRef!.current!.scrollTop;
-
-        if (startPosition === 0) return;
-
-        const duration = 2000; // 2000ms = 2초
-        let startTime: number | null = null;
-
-        // Easing function: easeOutCubic
-        // 1 - (1 - t)^3
-        const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
-
-        const animation = (currentTime: number) => {
-            if (startTime === null) startTime = currentTime;
-            const timeElapsed = currentTime - startTime;
-            const progress = Math.min(timeElapsed / duration, 1);
-            const ease = easeOutCubic(progress);
-
-            const nextScroll = startPosition * (1 - ease);
-
-            if (isWindow) {
-                window.scrollTo(0, nextScroll);
-            } else {
-                containerRef!.current!.scrollTop = nextScroll;
-            }
-
-            if (timeElapsed < duration) {
-                requestAnimationFrame(animation);
-            }
-        };
-
-        requestAnimationFrame(animation);
+    const handleScrollToTop = () => {
+        scrollToTop({ container: containerRef?.current ?? undefined });
     };
 
     return (
         <button
-            onClick={scrollToTop}
+            onClick={handleScrollToTop}
             className={`absolute bottom-14 right-6 z-40 flex h-11 w-11 items-center justify-center rounded-full bg-white text-gray-900 shadow-xl border border-gray-100 transition-all active:scale-95 md:h-12 md:w-12 ${isVisible
                 ? 'opacity-100 translate-y-0 pointer-events-auto'
                 : 'opacity-0 translate-y-4 pointer-events-none'
