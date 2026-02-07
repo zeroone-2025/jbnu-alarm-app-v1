@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { FiX, FiUser, FiChevronRight, FiSettings } from 'react-icons/fi';
 import { useUser } from '@/_lib/hooks/useUser';
-import GoogleLoginButton from '@/_components/auth/GoogleLoginButton';
+import LoginButtonGroup from '@/_components/auth/LoginButtonGroup';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -25,11 +25,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     // admin_fed는 별도 포트에서 실행되므로 전체 URL로 이동
     const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3001';
     window.location.href = `${adminUrl}/dashboard`;
-  };
-
-  const handleChinbaClick = () => {
-    onClose();
-    router.push('/chinba');
   };
 
   // admin 또는 super_admin 권한 체크 (일반 user는 false)
@@ -71,14 +66,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div className="w-full p-4 border border-gray-100 bg-gray-50/50 rounded-xl animate-pulse h-[72px]" />
               ) : !isLoggedIn ? (
                 <>
-                  <GoogleLoginButton onLoginStart={onClose} fullWidth />
+                  <LoginButtonGroup onLoginStart={onClose} />
                   <p className="px-1 mt-2 text-xs text-gray-500">
                     로그인하여 설정을 저장하고 더 많은 기능을 이용해보세요.
                   </p>
                 </>
               ) : (
                 <div className="space-y-3">
-                  
+
                   {/* Admin 페이지 버튼 (admin, super_admin만 표시) */}
                   {isAdmin && (
                     <button
@@ -129,25 +124,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       <FiChevronRight className="text-gray-400" size={18} />
                     </div>
                   </button>
-                  
+
                 </div>
               )}
-            </div>
-
-            <div className="mb-8">
-              <h3 className="mb-3 text-xs font-semibold text-gray-400 uppercase">서비스</h3>
-              <button
-                onClick={handleChinbaClick}
-                className="w-full p-4 text-left transition-all border border-gray-100 bg-gray-50/50 rounded-xl hover:bg-gray-100 active:scale-[0.98]"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-bold text-gray-800">친바 서비스</p>
-                    <p className="text-[11px] text-gray-400">일정 조율 보드</p>
-                  </div>
-                  <FiChevronRight className="text-gray-400" size={18} />
-                </div>
-              </button>
             </div>
           </div>
 

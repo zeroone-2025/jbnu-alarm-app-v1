@@ -24,6 +24,7 @@ import CategoryFilter from '@/_components/ui/CategoryFilter';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
 import ScrollToTop from '@/_components/ui/ScrollToTop';
 import PullToRefreshIndicator from '@/_components/ui/PullToRefreshIndicator';
+import UserStatsBanner from '@/_components/ui/UserStatsBanner';
 
 // Dayjs 설정
 dayjs.extend(relativeTime);
@@ -281,7 +282,7 @@ function HomeContent() {
 
   return (
     <>
-      <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
+      <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} onShowToast={handleShowToast} />
 
       <Toast
         message={toastMessage}
@@ -306,6 +307,9 @@ function HomeContent() {
               notificationCount={newKeywordCount}
             />
           </div>
+
+          {/* User Stats Banner */}
+          <UserStatsBanner />
 
           {/* 카테고리 필터 */}
           <div className="shrink-0" style={{ touchAction: 'none' }}>

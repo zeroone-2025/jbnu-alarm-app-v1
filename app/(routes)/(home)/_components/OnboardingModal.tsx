@@ -1,18 +1,24 @@
 'use client';
 
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { MAJOR_PRESETS } from '@/_lib/constants/presets';
+import { GUEST_DEFAULT_BOARDS } from '@/_lib/constants/boards';
 import { completeOnboarding } from '@/_lib/api';
 import UserInfoForm, { UserInfoFormData } from '@/_components/auth/UserInfoForm';
 import FullPageModal from '@/_components/layout/FullPageModal';
+import { useUserStore } from '@/_lib/store/useUserStore';
 import type { Department } from '@/_types/department';
 
 interface OnboardingModalProps {
   isOpen: boolean;
   onComplete: (categories: string[]) => void;
+  onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalProps) {
+export default function OnboardingModal({ isOpen, onComplete, onShowToast }: OnboardingModalProps) {
+  const queryClient = useQueryClient();
+  const setUser = useUserStore((state) => state.setUser);
   const [formData, setFormData] = useState<UserInfoFormData>({
     nickname: '',
     school: '전북대',
@@ -26,7 +32,7 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
     setIsSubmitting(true);
 
     // 구독할 게시판 결정
-    let boardCodes: string[] = ['home_campus']; // 기본값: 본부 공지
+    let boardCodes: string[] = [...GUEST_DEFAULT_BOARDS]; // 기본값: 7개 기본 구독
 
     if (formData.dept_code) {
       // 프리셋이 있는지 확인 (라벨 또는 코드 매칭)
@@ -50,8 +56,17 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
         board_codes: boardCodes,
       });
 
+      // React Query 캐시 업데이트 (프로필 페이지에서 즉시 반영)
+      queryClient.setQueryData(['user', 'profile'], result.user);
+
+      // Zustand Store 업데이트
+      setUser(result.user);
+
       // localStorage 캐시 저장
       localStorage.setItem('my_subscribed_categories', JSON.stringify(result.subscribed_boards));
+
+      // 환영 토스트 표시
+      onShowToast?.('제로타임에 오신 것을 환영합니다! 🎉', 'success');
 
       // 부모 컴포넌트에 알림
       onComplete(result.subscribed_boards);
@@ -68,13 +83,23 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
 
     setIsSubmitting(true);
     try {
-      const defaultBoards = ['home_campus'];
-      await completeOnboarding({
+      const defaultBoards = [...GUEST_DEFAULT_BOARDS];
+      const result = await completeOnboarding({
         school: '전북대',
         board_codes: defaultBoards,
       });
 
+      // React Query 캐시 업데이트
+      queryClient.setQueryData(['user', 'profile'], result.user);
+
+      // Zustand Store 업데이트
+      setUser(result.user);
+
       localStorage.setItem('my_subscribed_categories', JSON.stringify(defaultBoards));
+
+      // 환영 토스트 표시
+      onShowToast?.('제로타임에 오신 것을 환영합니다! 🎉', 'success');
+
       onComplete(defaultBoards);
     } catch (error) {
       console.error('건너뛰기 실패:', error);
@@ -94,7 +119,7 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
         <div className="mb-8 text-center">
           <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-3xl">🎓</div>
           <h2 className="mb-2 text-2xl font-bold text-gray-900">
-            ZeroTime에 오신 것을 환영합니다!
+            제로타임에 오신 것을 환영합니다!
           </h2>
           <p className="text-sm text-gray-500">
             소속 정보를 알려주시면<br />맞춤형 공지사항을 자동으로 구독해 드려요!
