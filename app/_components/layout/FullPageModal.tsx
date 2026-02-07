@@ -48,17 +48,17 @@ export default function FullPageModal({
       {/* 전체 화면 컨테이너 */}
       <div className="relative mx-auto flex h-full w-full max-w-md flex-col overflow-hidden border-x border-gray-100 bg-white shadow-xl md:max-w-4xl">
         {/* 헤더 */}
-        <div className="shrink-0 border-b border-gray-100 px-5 pb-4">
+        <div className="shrink-0 border-b border-gray-100 px-4 pb-3">
           <div className="pt-safe" />
-          <div className="mt-6 flex items-center gap-3 md:mt-6">
+          <div className="mt-4 flex items-center gap-2 md:mt-4">
             <button
               onClick={onClose}
-              className="rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
+              className="rounded-full p-1.5 text-gray-600 transition-all hover:bg-gray-100"
               aria-label="뒤로가기"
             >
               <FiArrowLeft size={20} />
             </button>
-            <h1 className="text-lg font-bold text-gray-800">{title}</h1>
+            <h1 className="text-base font-bold text-gray-800">{title}</h1>
           </div>
         </div>
         {/* 컨텐츠 영역 */}

@@ -46,22 +46,33 @@ export function useSelectedCategories() {
         }
       } else {
         // ✅ Guest: localStorage에서만 읽기 (API 호출 차단)
+        const GUEST_FILTER_VERSION_KEY = 'JB_ALARM_GUEST_FILTER_VERSION';
+        const savedVersion = localStorage.getItem(GUEST_FILTER_VERSION_KEY);
         const saved = localStorage.getItem(GUEST_FILTER_KEY);
-        if (saved) {
+
+        // 버전 체크: 버전이 없거나 다르면 기본값으로 덮어쓰기
+        const currentVersion = String(GUEST_DEFAULT_BOARDS.length); // 간단한 버전 관리
+        const needsMigration = !savedVersion || savedVersion !== currentVersion;
+
+        if (needsMigration || !saved) {
+          // 새 기본값으로 초기화
+          const defaultCategories = [...GUEST_DEFAULT_BOARDS];
+          localStorage.setItem(GUEST_FILTER_KEY, JSON.stringify(defaultCategories));
+          localStorage.setItem(GUEST_FILTER_VERSION_KEY, currentVersion);
+          setSelectedCategories(defaultCategories);
+        } else {
+          // 기존 값 사용 (버전이 같은 경우)
           try {
             const parsed = JSON.parse(saved);
             const categories = Array.isArray(parsed) ? parsed : [...GUEST_DEFAULT_BOARDS];
             setSelectedCategories(categories);
           } catch {
+            // 파싱 실패 시 기본값으로 초기화
             const defaultCategories = [...GUEST_DEFAULT_BOARDS];
             localStorage.setItem(GUEST_FILTER_KEY, JSON.stringify(defaultCategories));
+            localStorage.setItem(GUEST_FILTER_VERSION_KEY, currentVersion);
             setSelectedCategories(defaultCategories);
           }
-        } else {
-          // 저장된 값 없으면 기본값으로 초기화 후 저장
-          const defaultCategories = [...GUEST_DEFAULT_BOARDS];
-          localStorage.setItem(GUEST_FILTER_KEY, JSON.stringify(defaultCategories));
-          setSelectedCategories(defaultCategories);
         }
       }
 

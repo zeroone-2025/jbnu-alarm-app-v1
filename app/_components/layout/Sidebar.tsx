@@ -1,9 +1,11 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiUser, FiChevronRight, FiSettings, FiBell, FiHeart, FiZap } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 import { useUser } from '@/_lib/hooks/useUser';
+import { getAllDepartments } from '@/_lib/api';
 import LoginButtonGroup from '@/_components/auth/LoginButtonGroup';
 
 interface SidebarProps {
@@ -62,6 +64,19 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
   const admissionYearText = formatAdmissionYear(user?.admission_year);
 
+  // dept_code → dept_name 변환
+  const [deptName, setDeptName] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user?.dept_code) {
+      setDeptName(null);
+      return;
+    }
+    getAllDepartments(true).then((depts) => {
+      const found = depts.find((d) => d.dept_code === user.dept_code);
+      setDeptName(found?.dept_name || null);
+    }).catch(() => setDeptName(null));
+  }, [user?.dept_code]);
+
   return (
     <>
       {/* Backdrop */}
@@ -117,9 +132,9 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
                     <p className="text-[11px] text-gray-400 truncate">
                       {user?.email}
                     </p>
-                    {(user?.school || admissionYearText) && (
+                    {(user?.school || deptName || admissionYearText) && (
                       <p className="text-[11px] text-gray-400 truncate">
-                        {[user?.school, admissionYearText].filter(Boolean).join(' · ')}
+                        {[user?.school, deptName, admissionYearText].filter(Boolean).join(' · ')}
                       </p>
                     )}
                   </div>
