@@ -113,27 +113,27 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
                   <LoginButtonGroup onLoginStart={onClose} />
                 </>
               ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   {user?.profile_image ? (
                     <img
                       src={user.profile_image}
                       alt={user.nickname || '사용자'}
-                      className="object-cover w-12 h-12 rounded-full"
+                      className="object-cover w-16 h-16 rounded-full border border-gray-100"
                     />
                   ) : (
-                    <div className="flex items-center justify-center w-12 h-12 text-blue-600 bg-blue-100 rounded-full">
-                      <FiUser size={22} />
+                    <div className="flex items-center justify-center w-16 h-16 text-gray-400 bg-gray-50 rounded-full border border-gray-100">
+                      <FiUser size={28} />
                     </div>
                   )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-gray-800 truncate">
+                  <div className="flex flex-col">
+                    <p className="text-base font-bold text-gray-800">
                       {user?.nickname || '사용자'}
                     </p>
-                    <p className="text-[11px] text-gray-400 truncate">
+                    <p className="text-[11px] text-gray-400 mt-0.5">
                       {user?.email}
                     </p>
                     {(user?.school || deptName || admissionYearText) && (
-                      <p className="text-[11px] text-gray-400 truncate">
+                      <p className="text-[11px] text-gray-400 mt-0.5">
                         {[user?.school, deptName, admissionYearText].filter(Boolean).join(' · ')}
                       </p>
                     )}
@@ -153,10 +153,10 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
                     key={item.id}
                     onClick={() => handleServiceClick(item)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${item.isActive
-                        ? 'bg-blue-50 text-blue-700'
-                        : item.isDisabled
-                          ? 'text-gray-400'
-                          : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                      ? 'bg-blue-50 text-blue-700'
+                      : item.isDisabled
+                        ? 'text-gray-400'
+                        : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
                       }`}
                   >
                     <Icon size={18} />
