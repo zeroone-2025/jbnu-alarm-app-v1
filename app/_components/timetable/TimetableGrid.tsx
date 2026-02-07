@@ -144,10 +144,7 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
     if (!dragState?.isDragging) return;
     const minRow = Math.min(dragState.startRow, dragState.endRow);
     const maxRow = Math.max(dragState.startRow, dragState.endRow);
-    if (maxRow - minRow < 1) {
-      setDragState(null);
-      return;
-    }
+
     const startMinutes = 9 * 60 + minRow * 30;
     const endMinutes = 9 * 60 + (maxRow + 1) * 30;
     openModalIfNoOverlap(dragState.day, minutesToTime(startMinutes), minutesToTime(endMinutes));
@@ -179,10 +176,7 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
     if (!dragState?.isDragging) return;
     const minRow = Math.min(dragState.startRow, dragState.endRow);
     const maxRow = Math.max(dragState.startRow, dragState.endRow);
-    if (maxRow - minRow < 1) {
-      setDragState(null);
-      return;
-    }
+
     const startMinutes = 9 * 60 + minRow * 30;
     const endMinutes = 9 * 60 + (maxRow + 1) * 30;
     openModalIfNoOverlap(dragState.day, minutesToTime(startMinutes), minutesToTime(endMinutes));

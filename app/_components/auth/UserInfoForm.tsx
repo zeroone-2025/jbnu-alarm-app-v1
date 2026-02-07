@@ -1,6 +1,6 @@
 'use client';
 
-import { FiUser, FiHome, FiBook, FiHash } from 'react-icons/fi';
+import { FiUser, FiHome, FiBook, FiHash, FiMail } from 'react-icons/fi';
 import DepartmentSearch from '@/_components/ui/DepartmentSearch';
 import type { Department } from '@/_types/department';
 
@@ -15,6 +15,7 @@ export interface UserInfoFormData {
 interface UserInfoFormProps {
     formData: UserInfoFormData;
     onChange: (data: Partial<UserInfoFormData>) => void;
+    email?: string;
     showNickname?: boolean;
     isReadonlyNickname?: boolean;
     isReadonlySchool?: boolean;
@@ -24,6 +25,7 @@ interface UserInfoFormProps {
 export default function UserInfoForm({
     formData,
     onChange,
+    email,
     showNickname = true,
     isReadonlyNickname = false,
     isReadonlySchool = false,
@@ -61,6 +63,22 @@ export default function UserInfoForm({
                             ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                             : 'bg-gray-50 focus:border-gray-900 focus:bg-white'
                             }`}
+                    />
+                </div>
+            )}
+
+            {/* 이메일 (정보성, 읽기전용) */}
+            {email && (
+                <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <FiMail className="text-gray-400" />
+                        이메일
+                    </label>
+                    <input
+                        type="email"
+                        value={email}
+                        readOnly
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none bg-gray-100 text-gray-500 cursor-not-allowed"
                     />
                 </div>
             )}
