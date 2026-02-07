@@ -85,15 +85,17 @@ fi
 # 4. 백엔드 API 서버 확인
 echo -e "\n${YELLOW}[4/4] 백엔드 API 서버 확인 중...${NC}"
 
-# .env.local에서 API URL 추출
-API_URL=$(grep "NEXT_PUBLIC_API_BASE_URL_WEB" .env.local | cut -d'=' -f2)
+# .env.local에서 API URL 추출 (따옴표 제거)
+API_URL=$(grep "NEXT_PUBLIC_API_BASE_URL_WEB" .env.local | cut -d'=' -f2 | tr -d '"')
 
 if [ -z "$API_URL" ]; then
     API_URL="http://localhost:8080"
 fi
 
 # API 서버 health check
-if curl -s -f "${API_URL}/health" > /dev/null 2>&1; then
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${API_URL}/health" 2>/dev/null || echo "000")
+
+if [ "$HTTP_STATUS" = "200" ]; then
     echo -e "${GREEN}✓ 백엔드 API 서버가 실행 중입니다 (${API_URL})${NC}"
 else
     echo -e "${YELLOW}⚠ 백엔드 API 서버에 연결할 수 없습니다 (${API_URL})${NC}"
@@ -108,7 +110,50 @@ else
     fi
 fi
 
-# 5. 개발 서버 실행
+# 5. Next.js 빌드 (iOS 동기화를 위해)
+if [ -d "ios" ]; then
+    echo -e "\n${YELLOW}Next.js 프로젝트를 빌드합니다...${NC}"
+    npm run build
+    echo -e "${GREEN}✓ Next.js 빌드 완료${NC}"
+fi
+
+# 6. Capacitor 프로젝트 동기화 (항상 실행)
+if [ -d "ios" ]; then
+    echo -e "\n${YELLOW}Capacitor 프로젝트를 동기화합니다...${NC}"
+    npx cap sync ios
+    echo -e "${GREEN}✓ Capacitor 동기화 완료${NC}"
+fi
+
+# 7. iOS 시뮬레이터 실행 옵션
+echo -e "\n${YELLOW}iOS 시뮬레이터를 실행하시겠습니까? (y/N): ${NC}"
+read -p "" -n 1 -r
+echo
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo -e "${YELLOW}iOS 시뮬레이터를 실행합니다...${NC}"
+    
+    # Xcode 프로젝트 열기 (백그라운드)
+    if [ -d "ios/App/App.xcworkspace" ]; then
+        echo -e "${GREEN}✓ Xcode를 실행합니다...${NC}"
+        open ios/App/App.xcworkspace
+    elif [ -d "ios/App/App.xcodeproj" ]; then
+        echo -e "${GREEN}✓ Xcode를 실행합니다...${NC}"
+        open ios/App/App.xcodeproj
+    fi
+    
+    # 시뮬레이터 실행 (iPhone 17 Pro, 다른 기기로 변경 가능)
+    echo -e "${GREEN}✓ iOS 시뮬레이터를 실행합니다...${NC}"
+    xcrun simctl boot "iPhone 17 Pro" 2>/dev/null || echo -e "${YELLOW}⚠ 시뮬레이터가 이미 실행 중이거나 기기를 찾을 수 없습니다${NC}"
+    open -a Simulator
+    
+    echo -e "${GREEN}✓ Xcode와 시뮬레이터가 실행되었습니다${NC}"
+    echo -e "${YELLOW}Xcode에서 앱을 빌드하고 실행하세요 (⌘+R)${NC}\n"
+    
+    # 시뮬레이터가 준비될 때까지 잠시 대기
+    sleep 2
+fi
+
+# 6. 개발 서버 실행
 echo -e "\n${BLUE}========================================${NC}"
 echo -e "${GREEN}✓ 모든 설정이 완료되었습니다!${NC}"
 echo -e "${BLUE}========================================${NC}\n"
@@ -118,3 +163,4 @@ echo -e "${YELLOW}서버를 중지하려면 Ctrl+C를 누르세요${NC}\n"
 
 # Next.js 개발 서버 실행
 npm run dev
+

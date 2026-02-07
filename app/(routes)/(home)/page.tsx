@@ -309,7 +309,7 @@ function HomeContent() {
           </div>
 
           {/* User Stats Banner */}
-          <UserStatsBanner />
+          <UserStatsBanner isLoggedIn={isLoggedIn} onSignupClick={() => setIsSidebarOpen(true)} />
 
           {/* 카테고리 필터 */}
           <div className="shrink-0" style={{ touchAction: 'none' }}>
@@ -423,7 +423,7 @@ function HomeContent() {
             </div>
           </div>
 
-          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onShowToast={handleShowToast} />
         </div>
       </main>
     </>
