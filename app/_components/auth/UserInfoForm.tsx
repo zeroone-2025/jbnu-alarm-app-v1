@@ -1,6 +1,6 @@
 'use client';
 
-import { FiUser, FiHome, FiBook, FiHash } from 'react-icons/fi';
+import { FiUser, FiHome, FiBook, FiHash, FiMail } from 'react-icons/fi';
 import DepartmentSearch from '@/_components/ui/DepartmentSearch';
 import type { Department } from '@/_types/department';
 
@@ -15,6 +15,7 @@ export interface UserInfoFormData {
 interface UserInfoFormProps {
     formData: UserInfoFormData;
     onChange: (data: Partial<UserInfoFormData>) => void;
+    email?: string;
     showNickname?: boolean;
     isReadonlyNickname?: boolean;
     isReadonlySchool?: boolean;
@@ -24,6 +25,7 @@ interface UserInfoFormProps {
 export default function UserInfoForm({
     formData,
     onChange,
+    email,
     showNickname = true,
     isReadonlyNickname = false,
     isReadonlySchool = false,
@@ -47,7 +49,7 @@ export default function UserInfoForm({
             {showNickname && (
                 <div className="space-y-2">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                        <FiUser className="text-blue-500" />
+                        <FiUser className="text-gray-400" />
                         닉네임
                     </label>
                     <input
@@ -59,8 +61,24 @@ export default function UserInfoForm({
                         placeholder="닉네임을 입력하세요"
                         className={`w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all ${(isReadonlyNickname || isReadonly)
                             ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                            : 'bg-gray-50 focus:border-blue-500 focus:bg-white'
+                            : 'bg-gray-50 focus:border-gray-900 focus:bg-white'
                             }`}
+                    />
+                </div>
+            )}
+
+            {/* 이메일 (정보성, 읽기전용) */}
+            {email && (
+                <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <FiMail className="text-gray-400" />
+                        이메일
+                    </label>
+                    <input
+                        type="email"
+                        value={email}
+                        readOnly
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none bg-gray-100 text-gray-500 cursor-not-allowed"
                     />
                 </div>
             )}
@@ -68,7 +86,7 @@ export default function UserInfoForm({
             {/* 학교 */}
             <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <FiHome className="text-blue-500" />
+                    <FiHome className="text-gray-400" />
                     학교
                 </label>
                 <div className="relative">
@@ -79,7 +97,7 @@ export default function UserInfoForm({
                         disabled={isReadonlySchool || isReadonly}
                         className={`w-full appearance-none rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all ${(isReadonlySchool || isReadonly)
                             ? 'bg-gray-100 text-gray-500 cursor-not-allowed font-medium'
-                            : 'bg-gray-50 focus:border-blue-500 focus:bg-white'
+                            : 'bg-gray-50 focus:border-gray-900 focus:bg-white'
                             }`}
                     >
                         <option value="전북대">전북대학교</option>
@@ -98,7 +116,7 @@ export default function UserInfoForm({
             {/* 학과 선택 */}
             <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <FiBook className="text-blue-500" />
+                    <FiBook className="text-gray-400" />
                     학과
                 </label>
                 <DepartmentSearch
@@ -109,10 +127,10 @@ export default function UserInfoForm({
                 />
             </div>
 
-            {/* 학분 (입학년도) */}
+            {/* 학번 (입학년도) */}
             <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                    <FiHash className="text-blue-500" />
+                    <FiHash className="text-gray-400" />
                     학번 (입학년도)
                 </label>
                 <div className="relative">
@@ -123,7 +141,7 @@ export default function UserInfoForm({
                         disabled={isReadonly}
                         className={`w-full appearance-none rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all ${isReadonly
                             ? 'bg-gray-100 text-gray-500 cursor-not-allowed font-medium'
-                            : 'bg-gray-50 focus:border-blue-500 focus:bg-white'
+                            : 'bg-gray-50 focus:border-gray-900 focus:bg-white'
                             }`}
                     >
                         <option value="">{isReadonly ? '미설정' : '-- 학번을 선택하세요 --'}</option>
