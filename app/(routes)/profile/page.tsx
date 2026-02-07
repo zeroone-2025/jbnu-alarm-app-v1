@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import FullPageModal from '@/_components/layout/FullPageModal';
 import { useUser, useUpdateUser } from '@/_lib/hooks/useUser';
 import UserInfoForm, { UserInfoFormData } from '@/_components/auth/UserInfoForm';
-import { FiLogOut, FiEdit3 } from 'react-icons/fi';
+import { FiLogOut, FiEdit3, FiUser, FiMail } from 'react-icons/fi';
 import { useUserStore } from '@/_lib/store/useUserStore';
 import Button from '@/_components/ui/Button';
 import Toast from '@/_components/ui/Toast';
@@ -132,10 +132,39 @@ export default function ProfilePage() {
         <FullPageModal
             isOpen={true}
             onClose={handleClose}
-            title={isEditing ? "프로필 수정" : "내 프로필"}
+            title={isEditing ? "프로필 수정" : "프로필"}
         >
             <div className="px-5 py-6">
                 <form onSubmit={handleSubmit} className="space-y-6">
+
+                    {/* 프로필 사진 */}
+                    <div className="flex justify-center mb-6">
+                        {user?.profile_image ? (
+                            <img
+                                src={user.profile_image}
+                                alt="프로필 사진"
+                                className="w-20 h-20 rounded-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+                                <FiUser className="text-gray-400" size={32} />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 이메일 (읽기전용) */}
+                    <div className="space-y-2">
+                        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                            <FiMail className="text-blue-500" />
+                            이메일
+                        </label>
+                        <input
+                            type="email"
+                            value={user?.email || ''}
+                            readOnly
+                            className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none bg-gray-100 text-gray-500 cursor-not-allowed"
+                        />
+                    </div>
 
                     <UserInfoForm
                         formData={formData}

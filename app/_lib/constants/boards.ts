@@ -123,6 +123,13 @@ export const getColorClasses = (color: string) => {
   return colorMap[color] || colorMap.gray;
 };
 
+
+/**
+ * 게스트 필터 버전 (기본값 변경 시 증가)
+ * 버전이 다르면 localStorage를 새 기본값으로 덮어씁니다.
+ */
+export const GUEST_FILTER_VERSION = 2;
+
 /**
  * 게스트 기본 필터 게시판 목록
  */
@@ -130,6 +137,7 @@ export const GUEST_DEFAULT_BOARDS = [
   'home_campus', 'home_student', 'home_lecture',
   'home_news', 'home_contest', 'home_parttime', 'agency_sw',
 ];
+
 
 /**
  * 전체 게시판 목록 (카테고리 포함)
