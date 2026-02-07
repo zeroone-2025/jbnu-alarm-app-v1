@@ -71,6 +71,7 @@ const withPWA = withPWAInit({
 const nextConfig: NextConfig = {
   /* config options here */
   output: 'export', // Capacitor용 정적 빌드
+  outputFileTracingRoot: __dirname, // 프로젝트 루트 명시 (다중 lockfile 경고 방지)
   trailingSlash: true,
   images: {
     unoptimized: true, // Static export에서는 이미지 최적화 비활성화

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { FiX, FiUser, FiChevronRight, FiSettings } from 'react-icons/fi';
 import { useUser } from '@/_lib/hooks/useUser';
-import GoogleLoginButton from '@/_components/auth/GoogleLoginButton';
+import LoginButtonGroup from '@/_components/auth/LoginButtonGroup';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -71,7 +71,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div className="w-full p-4 border border-gray-100 bg-gray-50/50 rounded-xl animate-pulse h-[72px]" />
               ) : !isLoggedIn ? (
                 <>
-                  <GoogleLoginButton onLoginStart={onClose} fullWidth />
+                  <LoginButtonGroup onLoginStart={onClose} />
                   <p className="px-1 mt-2 text-xs text-gray-500">
                     로그인하여 설정을 저장하고 더 많은 기능을 이용해보세요.
                   </p>

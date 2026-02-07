@@ -25,12 +25,12 @@ export const BOARD_MAP: Record<string, BoardMeta> = {
   // 전북대 본부 공지
   home_campus: { name: "교내공지", color: "blue", category: "전북대" },
   home_student: { name: "학생공지", color: "blue", category: "전북대" },
-  home_lecture: { name: "특강&세미나", color: "blue", category: "전북대" },
-  home_news: { name: "JBNU News", color: "blue", category: "전북대" },
+  home_lecture: { name: "특강&세미나", color: "sky", category: "전북대" },
+  home_news: { name: "JBNU News", color: "sky", category: "전북대" },
   home_newsplus: { name: "JBNU Newsplus", color: "blue", category: "전북대" },
   home_policy: { name: "교육정책/주요대학소식", color: "blue", category: "전북대" },
-  home_contest: { name: "공모/스터디", color: "blue", category: "전북대" },
-  home_parttime: { name: "아르바이트", color: "blue", category: "전북대" },
+  home_contest: { name: "공모/스터디", color: "teal", category: "전북대" },
+  home_parttime: { name: "아르바이트", color: "teal", category: "전북대" },
   home_housing: { name: "자취/하숙", color: "blue", category: "전북대" },
   home_lostandfound: { name: "분실/습득", color: "blue", category: "전북대" },
   home_poster: { name: "전자대자보", color: "blue", category: "전북대" },
@@ -117,10 +117,19 @@ export const getColorClasses = (color: string) => {
     indigo: { bg: "bg-indigo-100", text: "text-indigo-700" },
     orange: { bg: "bg-orange-100", text: "text-orange-700" },
     sky: { bg: "bg-sky-100", text: "text-sky-700" },
+    teal: { bg: "bg-teal-100", text: "text-teal-700" },
   };
 
   return colorMap[color] || colorMap.gray;
 };
+
+/**
+ * 게스트 기본 필터 게시판 목록
+ */
+export const GUEST_DEFAULT_BOARDS = [
+  'home_campus', 'home_student', 'home_lecture',
+  'home_news', 'home_contest', 'home_parttime', 'agency_sw',
+];
 
 /**
  * 전체 게시판 목록 (카테고리 포함)

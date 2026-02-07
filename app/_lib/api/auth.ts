@@ -5,16 +5,22 @@ import { setAccessToken, clearAccessToken, hasAccessToken } from '@/_lib/auth/to
 let isAuthInitialized = false;
 let initializationPromise: Promise<boolean> | null = null;
 
-// 구글 로그인 URL 생성 (리다이렉트용)
-export const getGoogleLoginUrl = () => {
-    return `${API_BASE_URL}/auth/google/login?redirect_to=user`;
-};
+// OAuth 프로바이더 타입
+export type OAuthProvider = 'google' | 'apple' | 'naver' | 'kakao';
 
-// 구글 로그인 URL 가져오기 (비동기) - iOS 외부 브라우저용
-export const fetchGoogleLoginUrl = async (platform: string): Promise<string> => {
-    const response = await authApi.get<{ url: string }>(`/auth/google/login/url?platform=${platform}`);
+// 범용 소셜 로그인 URL 생성 (리다이렉트용)
+export const getSocialLoginUrl = (provider: OAuthProvider) =>
+    `${API_BASE_URL}/auth/${provider}/login?redirect_to=user`;
+
+// 범용 소셜 로그인 URL 가져오기 (비동기) - iOS 외부 브라우저용
+export const fetchSocialLoginUrl = async (provider: OAuthProvider, platform: string): Promise<string> => {
+    const response = await authApi.get<{ url: string }>(`/auth/${provider}/login/url?platform=${platform}`);
     return response.data.url;
 };
+
+// 하위 호환: 기존 함수 유지
+export const getGoogleLoginUrl = () => getSocialLoginUrl('google');
+export const fetchGoogleLoginUrl = async (platform: string) => fetchSocialLoginUrl('google', platform);
 
 // 인증 초기화 여부 확인
 export const isAuthReady = () => isAuthInitialized;
