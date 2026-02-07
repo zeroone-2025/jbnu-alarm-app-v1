@@ -10,7 +10,7 @@ interface ProfileTabsProps {
 }
 
 const TABS: { key: ProfileTabType; label: string }[] = [
-  { key: 'basic', label: '기본 정보' },
+  { key: 'basic', label: '기본정보' },
   { key: 'timetable', label: '일정관리' },
   { key: 'history', label: '이력관리' },
 ];
