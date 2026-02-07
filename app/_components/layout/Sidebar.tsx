@@ -88,7 +88,7 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
 
       {/* Sidebar */}
       <div
-        className={`absolute inset-y-0 left-0 z-50 w-72 transform bg-white shadow-xl transition-all duration-300 ease-in-out ${isOpen ? 'translate-x-0 visible' : '-translate-x-full invisible'
+        className={`absolute inset-y-0 left-0 z-50 w-[340px] transform bg-white shadow-xl transition-all duration-300 ease-in-out ${isOpen ? 'translate-x-0 visible' : '-translate-x-full invisible'
           }`}
       >
         <div className="flex flex-col h-full">
@@ -152,13 +152,12 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
                   <button
                     key={item.id}
                     onClick={() => handleServiceClick(item)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                      item.isActive
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${item.isActive
                         ? 'bg-blue-50 text-blue-700'
                         : item.isDisabled
                           ? 'text-gray-400'
                           : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     <Icon size={18} />
                     <span className="text-sm font-medium">{item.label}</span>
