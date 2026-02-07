@@ -15,14 +15,24 @@ module.exports = {
     },
     // BoardFilterModal 선택된 게시판 색상 (카테고리별)
     {
-      pattern: /bg-(blue|green|gray|indigo|sky)-(500|600)/,
+      pattern: /bg-(blue|green|gray|indigo|sky|teal)-(500|600)/,
     },
     {
-      pattern: /hover:bg-(blue|green|gray|indigo|sky)-(600|700)/,
+      pattern: /hover:bg-(blue|green|gray|indigo|sky|teal)-(600|700)/,
     },
   ],
   theme: {
-    extend: {},
+    extend: {
+      animation: {
+        slideDown: 'slideDown 0.3s ease-out',
+      },
+      keyframes: {
+        slideDown: {
+          '0%': { transform: 'translateY(-100%)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+      },
+    },
   },
   plugins: [],
 };

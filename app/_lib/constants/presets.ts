@@ -65,11 +65,14 @@ export const MAJOR_PRESETS: MajorPreset[] = [
   //   categories: ['dept_business', 'college_biz', 'academic_main'],
   // },
 
-  // 기타/선택안함 (본부 공지만 구독)
+  // 기타/선택안함 (기본 구독)
   {
     id: 'common',
-    label: '기타 (본부 공지만 구독)',
-    categories: ['home_campus'],
+    label: '기타 (기본 구독)',
+    categories: [
+      'home_campus', 'home_student', 'home_lecture',
+      'home_news', 'home_contest', 'home_parttime', 'agency_sw',
+    ],
   },
 ];
 

@@ -29,6 +29,15 @@ function AuthCallbackContent() {
       return;
     }
 
+    // 이메일 미제공 에러 (Kakao 등)
+    if (error === 'email_required') {
+      setStatus('이메일 정보가 필요합니다. 카카오 계정에 이메일을 등록해주세요.');
+      setTimeout(() => {
+        router.replace('/');
+      }, 3000);
+      return;
+    }
+
     // 기타 에러가 있는 경우
     if (error) {
       setStatus('로그인 중 문제가 발생했습니다. 다시 시도해주세요.');

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { FiX, FiUser, FiChevronRight, FiSettings } from 'react-icons/fi';
 import { useUser } from '@/_lib/hooks/useUser';
-import GoogleLoginButton from '@/_components/auth/GoogleLoginButton';
+import LoginButtonGroup from '@/_components/auth/LoginButtonGroup';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -66,13 +66,37 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 <div className="w-full p-4 border border-gray-100 bg-gray-50/50 rounded-xl animate-pulse h-[72px]" />
               ) : !isLoggedIn ? (
                 <>
-                  <GoogleLoginButton onLoginStart={onClose} fullWidth />
+                  <LoginButtonGroup onLoginStart={onClose} />
                   <p className="px-1 mt-2 text-xs text-gray-500">
                     로그인하여 설정을 저장하고 더 많은 기능을 이용해보세요.
                   </p>
                 </>
               ) : (
                 <div className="space-y-3">
+
+                  {/* Admin 페이지 버튼 (admin, super_admin만 표시) */}
+                  {isAdmin && (
+                    <button
+                      onClick={handleAdminClick}
+                      className="w-full p-4 text-left transition-all border border-purple-100 bg-purple-50/50 rounded-xl hover:bg-purple-100 active:scale-[0.98]"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-10 h-10 text-purple-600 bg-purple-100 rounded-full">
+                            <FiSettings size={20} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-800">
+                              관리자 페이지
+                            </p>
+                            <p className="text-[11px] text-purple-600">Admin Dashboard</p>
+                          </div>
+                        </div>
+                        <FiChevronRight className="text-purple-400" size={18} />
+                      </div>
+                    </button>
+                  )}
+
                   <button
                     onClick={handleProfileClick}
                     className="w-full p-4 text-left transition-all border border-gray-100 bg-gray-50/50 rounded-xl hover:bg-gray-100 active:scale-[0.98]"
@@ -101,28 +125,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     </div>
                   </button>
 
-                  {/* Admin 페이지 버튼 (admin, super_admin만 표시) */}
-                  {isAdmin && (
-                    <button
-                      onClick={handleAdminClick}
-                      className="w-full p-4 text-left transition-all border border-purple-100 bg-purple-50/50 rounded-xl hover:bg-purple-100 active:scale-[0.98]"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 text-purple-600 bg-purple-100 rounded-full">
-                            <FiSettings size={20} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-gray-800">
-                              관리자 페이지
-                            </p>
-                            <p className="text-[11px] text-purple-600">Admin Dashboard</p>
-                          </div>
-                        </div>
-                        <FiChevronRight className="text-purple-400" size={18} />
-                      </div>
-                    </button>
-                  )}
                 </div>
               )}
             </div>
