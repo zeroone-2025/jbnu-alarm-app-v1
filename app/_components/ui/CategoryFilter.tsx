@@ -72,7 +72,7 @@ export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedI
         {showTooltip && (
           <div className="absolute top-12 left-0 z-10 animate-fadeIn">
             <div className="relative flex items-center gap-2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white shadow-lg">
-              <span>내가 원하는 게시판을 선택하세요</span>
+              <span>내 학과를 선택하고 더 많은 정보를 확인하세요</span>
               <button
                 onClick={closeTooltip}
                 className="rounded-full p-0.5 hover:bg-gray-700"
