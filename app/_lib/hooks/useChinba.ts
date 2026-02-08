@@ -16,10 +16,11 @@ import type {
   ChinbaUnavailabilityUpdateRequest,
 } from '@/_types/chinba';
 
-export function useMyChinbaEvents() {
+export function useMyChinbaEvents(enabled = true) {
   return useQuery({
     queryKey: ['chinba', 'my-events'],
     queryFn: getMyChinbaEvents,
+    enabled,
     staleTime: 1000 * 60 * 5,
   });
 }

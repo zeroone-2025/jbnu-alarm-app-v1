@@ -69,7 +69,6 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
   }, []);
 
   useEffect(() => {
-    if (isLoggedIn) return;
     try {
       localStorage.setItem(
         draftKey,
@@ -78,7 +77,7 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
     } catch {
       // ignore localStorage errors
     }
-  }, [draftKey, isLoggedIn, selectedSlots]);
+  }, [draftKey, selectedSlots]);
 
   const handleSave = async () => {
     if (!isLoggedIn) {

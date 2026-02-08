@@ -81,7 +81,7 @@ function EventCard({ event, onClick }: { event: ChinbaEventListItem; onClick: ()
 export default function ChinbaHistoryClient() {
   const router = useRouter();
   const { isLoggedIn, isAuthLoaded } = useUser();
-  const { data: events, isLoading } = useMyChinbaEvents();
+  const { data: events, isLoading } = useMyChinbaEvents(isLoggedIn);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const [toastKey, setToastKey] = useState(0);
@@ -144,10 +144,10 @@ export default function ChinbaHistoryClient() {
 
         <button
           onClick={handleCreateClick}
-          className="absolute bottom-6 right-6 z-[60] h-12 w-12 rounded-full bg-gray-900 text-white shadow-lg flex items-center justify-center active:scale-95 transition-all"
+          className="absolute bottom-8 right-8 z-[60] h-14 w-14 rounded-full bg-gray-900 text-white shadow-xl flex items-center justify-center active:scale-95 transition-all"
           aria-label="새로 만들기"
         >
-          <FiPlus size={20} />
+          <FiPlus size={24} />
         </button>
       </div>
 
