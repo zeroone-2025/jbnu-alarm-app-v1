@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FiUpload } from 'react-icons/fi';
 import Button from '@/_components/ui/Button';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
@@ -21,12 +21,15 @@ interface MyScheduleTabProps {
 
 export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLoggedIn }: MyScheduleTabProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: participation, isLoading } = useMyParticipation(isLoggedIn ? eventId : undefined);
   const updateMutation = useUpdateUnavailability(eventId);
   const importMutation = useImportTimetable(eventId);
 
   const draftKey = `chinba:event:${eventId}:draft-unavailable`;
   const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set());
+  const [hasDraft, setHasDraft] = useState(false);
+  const [draftLoaded, setDraftLoaded] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showNoTimetableModal, setShowNoTimetableModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -37,24 +40,29 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
 
   // Load existing unavailable slots (logged in only)
   useEffect(() => {
-    if (participation?.unavailable_slots) {
+    if (participation?.unavailable_slots && !hasDraft) {
       setSelectedSlots(new Set(participation.unavailable_slots));
     }
-  }, [participation?.unavailable_slots]);
+  }, [participation?.unavailable_slots, hasDraft]);
 
   useEffect(() => {
-    if (isLoggedIn) return;
     try {
       const stored = localStorage.getItem(draftKey);
-      if (!stored) return;
-      const parsed = JSON.parse(stored) as string[];
-      if (Array.isArray(parsed)) {
-        setSelectedSlots(new Set(parsed));
+      if (!stored) {
+        setDraftLoaded(true);
+        return;
+      }
+      const parsed = JSON.parse(stored) as { slots?: string[]; updatedAt?: number };
+      if (Array.isArray(parsed?.slots)) {
+        setSelectedSlots(new Set(parsed.slots));
+        setHasDraft(true);
       }
     } catch {
       // ignore localStorage errors
+    } finally {
+      setDraftLoaded(true);
     }
-  }, [draftKey, isLoggedIn]);
+  }, [draftKey]);
 
   const handleSlotsChange = useCallback((slots: Set<string>) => {
     setSelectedSlots(slots);
@@ -63,7 +71,10 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
   useEffect(() => {
     if (isLoggedIn) return;
     try {
-      localStorage.setItem(draftKey, JSON.stringify(Array.from(selectedSlots)));
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({ slots: Array.from(selectedSlots), updatedAt: Date.now() })
+      );
     } catch {
       // ignore localStorage errors
     }
@@ -81,15 +92,16 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
       await updateMutation.mutateAsync({
         unavailable_slots: Array.from(selectedSlots),
       });
-      setToastMessage('저장되었습니다');
-      setToastType('success');
-      setToastVisible(true);
-      setToastKey(prev => prev + 1);
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', 'team');
+      params.set('toast', 'save');
+      router.replace(`/chinba/event?${params.toString()}`);
       try {
         localStorage.removeItem(draftKey);
       } catch {
         // ignore localStorage errors
       }
+      setHasDraft(false);
     } catch (err: any) {
       setToastMessage(err.response?.data?.detail || '저장에 실패했습니다');
       setToastType('error');
@@ -114,6 +126,7 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
       } catch {
         // ignore localStorage errors
       }
+      setHasDraft(false);
     } catch (err: any) {
       const detail = err.response?.data?.detail as string | undefined;
       const status = err.response?.status as number | undefined;
@@ -132,7 +145,7 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
     }
   };
 
-  if (isLoggedIn && isLoading) {
+  if (isLoggedIn && (isLoading || !draftLoaded)) {
     return (
       <div className="flex h-40 items-center justify-center">
         <LoadingSpinner size="md" />
@@ -231,7 +244,7 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
         onConfirm={() => router.push('/profile?tab=timetable')}
         onCancel={() => setShowNoTimetableModal(false)}
       >
-        시간표를 등록하고 1초만에 불러오실래요?
+        시간표를 등록하고 1초만에 불러오세요.
       </ConfirmModal>
     </div>
   );

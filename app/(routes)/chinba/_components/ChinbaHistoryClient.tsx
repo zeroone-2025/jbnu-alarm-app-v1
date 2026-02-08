@@ -141,15 +141,15 @@ export default function ChinbaHistoryClient() {
             </div>
           )}
         </div>
-      </div>
 
-      <button
-        onClick={handleCreateClick}
-        className="fixed bottom-6 right-6 z-[60] h-12 w-12 rounded-full bg-gray-900 text-white shadow-lg flex items-center justify-center active:scale-95 transition-all"
-        aria-label="새로 만들기"
-      >
-        <FiPlus size={20} />
-      </button>
+        <button
+          onClick={handleCreateClick}
+          className="absolute bottom-6 right-6 z-[60] h-12 w-12 rounded-full bg-gray-900 text-white shadow-lg flex items-center justify-center active:scale-95 transition-all"
+          aria-label="새로 만들기"
+        >
+          <FiPlus size={20} />
+        </button>
+      </div>
 
       <Toast
         message={toastMessage}

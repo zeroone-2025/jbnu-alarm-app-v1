@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { FiShare2, FiTrash2, FiCheckCircle, FiLink } from 'react-icons/fi';
 import { LuChevronLeft } from 'react-icons/lu';
@@ -26,18 +26,86 @@ export default function ChinbaDetailClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const eventId = searchParams.get('id') || '';
+  const lastTabKey = `chinba:event:${eventId}:last-tab`;
 
   const { user, isLoggedIn, isAuthLoaded } = useUser();
   const { data: event, isLoading, error } = useChinbaEventDetail(eventId);
   const deleteMutation = useDeleteChinbaEvent();
   const completeMutation = useCompleteChinbaEvent();
 
-  const [activeTab, setActiveTab] = useState<'team' | 'my'>('team');
+  const TAB_INDEX: Record<'team' | 'my', number> = { team: 0, my: 1 };
+  const initialTab = searchParams.get('tab') === 'my' ? 'my' : 'team';
+  const [activeTab, setActiveTab] = useState<'team' | 'my'>(initialTab);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
+  const [isAnimating, setIsAnimating] = useState(false);
+  const pendingTabRef = useRef<'team' | 'my' | null>(null);
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'my' || tab === 'team') {
+      if (pendingTabRef.current) {
+        if (pendingTabRef.current === tab) {
+          pendingTabRef.current = null;
+        }
+        return;
+      }
+      if (tab === activeTab) return;
+      const direction = TAB_INDEX[tab] > TAB_INDEX[activeTab] ? 'right' : 'left';
+      setSlideDirection(direction);
+      setIsAnimating(true);
+      setActiveTab(tab);
+    }
+  }, [searchParams, activeTab]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'my' || tab === 'team') return;
+    try {
+      const stored = localStorage.getItem(lastTabKey);
+      if (stored === 'my' || stored === 'team') {
+        pendingTabRef.current = stored;
+        setActiveTab(stored);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('tab', stored);
+        router.replace(`/chinba/event?${params.toString()}`);
+      }
+    } catch {
+      // ignore localStorage errors
+    }
+  }, [lastTabKey, router, searchParams]);
+
+  const handleTabChange = (tab: 'team' | 'my') => {
+    if (tab === activeTab) return;
+    const direction = TAB_INDEX[tab] > TAB_INDEX[activeTab] ? 'right' : 'left';
+    setSlideDirection(direction);
+    setIsAnimating(true);
+    setActiveTab(tab);
+    pendingTabRef.current = tab;
+    try {
+      localStorage.setItem(lastTabKey, tab);
+    } catch {
+      // ignore localStorage errors
+    }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('tab', tab);
+    router.replace(`/chinba/event?${params.toString()}`);
+  };
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const [toastKey, setToastKey] = useState(0);
+
+  useEffect(() => {
+    const toastParam = searchParams.get('toast');
+    if (toastParam !== 'save') return;
+    setToastMessage('저장되었습니다');
+    setToastVisible(true);
+    setToastKey(prev => prev + 1);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('toast');
+    router.replace(`/chinba/event?${params.toString()}`);
+  }, [router, searchParams]);
 
   const isCreator = isLoggedIn && user && event && user.id === event.creator_id;
   const isActive = event?.status === 'active';
@@ -45,7 +113,9 @@ export default function ChinbaDetailClient() {
   const isExpired = event?.status === 'expired';
 
   const handleShare = useCallback(async () => {
-    const url = window.location.href;
+    const urlObj = new URL(window.location.href);
+    urlObj.searchParams.set('tab', 'team');
+    const url = urlObj.toString();
     const text = `${event?.title || '일정 조율'}에 참여하세요!`;
 
     if (navigator.share) {
@@ -64,7 +134,9 @@ export default function ChinbaDetailClient() {
   }, [event?.title]);
 
   const handleCopyLink = useCallback(async () => {
-    await navigator.clipboard.writeText(window.location.href);
+    const urlObj = new URL(window.location.href);
+    urlObj.searchParams.set('tab', 'team');
+    await navigator.clipboard.writeText(urlObj.toString());
     setToastMessage('링크가 복사되었습니다');
     setToastVisible(true);
     setToastKey(prev => prev + 1);
@@ -188,7 +260,7 @@ export default function ChinbaDetailClient() {
         {isActive && (
           <div className="shrink-0 flex border-b border-gray-200">
             <button
-              onClick={() => setActiveTab('team')}
+              onClick={() => handleTabChange('team')}
               className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
                 activeTab === 'team'
                   ? 'text-gray-900 border-b-2 border-gray-900'
@@ -198,7 +270,7 @@ export default function ChinbaDetailClient() {
               전체 일정
             </button>
             <button
-              onClick={() => setActiveTab('my')}
+              onClick={() => handleTabChange('my')}
               className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
                 activeTab === 'my'
                   ? 'text-gray-900 border-b-2 border-gray-900'
@@ -212,18 +284,32 @@ export default function ChinbaDetailClient() {
 
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto pt-4 pb-safe">
-          {(isCompleted || isExpired || activeTab === 'team') && (
-            <TeamScheduleTab event={event} />
-          )}
-          {isActive && activeTab === 'my' && (
-            <MyScheduleTab
-              eventId={eventId}
-              dates={event.dates}
-              startHour={event.start_hour}
-              endHour={event.end_hour}
-              isLoggedIn={isLoggedIn}
-            />
-          )}
+          <div className="overflow-hidden">
+            <div
+              key={activeTab}
+              className={
+                isAnimating
+                  ? slideDirection === 'right'
+                    ? 'animate-slideInRight'
+                    : 'animate-slideInLeft'
+                  : ''
+              }
+              onAnimationEnd={() => setIsAnimating(false)}
+            >
+              {(isCompleted || isExpired || activeTab === 'team') && (
+                <TeamScheduleTab event={event} />
+              )}
+              {isActive && activeTab === 'my' && (
+                <MyScheduleTab
+                  eventId={eventId}
+                  dates={event.dates}
+                  startHour={event.start_hour}
+                  endHour={event.end_hour}
+                  isLoggedIn={isLoggedIn}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
