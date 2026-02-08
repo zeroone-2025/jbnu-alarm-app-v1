@@ -99,8 +99,10 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
               // 외부 브라우저 닫기
               await Browser.close();
 
-              // 홈으로 리다이렉트
-              window.location.href = '/';
+              const redirectTo = url.searchParams.get('redirect_to');
+              const safeRedirect = redirectTo?.startsWith('/') ? redirectTo : '/';
+              // redirect_to가 있으면 해당 경로로 이동
+              window.location.href = safeRedirect;
             }
           }
         } catch (error) {
