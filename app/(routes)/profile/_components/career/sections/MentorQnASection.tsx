@@ -219,35 +219,35 @@ export default function MentorQnASection({
         <div className="space-y-4 text-sm">
           {profile?.mentor_qna?.reason_for_local && (
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-500">Q. 지역을 선택한 이유</p>
+              <p className="mb-1 text-xs font-medium text-gray-500">Q. 수도권이 아닌 지역을 택한 이유가 있나요?</p>
               <p className="text-gray-700">{profile.mentor_qna.reason_for_local}</p>
             </div>
           )}
 
           {profile?.mentor_qna?.helpful_organizations && (
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-500">Q. 도움받은 기관/멘토</p>
+              <p className="mb-1 text-xs font-medium text-gray-500">Q. 지역 취·창업시 도움받은 기관이나 멘토가 있나요?</p>
               <p className="text-gray-700">{profile.mentor_qna.helpful_organizations}</p>
             </div>
           )}
 
           {profile?.mentor_qna?.local_advantages && (
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-500">Q. 지역 취창업 장점</p>
+              <p className="mb-1 text-xs font-medium text-gray-500">Q. 내가 생각하는 지역 취·창업 장점</p>
               <p className="text-gray-700">{profile.mentor_qna.local_advantages}</p>
             </div>
           )}
 
           {profile?.mentor_qna?.local_disadvantages && (
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-500">Q. 지역 취창업 단점</p>
+              <p className="mb-1 text-xs font-medium text-gray-500">Q. 내가 생각하는 지역 취·창업 단점</p>
               <p className="text-gray-700">{profile.mentor_qna.local_disadvantages}</p>
             </div>
           )}
 
           {profile?.mentor_qna?.advice_for_juniors && (
             <div>
-              <p className="mb-1 text-xs font-medium text-gray-500">Q. 후배들에게 전하는 조언</p>
+              <p className="mb-1 text-xs font-medium text-gray-500">Q. 지역 취·창업을 준비하는 후배에게 해주고 싶은 말</p>
               <p className="text-gray-700">{profile.mentor_qna.advice_for_juniors}</p>
             </div>
           )}

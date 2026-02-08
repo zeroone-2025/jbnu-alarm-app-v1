@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { LuChevronLeft } from 'react-icons/lu';
 import Button from '@/_components/ui/Button';
@@ -23,6 +23,7 @@ export default function ChinbaCreateClient() {
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const [toastKey, setToastKey] = useState(0);
+  const loginPromptRef = useRef<HTMLDivElement>(null);
 
   const canSubmit = title.trim().length > 0 && selectedDates.length > 0 && !createEvent.isPending;
 
@@ -53,6 +54,9 @@ export default function ChinbaCreateClient() {
       setToastVisible(true);
       setToastKey(prev => prev + 1);
       setShowLoginPrompt(true);
+      requestAnimationFrame(() => {
+        loginPromptRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
       return;
     }
     setError(null);
@@ -132,7 +136,7 @@ export default function ChinbaCreateClient() {
           </div>
 
           {showLoginPrompt && (
-            <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <div ref={loginPromptRef} className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
               <p className="text-sm font-medium text-gray-800 text-center mb-1">
                 만들려면 로그인이 필요합니다
               </p>

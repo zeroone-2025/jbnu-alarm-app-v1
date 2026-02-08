@@ -85,8 +85,7 @@ function AnimatedCount({ value }: { value: number }) {
         const startValue = prevTargetRef.current;
         prevTargetRef.current = value;
         startTimeRef.current = null;
-
-        const duration = startValue === 0 ? 2000 : 800;
+        const duration = startValue === 0 ? 3500 : 1500;
 
         const animate = (currentTime: number) => {
             if (startTimeRef.current === null) {
@@ -97,7 +96,7 @@ function AnimatedCount({ value }: { value: number }) {
             const progress = Math.min(elapsed / duration, 1);
             const easeProgress = 1 - Math.pow(1 - progress, 3);
 
-            const current = Math.floor(startValue + (value - startValue) * easeProgress);
+            const current = Math.round(startValue + (value - startValue) * easeProgress);
             setDisplayValue(current);
 
             if (progress < 1) {
