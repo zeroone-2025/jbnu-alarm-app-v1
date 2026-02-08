@@ -85,7 +85,7 @@ export default function SkillTagsSection({
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="예: Python, React, AWS..."
+                placeholder="예: 인사, 세무, 프로그래밍"
                 className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-900"
               />
               <button
@@ -134,7 +134,8 @@ export default function SkillTagsSection({
     );
   }
 
-  const displayTags = isEmpty ? ['Python', 'React', 'TypeScript'] : profile?.skill_tags || [];
+  const isSectionEmpty = isEmpty || !profile || profile.skill_tags.length === 0;
+  const displayTags = isSectionEmpty ? ['인사', '세무', '프로그래밍'] : profile?.skill_tags || [];
 
   return (
     <div className="relative">
@@ -154,7 +155,7 @@ export default function SkillTagsSection({
           <span
             key={idx}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
-              isEmpty ? 'bg-gray-100 text-gray-300' : 'bg-gray-800 text-white'
+              isSectionEmpty ? 'bg-gray-100 text-gray-300' : 'bg-gray-800 text-white'
             }`}
           >
             {tag}

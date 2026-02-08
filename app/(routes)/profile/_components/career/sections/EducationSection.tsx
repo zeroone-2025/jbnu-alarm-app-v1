@@ -221,7 +221,8 @@ export default function EducationSection({
     );
   }
 
-  const displayEducations = isEmpty
+  const isSectionEmpty = isEmpty || !profile || profile.educations.length === 0;
+  const displayEducations = isSectionEmpty
     ? [
         {
           start_date: '2020.03',
@@ -251,18 +252,18 @@ export default function EducationSection({
 
       <div className="space-y-3">
         {displayEducations.map((edu, idx) => (
-          <div key={idx} className={`border-l-2 pl-3 ${isEmpty ? 'border-gray-200' : 'border-gray-300'}`}>
-            <div className={`text-[10px] ${isEmpty ? 'text-gray-300' : 'text-gray-400'}`}>
+          <div key={idx} className={`border-l-2 pl-3 ${isSectionEmpty ? 'border-gray-200' : 'border-gray-300'}`}>
+            <div className={`text-[10px] ${isSectionEmpty ? 'text-gray-300' : 'text-gray-400'}`}>
               {edu.start_date} - {edu.is_current ? '재학 중' : edu.end_date}
             </div>
-            <div className={`mt-0.5 text-sm font-bold ${isEmpty ? 'text-gray-300' : 'text-gray-800'}`}>
+            <div className={`mt-0.5 text-sm font-bold ${isSectionEmpty ? 'text-gray-300' : 'text-gray-800'}`}>
               {edu.school}
             </div>
-            <div className={`mt-0.5 text-xs ${isEmpty ? 'text-gray-300' : 'text-gray-500'}`}>
+            <div className={`mt-0.5 text-xs ${isSectionEmpty ? 'text-gray-300' : 'text-gray-500'}`}>
               {edu.major} · {DEGREE_LABELS[edu.degree]} · {STATUS_LABELS[edu.status]}
             </div>
             {edu.region && (
-              <div className={`mt-0.5 text-xs ${isEmpty ? 'text-gray-300' : 'text-gray-400'}`}>
+              <div className={`mt-0.5 text-xs ${isSectionEmpty ? 'text-gray-300' : 'text-gray-400'}`}>
                 {edu.region}
               </div>
             )}

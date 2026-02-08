@@ -150,7 +150,8 @@ export default function ActivitySection({
     );
   }
 
-  const displayActivities = isEmpty
+  const isSectionEmpty = isEmpty || !profile || profile.activities.length === 0;
+  const displayActivities = isSectionEmpty
     ? [
         {
           name: '창업 경진대회',
@@ -177,17 +178,17 @@ export default function ActivitySection({
         {displayActivities.map((activity, idx) => (
           <div key={idx}>
             <div className="flex items-center justify-between">
-              <span className={`text-sm font-bold ${isEmpty ? 'text-gray-300' : 'text-gray-800'}`}>
+              <span className={`text-sm font-bold ${isSectionEmpty ? 'text-gray-300' : 'text-gray-800'}`}>
                 {activity.name}
               </span>
               {activity.period && (
-                <span className={`text-xs ${isEmpty ? 'text-gray-300' : 'text-gray-400'}`}>
+                <span className={`text-xs ${isSectionEmpty ? 'text-gray-300' : 'text-gray-400'}`}>
                   {activity.period}
                 </span>
               )}
             </div>
             {activity.description && (
-              <p className={`mt-1 text-xs ${isEmpty ? 'text-gray-300' : 'text-gray-500'}`}>
+              <p className={`mt-1 text-xs ${isSectionEmpty ? 'text-gray-300' : 'text-gray-500'}`}>
                 {activity.description}
               </p>
             )}

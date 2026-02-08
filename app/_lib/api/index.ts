@@ -25,6 +25,9 @@ export * from './timetable';
 // Career
 export * from './career';
 
+// Chinba
+export * from './chinba';
+
 // Types re-export for convenience
 export type { Notice, NoticeListResponse } from '@/_types/notice';
 export type { Keyword } from '@/_types/keyword';

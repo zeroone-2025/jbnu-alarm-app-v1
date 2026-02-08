@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiUser, FiChevronRight, FiSettings, FiBell, FiHeart, FiZap } from 'react-icons/fi';
+import { FiUser, FiChevronRight, FiSettings, FiBell, FiUsers, FiZap } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 import { useUser } from '@/_lib/hooks/useUser';
 import { getAllDepartments } from '@/_lib/api';
@@ -26,7 +26,7 @@ interface ServiceItem {
 const SERVICE_ITEMS: ServiceItem[] = [
   { id: 'profile', label: '프로필', icon: FiUser, href: '/profile' },
   { id: 'jbnu-alarm', label: '전북대 알리미', icon: FiBell, isActive: true },
-  { id: 'chinhae', label: '친해지길 바래', icon: FiHeart, isDisabled: true },
+  { id: 'chinba', label: '친해지길 바래', icon: FiUsers, href: '/chinba' },
   { id: 'flow', label: '플로우', icon: FiZap, isDisabled: true },
 ];
 

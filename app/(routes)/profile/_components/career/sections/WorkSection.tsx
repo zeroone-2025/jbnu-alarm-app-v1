@@ -204,7 +204,8 @@ export default function WorkSection({
     );
   }
 
-  const displayWorks = isEmpty
+  const isSectionEmpty = isEmpty || !profile || profile.works.length === 0;
+  const displayWorks = isSectionEmpty
     ? [
         {
           start_date: '2024.03',
@@ -233,18 +234,18 @@ export default function WorkSection({
 
       <div className="space-y-3">
         {displayWorks.map((work, idx) => (
-          <div key={idx} className={`border-l-2 pl-3 ${isEmpty ? 'border-gray-200' : 'border-gray-300'}`}>
-            <div className={`text-[10px] ${isEmpty ? 'text-gray-300' : 'text-gray-400'}`}>
+          <div key={idx} className={`border-l-2 pl-3 ${isSectionEmpty ? 'border-gray-200' : 'border-gray-300'}`}>
+            <div className={`text-[10px] ${isSectionEmpty ? 'text-gray-300' : 'text-gray-400'}`}>
               {work.start_date} - {work.is_current ? '재직 중' : work.end_date}
             </div>
-            <div className={`mt-0.5 text-sm font-bold ${isEmpty ? 'text-gray-300' : 'text-gray-800'}`}>
+            <div className={`mt-0.5 text-sm font-bold ${isSectionEmpty ? 'text-gray-300' : 'text-gray-800'}`}>
               {work.company}
             </div>
-            <div className={`mt-0.5 text-xs ${isEmpty ? 'text-gray-300' : 'text-gray-500'}`}>
+            <div className={`mt-0.5 text-xs ${isSectionEmpty ? 'text-gray-300' : 'text-gray-500'}`}>
               {work.position} · {EMPLOYMENT_TYPE_LABELS[work.employment_type]}
             </div>
             {work.region && (
-              <div className={`mt-0.5 text-xs ${isEmpty ? 'text-gray-300' : 'text-gray-400'}`}>
+              <div className={`mt-0.5 text-xs ${isSectionEmpty ? 'text-gray-300' : 'text-gray-400'}`}>
                 {work.region}
               </div>
             )}

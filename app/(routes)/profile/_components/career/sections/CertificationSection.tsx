@@ -129,7 +129,8 @@ export default function CertificationSection({
     );
   }
 
-  const displayCerts = isEmpty
+  const isSectionEmpty = isEmpty || !profile || profile.certifications.length === 0;
+  const displayCerts = isSectionEmpty
     ? [
         { name: 'TOEIC 900점', date: '2023.06' },
         { name: '정보처리기사', date: '2023.09' },
@@ -151,11 +152,11 @@ export default function CertificationSection({
 
       <ul className="space-y-2">
         {displayCerts.map((cert, idx) => (
-          <li key={idx} className={`flex items-center text-sm ${isEmpty ? 'text-gray-300' : 'text-gray-700'}`}>
+          <li key={idx} className={`flex items-center text-sm ${isSectionEmpty ? 'text-gray-300' : 'text-gray-700'}`}>
             <span className="mr-2">•</span>
             <span>{cert.name}</span>
             {cert.date && (
-              <span className={`ml-auto text-xs ${isEmpty ? 'text-gray-300' : 'text-gray-400'}`}>
+              <span className={`ml-auto text-xs ${isSectionEmpty ? 'text-gray-300' : 'text-gray-400'}`}>
                 {cert.date}
               </span>
             )}
