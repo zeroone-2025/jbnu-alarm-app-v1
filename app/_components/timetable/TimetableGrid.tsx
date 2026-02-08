@@ -7,7 +7,7 @@ import ConfirmModal from '@/_components/ui/ConfirmModal';
 
 const DAY_LABELS_WEEKDAY = ['월', '화', '수', '목', '금'];
 const DAY_LABELS_ALL = ['월', '화', '수', '목', '금', '토', '일'];
-const HOURS = Array.from({ length: 12 }, (_, i) => i + 9); // 9~20
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8~20
 const BLOCK_COLORS = [
   { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' },
   { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200' },
@@ -50,7 +50,7 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
     day: number;
     startTime: string;
     endTime: string;
-  }>({ isOpen: false, day: 0, startTime: '09:00', endTime: '10:00' });
+  }>({ isOpen: false, day: 0, startTime: '08:00', endTime: '09:00' });
 
   const [dragState, setDragState] = useState<{
     isDragging: boolean;
@@ -145,8 +145,8 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
     const minRow = Math.min(dragState.startRow, dragState.endRow);
     const maxRow = Math.max(dragState.startRow, dragState.endRow);
 
-    const startMinutes = 9 * 60 + minRow * 30;
-    const endMinutes = 9 * 60 + (maxRow + 1) * 30;
+    const startMinutes = 8 * 60 + minRow * 30;
+    const endMinutes = 8 * 60 + (maxRow + 1) * 30;
     openModalIfNoOverlap(dragState.day, minutesToTime(startMinutes), minutesToTime(endMinutes));
     setDragState(null);
   }, [dragState, openModalIfNoOverlap]);
@@ -177,8 +177,8 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
     const minRow = Math.min(dragState.startRow, dragState.endRow);
     const maxRow = Math.max(dragState.startRow, dragState.endRow);
 
-    const startMinutes = 9 * 60 + minRow * 30;
-    const endMinutes = 9 * 60 + (maxRow + 1) * 30;
+    const startMinutes = 8 * 60 + minRow * 30;
+    const endMinutes = 8 * 60 + (maxRow + 1) * 30;
     openModalIfNoOverlap(dragState.day, minutesToTime(startMinutes), minutesToTime(endMinutes));
     setDragState(null);
   }, [dragState, openModalIfNoOverlap]);
@@ -258,7 +258,7 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
           {classes.map((cls) => {
             const startMin = timeToMinutes(cls.start_time);
             const endMin = timeToMinutes(cls.end_time);
-            const baseMin = 9 * 60;
+            const baseMin = 8 * 60;
             const top = ((startMin - baseMin) / 60) * cellHeight + 8; // +8 for pt-2
             const height = ((endMin - startMin) / 60) * cellHeight;
             const colorIdx = colorMap.get(cls.name) ?? 0;

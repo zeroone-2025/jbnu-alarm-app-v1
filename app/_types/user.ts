@@ -10,6 +10,7 @@ export interface UserProfile {
     admission_year: number | null;
     profile_image: string | null;
     role: string; // "user" | "admin" | "super_admin"
+    user_type: 'student' | 'mentor';
     created_at: string;
 }
 
@@ -25,6 +26,7 @@ export interface UserProfileUpdate {
 
 // 온보딩 완료 요청
 export interface OnboardingRequest {
+    user_type: 'student' | 'mentor';
     school: string;
     dept_code?: string;
     admission_year?: number;

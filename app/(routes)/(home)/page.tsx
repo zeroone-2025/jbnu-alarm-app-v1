@@ -51,7 +51,7 @@ function HomeContent() {
   }, []);
 
   // Custom Hooks
-  const { isLoggedIn, isAuthLoaded, refetch: refetchUser } = useUser();
+  const { isLoggedIn, isAuthLoaded, refetch: refetchUser, user } = useUser();
   const {
     selectedCategories,
     updateSelectedCategories,
@@ -277,6 +277,16 @@ function HomeContent() {
       router.replace('/');
     }
   }, [router]);
+
+  useEffect(() => {
+    if (!isAuthLoaded || !isLoggedIn || !user) return;
+    const needsOnboarding =
+      !user.user_type ||
+      (user.user_type === 'student' && !user.dept_code);
+    if (needsOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, [isAuthLoaded, isLoggedIn, user?.dept_code, user?.user_type, user]);
 
   const selectedBoardsForList = filter === 'KEYWORD' ? ['keyword'] : selectedBoards;
 

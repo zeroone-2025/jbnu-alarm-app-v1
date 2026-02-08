@@ -126,8 +126,13 @@ fi
 
 # 7. iOS 시뮬레이터 실행 옵션
 echo -e "\n${YELLOW}iOS 시뮬레이터를 실행하시겠습니까? (y/N): ${NC}"
-read -p "" -n 1 -r
-echo
+if [ -t 0 ]; then
+    read -p "" -n 1 -r
+    echo
+else
+    REPLY="n"
+    echo
+fi
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo -e "${YELLOW}iOS 시뮬레이터를 실행합니다...${NC}"

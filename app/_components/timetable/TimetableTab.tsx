@@ -90,7 +90,7 @@ export default function TimetableTab() {
   // Grid header ~28px, pt-2 padding ~8px → subtract from gridHeight
   const cellHeight = useMemo(() => {
     const bodyHeight = gridHeight - 28 - 8; // header + padding
-    return Math.max(Math.floor(bodyHeight / 12), 36);
+    return Math.max(Math.floor(bodyHeight / 13), 36);
   }, [gridHeight]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiUser, FiChevronRight, FiSettings, FiBell, FiHeart, FiZap } from 'react-icons/fi';
+import { FiUser, FiChevronRight, FiSettings, FiBell, FiUsers, FiZap } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 import { useUser } from '@/_lib/hooks/useUser';
 import { getAllDepartments } from '@/_lib/api';
@@ -26,7 +26,7 @@ interface ServiceItem {
 const SERVICE_ITEMS: ServiceItem[] = [
   { id: 'profile', label: '프로필', icon: FiUser, href: '/profile' },
   { id: 'jbnu-alarm', label: '전북대 알리미', icon: FiBell, isActive: true },
-  { id: 'chinhae', label: '친해지길 바래', icon: FiHeart, isDisabled: true },
+  { id: 'chinba', label: '친해지길 바래', icon: FiUsers, href: '/chinba' },
   { id: 'flow', label: '플로우', icon: FiZap, isDisabled: true },
 ];
 
@@ -144,33 +144,36 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
           </div>
 
           {/* Service List */}
-          {isLoggedIn && (
-            <div className="px-3 pt-4">
-              {SERVICE_ITEMS.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleServiceClick(item)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${item.isActive
-                      ? 'bg-blue-50 text-blue-700'
-                      : item.isDisabled
-                        ? 'text-gray-400'
-                        : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
-                      }`}
-                  >
-                    <Icon size={18} />
-                    <span className="text-sm font-medium">{item.label}</span>
-                    {item.isActive && (
-                      <span className="ml-auto text-[10px] font-medium text-blue-500 bg-blue-100 px-1.5 py-0.5 rounded">
-                        현재
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div className="px-3 pt-4">
+            {SERVICE_ITEMS.map((item) => {
+              // 비로그인 시 프로필 항목 숨기기
+              if (!isLoggedIn && item.id === 'profile') {
+                return null;
+              }
+              
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleServiceClick(item)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${item.isActive
+                    ? 'bg-blue-50 text-blue-700'
+                    : item.isDisabled
+                      ? 'text-gray-400'
+                      : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                    }`}
+                >
+                  <Icon size={18} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                  {item.isActive && (
+                    <span className="ml-auto text-[10px] font-medium text-blue-500 bg-blue-100 px-1.5 py-0.5 rounded">
+                      현재
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
           {/* Spacer */}
           <div className="flex-1" />
