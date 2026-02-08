@@ -144,33 +144,36 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
           </div>
 
           {/* Service List */}
-          {isLoggedIn && (
-            <div className="px-3 pt-4">
-              {SERVICE_ITEMS.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => handleServiceClick(item)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${item.isActive
-                      ? 'bg-blue-50 text-blue-700'
-                      : item.isDisabled
-                        ? 'text-gray-400'
-                        : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
-                      }`}
-                  >
-                    <Icon size={18} />
-                    <span className="text-sm font-medium">{item.label}</span>
-                    {item.isActive && (
-                      <span className="ml-auto text-[10px] font-medium text-blue-500 bg-blue-100 px-1.5 py-0.5 rounded">
-                        현재
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          <div className="px-3 pt-4">
+            {SERVICE_ITEMS.map((item) => {
+              // 비로그인 시 프로필 항목 숨기기
+              if (!isLoggedIn && item.id === 'profile') {
+                return null;
+              }
+              
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleServiceClick(item)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${item.isActive
+                    ? 'bg-blue-50 text-blue-700'
+                    : item.isDisabled
+                      ? 'text-gray-400'
+                      : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                    }`}
+                >
+                  <Icon size={18} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                  {item.isActive && (
+                    <span className="ml-auto text-[10px] font-medium text-blue-500 bg-blue-100 px-1.5 py-0.5 rounded">
+                      현재
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
           {/* Spacer */}
           <div className="flex-1" />

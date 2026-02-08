@@ -7,7 +7,7 @@ import ConfirmModal from '@/_components/ui/ConfirmModal';
 
 const DAY_LABELS_WEEKDAY = ['월', '화', '수', '목', '금'];
 const DAY_LABELS_ALL = ['월', '화', '수', '목', '금', '토', '일'];
-const HOURS = Array.from({ length: 12 }, (_, i) => i + 9); // 9~20
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8~20
 const BLOCK_COLORS = [
   { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' },
   { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200' },
