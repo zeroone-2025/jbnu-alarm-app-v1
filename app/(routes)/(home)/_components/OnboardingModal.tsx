@@ -1,11 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { MAJOR_PRESETS } from '@/_lib/constants/presets';
 import { completeOnboarding } from '@/_lib/api';
 import UserInfoForm, { UserInfoFormData } from '@/_components/auth/UserInfoForm';
 import FullPageModal from '@/_components/layout/FullPageModal';
-import type { Department } from '@/_types/department';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -29,17 +27,8 @@ export default function OnboardingModal({ isOpen, onComplete }: OnboardingModalP
     let boardCodes: string[] = ['home_campus']; // 기본값: 본부 공지
 
     if (formData.dept_code) {
-      // 프리셋이 있는지 확인 (라벨 또는 코드 매칭)
-      const preset = MAJOR_PRESETS.find(
-        (p) => p.label === formData.dept_name || p.id === formData.dept_code.replace('dept_', '')
-      );
-
-      if (preset) {
-        boardCodes = preset.categories;
-      } else {
-        // 프리셋 없으면 해당 학과 게시판 추가
-        boardCodes.push(formData.dept_code);
-      }
+      // 학과/계열 코드만 전달하면 백엔드에서 dept_presets 기준으로 자동 확장됨
+      boardCodes.push(formData.dept_code);
     }
 
     try {

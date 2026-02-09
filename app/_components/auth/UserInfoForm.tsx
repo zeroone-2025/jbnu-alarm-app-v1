@@ -104,7 +104,7 @@ export default function UserInfoForm({
                 <DepartmentSearch
                     onSelect={handleDeptSelect}
                     selectedDeptCode={formData.dept_code}
-                    placeholder="학과를 검색하세요 (예: 컴퓨터, 경영)"
+                    placeholder="학과를 검색하세요"
                     isReadonly={isReadonly}
                 />
             </div>

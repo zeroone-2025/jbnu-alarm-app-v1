@@ -116,7 +116,7 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
                 <input
                   value={keywordInput}
                   onChange={(e) => setKeywordInput(e.target.value)}
-                  placeholder="예) 공모전, 수강신청, 장학금 등"
+                  placeholder="키워드 입력 (예: 공모전, 장학금)"
                   className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') handleAddKeyword();

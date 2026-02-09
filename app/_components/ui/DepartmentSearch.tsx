@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { FiSearch, FiX } from 'react-icons/fi';
 import { getAllDepartments } from '@/_lib/api';
 import { filterAndSort } from '@/_lib/utils/search';
@@ -21,7 +21,6 @@ export default function DepartmentSearch({
 }: DepartmentSearchProps) {
   const [query, setQuery] = useState('');
   const [allDepartments, setAllDepartments] = useState<Department[]>([]);
-  const [results, setResults] = useState<Department[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDept, setSelectedDept] = useState<Department | null>(null);
@@ -66,16 +65,14 @@ export default function DepartmentSearch({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 3. 실시간 최적 검색 (초성 검색 및 가중치 정렬 포함)
-  useEffect(() => {
-    if (!query) {
-      setResults([]);
-      return;
-    }
-
-    // 최적화된 필터링 및 정렬 적용
-    const filtered = filterAndSort(allDepartments, query, (d) => d.dept_name);
-    setResults(filtered);
+  // 3. 실시간 최적 검색 (학과명 + 단과대명 + 코드 기반)
+  const results = useMemo(() => {
+    if (!query) return [];
+    return filterAndSort(allDepartments, query, (d) => [
+      d.dept_name,
+      d.college_name ?? '',
+      d.dept_code,
+    ]).slice(0, 50);
   }, [query, allDepartments]);
 
   const handleSelect = (dept: Department) => {
