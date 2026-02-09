@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   getKeywordNotices,
@@ -15,18 +15,26 @@ import NoticeList from '@/(routes)/(home)/_components/NoticeList';
 import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
 import FullPageModal from '@/_components/layout/FullPageModal';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
+import PullToRefreshIndicator from '@/_components/ui/PullToRefreshIndicator';
 import { useUser } from '@/_lib/hooks/useUser';
+
+type LoadMode = 'initial' | 'refresh' | 'retry';
 
 export default function NotificationsClient() {
   const router = useRouter();
   const { isLoggedIn } = useUser();
   const [keywordCount, setKeywordCount] = useState<number | null>(null);
   const [keywordNotices, setKeywordNotices] = useState<Notice[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [showToast, setShowToast] = useState(false);
   const [toastKey, setToastKey] = useState(0);
+  const isLoggedInRef = useRef(isLoggedIn);
+  const isInitialLoadingRef = useRef(false);
+  const isRefreshingRef = useRef(false);
 
   const showToastMessage = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToastMessage(message);
@@ -35,46 +43,64 @@ export default function NotificationsClient() {
     setShowToast(true);
   };
 
-  const loadKeywordCount = async () => {
-    try {
-      const data = await getMyKeywords();
-      const count = data.length;
-      setKeywordCount(count);
-      return count;
-    } catch (error) {
-      console.error('Failed to load keywords', error);
-      setKeywordCount(0);
-      return 0;
-    }
+  useEffect(() => {
+    isLoggedInRef.current = isLoggedIn;
+  }, [isLoggedIn]);
+
+  const setInitialLoadingState = (value: boolean) => {
+    isInitialLoadingRef.current = value;
+    setIsInitialLoading(value);
   };
 
-  const loadKeywordNotices = async () => {
-    setLoading(true);
+  const setRefreshingState = (value: boolean) => {
+    isRefreshingRef.current = value;
+    setIsRefreshing(value);
+  };
+
+  const loadNotifications = async ({ mode }: { mode: LoadMode }) => {
+    if (!isLoggedInRef.current) return;
+    if (isRefreshingRef.current || isInitialLoadingRef.current) return;
+
+    const isInitialMode = mode === 'initial' || mode === 'retry';
+    if (isInitialMode) {
+      setInitialLoadingState(true);
+    } else {
+      setRefreshingState(true);
+    }
+
     try {
-      const data = await getKeywordNotices(0, 200, true);
-      setKeywordNotices(data);
+      const keywords = await getMyKeywords();
+      const count = keywords.length;
+      setKeywordCount(count);
+
+      if (count === 0) {
+        setKeywordNotices([]);
+        setLoadError(null);
+        return;
+      }
+
+      const notices = await getKeywordNotices(0, 200, true);
+      setKeywordNotices(notices);
+      setLoadError(null);
     } catch (error) {
-      console.error('Failed to load keyword notices', error);
+      console.error('Failed to load notifications', error);
+      setLoadError('알림을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.');
       showToastMessage('알림을 불러오지 못했습니다.', 'error');
     } finally {
-      setLoading(false);
+      if (isInitialMode) {
+        setInitialLoadingState(false);
+      } else {
+        setRefreshingState(false);
+      }
     }
-  };
-
-  const refreshKeywordNotices = async () => {
-    if (!isLoggedIn) return;
-    const count = await loadKeywordCount();
-    if (count === 0) {
-      setKeywordNotices([]);
-      return;
-    }
-    await loadKeywordNotices();
   };
 
   // Pull to Refresh 훅
-  const { scrollContainerRef, isPulling, pullDistance, refreshing } = usePullToRefresh({
-    onRefresh: refreshKeywordNotices,
-    enabled: true, // 항상 활성화 (키워드 있으면 공지 없어도 새로고침 가능)
+  const { scrollContainerRef, isPulling, pullDistance } = usePullToRefresh({
+    onRefresh: async () => {
+      await loadNotifications({ mode: 'refresh' });
+    },
+    enabled: isLoggedIn,
   });
 
   const updateNoticeState = (
@@ -135,20 +161,47 @@ export default function NotificationsClient() {
   }, [keywordNotices, lastSeenParam]);
 
   useEffect(() => {
-    if (isLoggedIn) {
-      (async () => {
-        const count = await loadKeywordCount();
-        if (count === 0) {
-          setKeywordNotices([]);
-          return;
-        }
-        await loadKeywordNotices();
-      })();
+    if (!isLoggedIn) {
+      setKeywordCount(null);
+      setKeywordNotices([]);
+      setLoadError(null);
+      setInitialLoadingState(false);
+      setRefreshingState(false);
+      return;
     }
+
+    loadNotifications({ mode: 'initial' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn]);
 
-
+  const isErrorWithoutData = !!loadError && keywordNotices.length === 0;
   const keywordCountLabel = keywordCount ?? 0;
+  const emptyMessage = isErrorWithoutData
+    ? loadError
+    : keywordCountLabel === 0
+      ? '키워드를 등록하면 알림을 받을 수 있어요'
+      : '아직 받은 알림이 없어요';
+  const emptyDescription = isErrorWithoutData
+    ? '네트워크 상태를 확인한 뒤 다시 시도해 주세요'
+    : keywordCountLabel === 0
+      ? '상단 설정 버튼에서 키워드를 추가해 주세요'
+      : '새로운 알림이 오면 여기에 표시돼요';
+  const emptyActionLabel = isErrorWithoutData
+    ? '다시 시도'
+    : keywordCountLabel === 0
+      ? '키워드 설정하기'
+      : undefined;
+
+  const handleEmptyActionClick = () => {
+    if (isErrorWithoutData) {
+      loadNotifications({ mode: 'retry' });
+      return;
+    }
+
+    if (keywordCountLabel === 0) {
+      router.push('/keywords');
+    }
+  };
 
   return (
     <>
@@ -164,28 +217,11 @@ export default function NotificationsClient() {
           }}
         />
 
-        {/* Pull to Refresh 인디케이터 */}
-        <div
-          className="shrink-0 flex items-center justify-center bg-linear-to-b from-gray-50 to-transparent overflow-hidden"
-          style={{
-            height: refreshing ? '64px' : isPulling ? `${pullDistance}px` : '0px',
-            opacity: refreshing ? 1 : isPulling ? Math.min(pullDistance / 50, 1) : 0,
-            transition: (isPulling || refreshing) ? 'none' : 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-out',
-          }}
-        >
-          {refreshing ? (
-            <div className="w-6 h-6 border-2 border-gray-900 rounded-full animate-spin border-t-transparent"></div>
-          ) : isPulling && pullDistance > 0 ? (
-            <div
-              className="text-sm font-medium text-gray-600"
-              style={{
-                transform: `scale(${Math.min(pullDistance / 40, 1)})`,
-              }}
-            >
-              {pullDistance > 30 ? '↓ 놓아서 새로고침' : '↓ 당겨서 새로고침'}
-            </div>
-          ) : null}
-        </div>
+        <PullToRefreshIndicator
+          isPulling={isPulling}
+          pullDistance={pullDistance}
+          refreshing={isRefreshing}
+        />
 
         {!isLoggedIn ? (
           <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
@@ -206,23 +242,18 @@ export default function NotificationsClient() {
               }}
             >
               <NoticeList
-                loading={loading}
+                loading={isInitialLoading}
                 selectedCategories={['keyword']}
                 filteredNotices={keywordNotices}
                 showKeywordPrefix={true}
                 onMarkAsRead={handleMarkAsRead}
                 onToggleFavorite={handleToggleFavorite}
                 isLoggedIn={isLoggedIn}
-                emptyMessage={
-                  keywordCountLabel === 0
-                    ? '키워드를 등록하면 알림을 받을 수 있어요'
-                    : '아직 받은 알림이 없어요'
-                }
-                emptyDescription={
-                  keywordCountLabel === 0
-                    ? '상단 설정 버튼에서 키워드를 추가해 주세요'
-                    : '새로운 알림이 오면 여기에 표시돼요'
-                }
+                emptyMessage={emptyMessage}
+                emptyDescription={emptyDescription}
+                emptyActionLabel={emptyActionLabel}
+                onEmptyActionClick={emptyActionLabel ? handleEmptyActionClick : undefined}
+                emptyStateVariant={isErrorWithoutData ? 'error' : keywordCountLabel === 0 ? 'keyword' : 'default'}
                 highlightedIds={highlightedIds}
               />
             </div>
