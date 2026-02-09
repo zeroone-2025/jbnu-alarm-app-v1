@@ -1,16 +1,9 @@
 import { useState, useEffect } from 'react';
-import { BOARD_LIST, GUEST_FILTER_KEY } from '@/_lib/constants/boards';
+import { BOARD_LIST, GUEST_FILTER_KEY, GUEST_DEFAULT_BOARDS } from '@/_lib/constants/boards';
 import { getUserSubscriptions, updateUserSubscriptions } from '@/_lib/api';
 import { useUser } from '@/_lib/hooks/useUser';
 
 const USER_STORAGE_KEY = 'my_subscribed_categories'; // 로그인 사용자 캐시 키
-const GUEST_FIXED_BOARD = 'home_campus';
-
-const normalizeGuestCategories = (categories: string[]) => {
-  const set = new Set(categories);
-  set.add(GUEST_FIXED_BOARD);
-  return Array.from(set);
-};
 
 /**
  * 선택된 카테고리를 관리하는 hook
@@ -53,25 +46,33 @@ export function useSelectedCategories() {
         }
       } else {
         // ✅ Guest: localStorage에서만 읽기 (API 호출 차단)
+        const GUEST_FILTER_VERSION_KEY = 'JB_ALARM_GUEST_FILTER_VERSION';
+        const savedVersion = localStorage.getItem(GUEST_FILTER_VERSION_KEY);
         const saved = localStorage.getItem(GUEST_FILTER_KEY);
-        if (saved) {
+
+        // 버전 체크: 버전이 없거나 다르면 기본값으로 덮어쓰기
+        const currentVersion = String(GUEST_DEFAULT_BOARDS.length); // 간단한 버전 관리
+        const needsMigration = !savedVersion || savedVersion !== currentVersion;
+
+        if (needsMigration || !saved) {
+          // 새 기본값으로 초기화
+          const defaultCategories = [...GUEST_DEFAULT_BOARDS];
+          localStorage.setItem(GUEST_FILTER_KEY, JSON.stringify(defaultCategories));
+          localStorage.setItem(GUEST_FILTER_VERSION_KEY, currentVersion);
+          setSelectedCategories(defaultCategories);
+        } else {
+          // 기존 값 사용 (버전이 같은 경우)
           try {
             const parsed = JSON.parse(saved);
-            const normalized = Array.isArray(parsed)
-              ? normalizeGuestCategories(parsed)
-              : [GUEST_FIXED_BOARD];
-            localStorage.setItem(GUEST_FILTER_KEY, JSON.stringify(normalized));
-            setSelectedCategories(normalized);
+            const categories = Array.isArray(parsed) ? parsed : [...GUEST_DEFAULT_BOARDS];
+            setSelectedCategories(categories);
           } catch {
-            const defaultCategories = [GUEST_FIXED_BOARD];
+            // 파싱 실패 시 기본값으로 초기화
+            const defaultCategories = [...GUEST_DEFAULT_BOARDS];
             localStorage.setItem(GUEST_FILTER_KEY, JSON.stringify(defaultCategories));
+            localStorage.setItem(GUEST_FILTER_VERSION_KEY, currentVersion);
             setSelectedCategories(defaultCategories);
           }
-        } else {
-          // 저장된 값 없으면 기본값으로 초기화 후 저장
-          const defaultCategories = [GUEST_FIXED_BOARD];
-          localStorage.setItem(GUEST_FILTER_KEY, JSON.stringify(defaultCategories));
-          setSelectedCategories(defaultCategories);
         }
       }
 
@@ -85,19 +86,15 @@ export function useSelectedCategories() {
   const updateSelectedCategories = async (categories: string[]) => {
     const previousCategories = selectedCategories;
 
-    const normalizedCategories = isLoggedIn
-      ? categories
-      : normalizeGuestCategories(categories);
-
     // 1. UI 먼저 업데이트 (Optimistic Update)
-    setSelectedCategories(normalizedCategories);
+    setSelectedCategories(categories);
 
     if (isLoggedIn) {
       // ✅ User: 백엔드 API 호출 (DB 저장)
       try {
-        await updateUserSubscriptions(normalizedCategories);
+        await updateUserSubscriptions(categories);
         // 성공 시 localStorage 캐시 저장
-        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalizedCategories));
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(categories));
       } catch (error) {
         console.error('Failed to save subscriptions to backend:', error);
         // 실패 시 롤백
@@ -107,7 +104,7 @@ export function useSelectedCategories() {
     } else {
       // ✅ Guest: localStorage에만 저장 (API 호출 차단)
       try {
-        localStorage.setItem(GUEST_FILTER_KEY, JSON.stringify(normalizedCategories));
+        localStorage.setItem(GUEST_FILTER_KEY, JSON.stringify(categories));
       } catch (error) {
         console.error('Failed to save to localStorage:', error);
         setSelectedCategories(previousCategories);

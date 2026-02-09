@@ -10,7 +10,7 @@ import {
   Notice,
 } from '@/_lib/api';
 import Toast from '@/_components/ui/Toast';
-import GoogleLoginButton from '@/_components/auth/GoogleLoginButton';
+import LoginButtonGroup from '@/_components/auth/LoginButtonGroup';
 import NoticeList from '@/(routes)/(home)/_components/NoticeList';
 import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
 import FullPageModal from '@/_components/layout/FullPageModal';
@@ -225,8 +225,10 @@ export default function NotificationsClient() {
 
         {!isLoggedIn ? (
           <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
-            <GoogleLoginButton />
-            <p className="mt-4 text-sm text-gray-600">로그인하면 알림을 받을 수 있어요.</p>
+            <p className="mb-6 text-sm font-medium text-gray-700">로그인하면 알림을 받을 수 있어요.</p>
+            <div className="w-full max-w-xs">
+              <LoginButtonGroup />
+            </div>
           </div>
         ) : (
           <div className="relative flex-1 min-h-0 overflow-hidden">

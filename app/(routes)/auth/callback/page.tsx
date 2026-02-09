@@ -19,13 +19,24 @@ function AuthCallbackContent() {
 
     const accessToken = searchParams.get('access_token');
     const error = searchParams.get('error');
+    const redirectTo = searchParams.get('redirect_to');
+    const safeRedirect = redirectTo?.startsWith('/') ? redirectTo : null;
 
     // 사용자가 로그인을 취소한 경우
     if (error === 'access_denied') {
       setStatus('로그인이 취소되었습니다.');
       setTimeout(() => {
-        router.replace('/');
+        router.replace(safeRedirect || '/');
       }, 800);
+      return;
+    }
+
+    // 이메일 미제공 에러 (Kakao 등)
+    if (error === 'email_required') {
+      setStatus('이메일 정보가 필요합니다. 카카오 계정에 이메일을 등록해주세요.');
+      setTimeout(() => {
+        router.replace(safeRedirect || '/');
+      }, 3000);
       return;
     }
 
@@ -33,7 +44,7 @@ function AuthCallbackContent() {
     if (error) {
       setStatus('로그인 중 문제가 발생했습니다. 다시 시도해주세요.');
       setTimeout(() => {
-        router.replace('/');
+        router.replace(safeRedirect || '/');
       }, 2000);
       return;
     }
@@ -56,13 +67,13 @@ function AuthCallbackContent() {
             // 신규 사용자: 온보딩 모달 표시
             setStatus('환영합니다! 학과 정보를 입력해주세요.');
             setTimeout(() => {
-              router.replace('/?login=success&show_onboarding=true');
+              router.replace(safeRedirect || '/?login=success&show_onboarding=true');
             }, 500);
           } else {
             // 기존 사용자: 바로 홈으로
             setStatus('로그인 성공! 홈으로 이동합니다.');
             setTimeout(() => {
-              router.replace('/?login=success');
+              router.replace(safeRedirect || '/?login=success');
             }, 500);
           }
         } catch (error) {
@@ -71,7 +82,7 @@ function AuthCallbackContent() {
 
           // 실패 시 홈으로 이동
           setTimeout(() => {
-            router.replace('/');
+            router.replace(safeRedirect || '/');
           }, 2000);
         }
       };
@@ -82,7 +93,7 @@ function AuthCallbackContent() {
       setStatus('잘못된 접근입니다. 홈으로 이동합니다.');
 
       setTimeout(() => {
-        router.replace('/');
+        router.replace(safeRedirect || '/');
       }, 2000);
     }
   }, [searchParams, router, setUser]);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, ReactNode } from 'react';
-import { FiArrowLeft } from 'react-icons/fi';
+import { LuChevronLeft } from 'react-icons/lu';
 
 interface FullPageModalProps {
   isOpen: boolean;
@@ -48,17 +48,17 @@ export default function FullPageModal({
       {/* 전체 화면 컨테이너 */}
       <div className="relative mx-auto flex h-full w-full max-w-md flex-col overflow-hidden border-x border-gray-100 bg-white shadow-xl md:max-w-4xl">
         {/* 헤더 */}
-        <div className="shrink-0 border-b border-gray-100 px-5 pb-4">
+        <div className="shrink-0 px-4 pb-3">
           <div className="pt-safe" />
-          <div className="mt-6 flex items-center gap-3 md:mt-6">
+          <div className="relative mt-4 flex items-center justify-center md:mt-4">
             <button
               onClick={onClose}
-              className="rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
+              className="absolute left-0 z-10 group -ml-1 rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100 hover:text-gray-900 active:scale-95"
               aria-label="뒤로가기"
             >
-              <FiArrowLeft size={20} />
+              <LuChevronLeft size={24} strokeWidth={2.5} className="transition-transform group-hover:-translate-x-0.5" />
             </button>
-            <h1 className="text-lg font-bold text-gray-800">{title}</h1>
+            <h1 className="text-base font-bold text-gray-800">{title}</h1>
           </div>
         </div>
         {/* 컨텐츠 영역 */}

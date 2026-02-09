@@ -24,6 +24,7 @@ import CategoryFilter from '@/_components/ui/CategoryFilter';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
 import ScrollToTop from '@/_components/ui/ScrollToTop';
 import PullToRefreshIndicator from '@/_components/ui/PullToRefreshIndicator';
+import UserStatsBanner from '@/_components/ui/UserStatsBanner';
 
 // Dayjs 설정
 dayjs.extend(relativeTime);
@@ -50,7 +51,7 @@ function HomeContent() {
   }, []);
 
   // Custom Hooks
-  const { isLoggedIn, isAuthLoaded, refetch: refetchUser } = useUser();
+  const { isLoggedIn, isAuthLoaded, refetch: refetchUser, user } = useUser();
   const {
     selectedCategories,
     updateSelectedCategories,
@@ -277,11 +278,21 @@ function HomeContent() {
     }
   }, [router]);
 
+  useEffect(() => {
+    if (!isAuthLoaded || !isLoggedIn || !user) return;
+    const needsOnboarding =
+      !user.user_type ||
+      (user.user_type === 'student' && !user.dept_code);
+    if (needsOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, [isAuthLoaded, isLoggedIn, user?.dept_code, user?.user_type, user]);
+
   const selectedBoardsForList = filter === 'KEYWORD' ? ['keyword'] : selectedBoards;
 
   return (
     <>
-      <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} />
+      <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} onShowToast={handleShowToast} />
 
       <Toast
         message={toastMessage}
@@ -306,6 +317,9 @@ function HomeContent() {
               notificationCount={newKeywordCount}
             />
           </div>
+
+          {/* User Stats Banner */}
+          <UserStatsBanner isLoggedIn={isLoggedIn} onSignupClick={() => setIsSidebarOpen(true)} />
 
           {/* 카테고리 필터 */}
           <div className="shrink-0" style={{ touchAction: 'none' }}>
@@ -419,7 +433,7 @@ function HomeContent() {
             </div>
           </div>
 
-          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onShowToast={handleShowToast} />
         </div>
       </main>
     </>

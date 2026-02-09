@@ -100,3 +100,34 @@ body {
 .animate-blink-orange {
   animation: soft-glow-orange 2.8s ease-in-out 3 forwards;
 }
+
+/* 탭 컨텐츠 슬라이드 */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.25s ease-out;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.25s ease-out;
+}
