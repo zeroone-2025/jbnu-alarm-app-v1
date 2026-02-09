@@ -80,25 +80,24 @@ body {
   animation: slideUp 0.3s ease-out;
 }
 
-@keyframes soft-glow-orange {
+@keyframes blink-orange {
   0% {
     background-color: #fff7ed;
-    box-shadow: 0 0 0 rgba(251, 146, 60, 0);
+    /* bg-orange-50 */
   }
 
   50% {
-    background-color: #ffedd5;
-    box-shadow: 0 0 8px rgba(251, 146, 60, 0.18);
+    background-color: white;
   }
 
   100% {
     background-color: #fff7ed;
-    box-shadow: 0 0 0 rgba(251, 146, 60, 0);
+    /* bg-orange-50 */
   }
 }
 
 .animate-blink-orange {
-  animation: soft-glow-orange 2.8s ease-in-out 3 forwards;
+  animation: blink-orange 3s ease-in-out 3 forwards;
 }
 
 /* 탭 컨텐츠 슬라이드 */
