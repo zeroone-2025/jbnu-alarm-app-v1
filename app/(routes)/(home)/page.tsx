@@ -256,6 +256,7 @@ function HomeContent() {
     const loginStatus = params.get('login');
     const showOnboardingParam = params.get('show_onboarding');
     const logoutStatus = params.get('logout');
+    const loginCancelled = params.get('login_cancelled');
 
     if (loginStatus === 'success') {
       if (showOnboardingParam === 'true') {
@@ -272,6 +273,11 @@ function HomeContent() {
       router.replace('/');
     } else if (logoutStatus === 'success') {
       setToastMessage('로그아웃되었습니다.');
+      setToastType('info');
+      setShowToast(true);
+      router.replace('/');
+    } else if (loginCancelled === 'true') {
+      setToastMessage('로그인이 취소되었습니다.');
       setToastType('info');
       setShowToast(true);
       router.replace('/');
