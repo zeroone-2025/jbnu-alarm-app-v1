@@ -189,27 +189,12 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
         />
       </div>
 
-      {/* Save button */}
-      <Button
-        variant="primary"
-        size="lg"
-        fullWidth
-        onClick={handleSave}
-        disabled={updateMutation.isPending}
-      >
-        {updateMutation.isPending ? (
-          <span className="flex items-center justify-center gap-2">
-            <LoadingSpinner size="sm" />
-            저장 중...
-          </span>
-        ) : (
-          '저장하기'
-        )}
-      </Button>
+      {/* Spacer for fixed button */}
+      <div className="h-16" />
 
       {/* Login prompt overlay */}
       {showLoginPrompt && (
-        <div ref={loginPromptRef} className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+        <div ref={loginPromptRef} className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
           <p className="text-sm font-medium text-gray-800 text-center mb-1">
             저장하려면 로그인이 필요합니다
           </p>
@@ -225,6 +210,28 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
           </button>
         </div>
       )}
+
+      {/* Fixed bottom bar with save button */}
+      <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-gray-100 bg-white px-4 py-3 pb-safe">
+        <div className="mx-auto max-w-md md:max-w-4xl">
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+          >
+            {updateMutation.isPending ? (
+              <span className="flex items-center justify-center gap-2">
+                <LoadingSpinner size="sm" />
+                저장 중...
+              </span>
+            ) : (
+              '저장하기'
+            )}
+          </Button>
+        </div>
+      </div>
 
       <Toast
         message={toastMessage}

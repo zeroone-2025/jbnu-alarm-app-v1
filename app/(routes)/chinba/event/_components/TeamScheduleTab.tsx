@@ -1,6 +1,7 @@
 'use client';
 
-import { FiCheck, FiClock } from 'react-icons/fi';
+import { useState } from 'react';
+import { FiCheck, FiClock, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import ChinbaHeatmapGrid from './ChinbaHeatmapGrid';
 import type { ChinbaEventDetail, ChinbaRecommendedTime } from '@/_types/chinba';
 
@@ -17,6 +18,7 @@ interface TeamScheduleTabProps {
 }
 
 export default function TeamScheduleTab({ event }: TeamScheduleTabProps) {
+  const [showParticipants, setShowParticipants] = useState(true);
   const submittedCount = event.participants.filter((p) => p.has_submitted).length;
   const totalCount = event.participants.length;
 
@@ -24,24 +26,34 @@ export default function TeamScheduleTab({ event }: TeamScheduleTabProps) {
     <div className="px-4 pb-6">
       {/* Participants */}
       <div className="mb-4">
-        <h3 className="text-xs font-bold text-gray-500 mb-2">
-          참여자 ({submittedCount}/{totalCount} 제출)
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {event.participants.map((p) => (
-            <div
-              key={p.user_id}
-              className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
-                p.has_submitted
+        <button
+          onClick={() => setShowParticipants(!showParticipants)}
+          className="flex items-center justify-between w-full mb-2 group"
+        >
+          <h3 className="text-xs font-bold text-gray-500 group-hover:text-gray-700 transition-colors">
+            참여자 ({submittedCount}/{totalCount} 제출)
+          </h3>
+          <div className="text-gray-400 group-hover:text-gray-600 transition-colors">
+            {showParticipants ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+          </div>
+        </button>
+
+        {showParticipants && (
+          <div className="flex flex-wrap gap-2 animate-fadeIn">
+            {event.participants.map((p) => (
+              <div
+                key={p.user_id}
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${p.has_submitted
                   ? 'bg-emerald-50 text-emerald-700'
                   : 'bg-gray-100 text-gray-500'
-              }`}
-            >
-              {p.has_submitted && <FiCheck size={10} />}
-              <span>{p.nickname || `유저${p.user_id}`}</span>
-            </div>
-          ))}
-        </div>
+                  }`}
+              >
+                {p.has_submitted && <FiCheck size={10} />}
+                <span>{p.nickname || `유저${p.user_id}`}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Heatmap */}
@@ -73,11 +85,10 @@ export default function TeamScheduleTab({ event }: TeamScheduleTabProps) {
             {event.recommended_times.slice(0, 3).map((rec, i) => (
               <div
                 key={i}
-                className={`rounded-xl px-3 py-2.5 ${
-                  rec.all_available
-                    ? 'bg-emerald-50 border border-emerald-200'
-                    : 'bg-amber-50 border border-amber-200'
-                }`}
+                className={`rounded-xl px-3 py-2.5 ${rec.all_available
+                  ? 'bg-emerald-50 border border-emerald-200'
+                  : 'bg-amber-50 border border-amber-200'
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <FiClock

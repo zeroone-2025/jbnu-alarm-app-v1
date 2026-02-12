@@ -7,6 +7,9 @@ import { IconType } from 'react-icons';
 import { useUser } from '@/_lib/hooks/useUser';
 import { getAllDepartments } from '@/_lib/api';
 import LoginButtonGroup from '@/_components/auth/LoginButtonGroup';
+import { useMyChinbaEvents } from '@/_lib/hooks/useChinba';
+import { ChinbaEventList } from '@/(routes)/chinba/_components/ChinbaEventList';
+import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -26,7 +29,7 @@ interface ServiceItem {
 const SERVICE_ITEMS: ServiceItem[] = [
   { id: 'profile', label: '프로필', icon: FiUser, href: '/profile' },
   { id: 'jbnu-alarm', label: '전북대 알리미', icon: FiBell, isActive: true },
-  { id: 'chinba', label: '친해지길 바래', icon: FiUsers, href: '/chinba' },
+  { id: 'chinba', label: '친해지길 바래', icon: FiUsers },
   { id: 'flow', label: '플로우', icon: FiZap, isDisabled: true },
 ];
 
@@ -38,6 +41,22 @@ function formatAdmissionYear(year: number | null | undefined): string | null {
 export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) {
   const router = useRouter();
   const { user, isLoggedIn, isAuthLoaded, isLoading } = useUser();
+  const [chinbaExpanded, setChinbaExpanded] = useState(() => {
+    // localStorage에서 초기값 로드
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebar_chinba_expanded');
+      return saved === 'true';
+    }
+    return false;
+  });
+  const { data: chinbaEvents, isLoading: isLoadingChinbaEvents, refetch } = useMyChinbaEvents(isLoggedIn);
+
+  // chinbaExpanded 상태가 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebar_chinba_expanded', String(chinbaExpanded));
+    }
+  }, [chinbaExpanded]);
 
   const handleAdminClick = () => {
     onClose();
@@ -50,6 +69,22 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
       onShowToast('준비 중입니다', 'info');
       return;
     }
+
+    // 친바 항목: /chinba 페이지로 이동
+    if (item.id === 'chinba') {
+      router.push('/chinba');
+      onClose();
+      return;
+    }
+
+    // 전북대 알리미: 메인 페이지로 이동
+    if (item.id === 'jbnu-alarm') {
+      router.push('/');
+      onClose();
+      return;
+    }
+
+    // 다른 항목: 기존 로직
     if (item.href) {
       router.push(item.href);
       onClose();
@@ -59,6 +94,15 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
       onClose();
       return;
     }
+  };
+
+  const handleChinbaToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isLoggedIn) {
+      onShowToast('로그인이 필요합니다', 'info');
+      return;
+    }
+    setChinbaExpanded(prev => !prev);
   };
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
@@ -150,27 +194,58 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
               if (!isLoggedIn && item.id === 'profile') {
                 return null;
               }
-              
+
               const Icon = item.icon;
               return (
-                <button
-                  key={item.id}
-                  onClick={() => handleServiceClick(item)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${item.isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : item.isDisabled
-                      ? 'text-gray-400'
-                      : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
-                    }`}
-                >
-                  <Icon size={18} />
-                  <span className="text-sm font-medium">{item.label}</span>
-                  {item.isActive && (
-                    <span className="ml-auto text-[10px] font-medium text-blue-500 bg-blue-100 px-1.5 py-0.5 rounded">
-                      현재
-                    </span>
+                <div key={item.id}>
+                  <button
+                    onClick={() => handleServiceClick(item)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${item.isActive
+                      ? 'bg-blue-50 text-blue-700'
+                      : item.isDisabled
+                        ? 'text-gray-400'
+                        : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                      }`}
+                  >
+                    <Icon size={18} />
+                    <span className="text-sm font-medium">{item.label}</span>
+                    {item.isActive && (
+                      <span className="ml-auto text-[10px] font-medium text-blue-500 bg-blue-100 px-1.5 py-0.5 rounded">
+                        현재
+                      </span>
+                    )}
+                    {/* 친바: 리스트 토글 버튼 */}
+                    {item.id === 'chinba' && (
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleChinbaToggle(e);
+                        }}
+                        className="ml-auto px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer"
+                      >
+                        친바 리스트
+                      </div>
+                    )}
+                  </button>
+
+                  {/* 친바 방 리스트 확장 영역 */}
+                  {item.id === 'chinba' && chinbaExpanded && (
+                    <div className="mt-2 ml-6 mr-1 mb-3 space-y-2 max-h-[300px] overflow-y-auto rounded-lg">
+                      <ChinbaEventList
+                        events={chinbaEvents}
+                        isLoading={isLoadingChinbaEvents}
+                        onEventClick={(eventId) => {
+                          router.push(`/chinba/event?id=${eventId}`);
+                          onClose();
+                        }}
+                        onDeleteSuccess={refetch}
+                        onShowToast={onShowToast}
+                        compact
+                        emptyMessage="참여한 방이 없습니다"
+                      />
+                    </div>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>

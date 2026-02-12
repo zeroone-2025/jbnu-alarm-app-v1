@@ -1,10 +1,10 @@
 import { Suspense } from 'react';
-import ChinbaHistoryClient from './_components/ChinbaHistoryClient';
+import ChinbaTimetableView from './_components/ChinbaTimetableView';
 
 export default function ChinbaPage() {
     return (
         <Suspense fallback={null}>
-            <ChinbaHistoryClient />
+            <ChinbaTimetableView />
         </Suspense>
     );
 }

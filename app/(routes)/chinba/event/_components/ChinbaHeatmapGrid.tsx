@@ -67,14 +67,14 @@ export default function ChinbaHeatmapGrid({
     };
   });
 
-  const cellSize = Math.max(40, Math.floor((window?.innerWidth ? Math.min(window.innerWidth, 448) - 48 - 40 : 320) / dates.length));
+  const cellSize = Math.max(50, Math.floor((window?.innerWidth ? Math.min(window.innerWidth, 448) - 48 - 20 : 320) / dates.length));
 
   return (
     <div className="overflow-x-auto">
       <div className="inline-block min-w-full">
         {/* Header */}
-        <div className="flex">
-          <div className="w-10 shrink-0" />
+        <div className="flex justify-center">
+          <div className="w-6 shrink-0" />
           {dateInfos.map((info) => (
             <div
               key={info.dateStr}
@@ -89,9 +89,9 @@ export default function ChinbaHeatmapGrid({
 
         {/* Grid */}
         {timeSlots.map((time) => (
-          <div key={time} className="flex">
+          <div key={time} className="flex justify-center">
             {/* Time label */}
-            <div className="w-10 shrink-0 flex items-center justify-end pr-1.5">
+            <div className="w-7 shrink-0 flex items-center justify-start">
               {time.endsWith(':00') && (
                 <span className="text-[10px] text-gray-400 -mt-2">{parseInt(time)}시</span>
               )}
@@ -108,10 +108,10 @@ export default function ChinbaHeatmapGrid({
               return (
                 <div
                   key={dtKey}
-                  className={`relative flex items-center justify-center border-r border-gray-100 ${bgColor} ${
-                    isHourBorder ? 'border-t border-t-gray-200' : 'border-t border-t-gray-100/50'
-                  } cursor-pointer transition-opacity hover:opacity-80`}
-                  style={{ width: cellSize, height: 24 }}
+                  className={`relative flex items-center justify-center border-r border-gray-100 ${bgColor} ${isHourBorder ? 'border-t border-t-gray-200' : 'border-t border-t-gray-100/50'
+                    } cursor-pointer transition-opacity hover:opacity-80`}
+                  // 셀 크기 조정
+                  style={{ width: cellSize, height: 22 }}
                   onClick={() => {
                     if (slot && slot.unavailable_count > 0) {
                       setTooltip(
