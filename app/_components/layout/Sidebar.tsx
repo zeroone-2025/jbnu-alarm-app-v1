@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { FiUser, FiChevronRight, FiSettings, FiBell, FiUsers, FiZap, FiPlus } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 import { useUser } from '@/_lib/hooks/useUser';
@@ -24,12 +24,13 @@ interface ServiceItem {
   href?: string;
   isActive?: boolean;
   isDisabled?: boolean;
+  matchPath?: string;  // pathname matching
 }
 
 const SERVICE_ITEMS: ServiceItem[] = [
-  { id: 'profile', label: '프로필', icon: FiUser, href: '/profile' },
-  { id: 'jbnu-alarm', label: '전북대 알리미', icon: FiBell, isActive: true },
-  { id: 'chinba', label: '친해지길 바래', icon: FiUsers },
+  { id: 'profile', label: '프로필', icon: FiUser, href: '/profile', matchPath: '/profile' },
+  { id: 'jbnu-alarm', label: '전북대 알리미', icon: FiBell, matchPath: '/' },
+  { id: 'chinba', label: '친해지길 바래', icon: FiUsers, matchPath: '/chinba' },
   { id: 'flow', label: '플로우', icon: FiZap, isDisabled: true },
 ];
 
@@ -40,17 +41,10 @@ function formatAdmissionYear(year: number | null | undefined): string | null {
 
 export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isLoggedIn, isAuthLoaded, isLoading } = useUser();
   const [chinbaExpanded, setChinbaExpanded] = useState(false);
   const { data: chinbaEvents, isLoading: isLoadingChinbaEvents, refetch } = useMyChinbaEvents(isLoggedIn);
-
-  // 클라이언트에서 localStorage로부터 초기값 로드 (hydration mismatch 방지)
-  useEffect(() => {
-    const saved = localStorage.getItem('sidebar_chinba_expanded');
-    if (saved === 'true') {
-      setChinbaExpanded(true);
-    }
-  }, []);
 
   // chinbaExpanded 상태가 변경될 때마다 localStorage에 저장
   useEffect(() => {
@@ -61,6 +55,12 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
     onClose();
     const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3001';
     window.location.href = `${adminUrl}/dashboard`;
+  };
+
+  const isItemActive = (item: ServiceItem) => {
+    if (!item.matchPath) return false;
+    if (item.matchPath === '/') return pathname === '/';
+    return pathname.startsWith(item.matchPath);
   };
 
   const handleServiceClick = (item: ServiceItem) => {
@@ -89,7 +89,8 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
       onClose();
       return;
     }
-    if (item.isActive) {
+    // 이미 해당 페이지에 있으면 사이드바만 닫기
+    if (item.matchPath && isItemActive(item)) {
       onClose();
       return;
     }
@@ -199,7 +200,7 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
                 <div key={item.id}>
                   <button
                     onClick={() => handleServiceClick(item)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${item.isActive
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${isItemActive(item)
                       ? 'bg-blue-50 text-blue-700'
                       : item.isDisabled
                         ? 'text-gray-400'
@@ -208,38 +209,12 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
                   >
                     <Icon size={18} />
                     <span className="text-sm font-medium">{item.label}</span>
-                    {item.isActive && (
+                    {isItemActive(item) && (
                       <span className="ml-auto text-[10px] font-medium text-blue-500 bg-blue-100 px-1.5 py-0.5 rounded">
                         현재
                       </span>
                     )}
-                    {/* 친바: 리스트 토글 버튼 */}
-                    {item.id === 'chinba' && (
-                      <div className="ml-auto flex items-center gap-1">
-                        {chinbaExpanded && (
-                          <div
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push('/chinba/create');
-                              onClose();
-                            }}
-                            className="p-1 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition-colors cursor-pointer"
-                            title="새 친바 만들기"
-                          >
-                            <FiPlus size={14} />
-                          </div>
-                        )}
-                        <div
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleChinbaToggle(e);
-                          }}
-                          className="px-2 py-1 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition-colors cursor-pointer"
-                        >
-                          친바 리스트
-                        </div>
-                      </div>
-                    )}
+
                   </button>
 
                   {/* 친바 방 리스트 확장 영역 */}

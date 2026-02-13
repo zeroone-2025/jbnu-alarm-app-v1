@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import type { ChinbaHeatmapSlot } from '@/_types/chinba';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -67,10 +67,25 @@ export default function ChinbaHeatmapGrid({
     };
   });
 
-  const cellSize = Math.max(50, Math.floor((window?.innerWidth ? Math.min(window.innerWidth, 448) - 48 - 20 : 320) / dates.length));
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [cellSize, setCellSize] = useState(40);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const calculate = () => {
+      const containerWidth = el.clientWidth;
+      // 28px for time label column, remaining space divided by number of dates
+      setCellSize(Math.floor((containerWidth - 28) / dates.length));
+    };
+    calculate();
+    const observer = new ResizeObserver(calculate);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [dates.length]);
 
   return (
-    <div className="overflow-x-auto">
+    <div ref={containerRef} className="overflow-hidden">
       <div className="inline-block min-w-full">
         {/* Header */}
         <div className="flex justify-center">

@@ -11,6 +11,7 @@ import Sidebar from '@/_components/layout/Sidebar';
 import Toast from '@/_components/ui/Toast';
 import { ChinbaEventList } from './ChinbaEventList';
 import { ChinbaHeader } from './ChinbaHeader';
+import ChinbaCreateModal from './ChinbaCreateModal';
 
 export default function ChinbaTimetableView() {
   const router = useRouter();
@@ -21,12 +22,18 @@ export default function ChinbaTimetableView() {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [toastKey, setToastKey] = useState(0);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const handleShowToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToastMessage(message);
     setToastType(type);
     setToastKey(prev => prev + 1);
     setShowToast(true);
+  };
+
+  const handleCreateSuccess = (eventId: string) => {
+    refetch();
+    router.push(`/chinba/event?id=${eventId}`);
   };
 
   if (!isAuthLoaded) {
@@ -69,7 +76,7 @@ export default function ChinbaTimetableView() {
               </div>
             ) : (
               <button
-                onClick={() => router.push('/chinba/create')}
+                onClick={() => setShowCreateModal(true)}
                 className="w-full py-4 px-4 text-center text-sm text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors active:scale-[0.99]"
               >
                 친바를 생성하세요 ✨
@@ -85,7 +92,7 @@ export default function ChinbaTimetableView() {
 
         {/* Floating + Button */}
         <button
-          onClick={() => router.push('/chinba/create')}
+          onClick={() => setShowCreateModal(true)}
           className="absolute bottom-8 right-8 z-[60] h-14 w-14 rounded-full bg-gray-900 text-white shadow-xl flex items-center justify-center active:scale-95 transition-all"
           aria-label="새로 만들기"
         >
@@ -101,6 +108,12 @@ export default function ChinbaTimetableView() {
         onClose={() => setShowToast(false)}
         type={toastType}
         triggerKey={toastKey}
+      />
+
+      <ChinbaCreateModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCreateSuccess}
       />
     </div>
   );
