@@ -41,21 +41,20 @@ function formatAdmissionYear(year: number | null | undefined): string | null {
 export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) {
   const router = useRouter();
   const { user, isLoggedIn, isAuthLoaded, isLoading } = useUser();
-  const [chinbaExpanded, setChinbaExpanded] = useState(() => {
-    // localStorage에서 초기값 로드
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebar_chinba_expanded');
-      return saved === 'true';
-    }
-    return false;
-  });
+  const [chinbaExpanded, setChinbaExpanded] = useState(false);
   const { data: chinbaEvents, isLoading: isLoadingChinbaEvents, refetch } = useMyChinbaEvents(isLoggedIn);
+
+  // 클라이언트에서 localStorage로부터 초기값 로드 (hydration mismatch 방지)
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebar_chinba_expanded');
+    if (saved === 'true') {
+      setChinbaExpanded(true);
+    }
+  }, []);
 
   // chinbaExpanded 상태가 변경될 때마다 localStorage에 저장
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('sidebar_chinba_expanded', String(chinbaExpanded));
-    }
+    localStorage.setItem('sidebar_chinba_expanded', String(chinbaExpanded));
   }, [chinbaExpanded]);
 
   const handleAdminClick = () => {
