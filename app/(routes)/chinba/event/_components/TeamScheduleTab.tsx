@@ -28,7 +28,7 @@ export default function TeamScheduleTab({ event }: TeamScheduleTabProps) {
       <div className="mb-4">
         <button
           onClick={() => setShowParticipants(!showParticipants)}
-          className="flex items-center justify-between w-full mb-2 group"
+          className="flex items-center gap-1.5 mb-2 group text-left w-full hover:bg-gray-50/50 -ml-1 pl-1 py-1 rounded transition-colors"
         >
           <h3 className="text-xs font-bold text-gray-500 group-hover:text-gray-700 transition-colors">
             참여자 ({submittedCount}/{totalCount} 제출)

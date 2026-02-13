@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { FiUser, FiChevronRight, FiSettings, FiBell, FiUsers, FiZap } from 'react-icons/fi';
+import { FiUser, FiChevronRight, FiSettings, FiBell, FiUsers, FiZap, FiPlus } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 import { useUser } from '@/_lib/hooks/useUser';
 import { getAllDepartments } from '@/_lib/api';
@@ -216,14 +216,29 @@ export default function Sidebar({ isOpen, onClose, onShowToast }: SidebarProps) 
                     )}
                     {/* 친바: 리스트 토글 버튼 */}
                     {item.id === 'chinba' && (
-                      <div
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleChinbaToggle(e);
-                        }}
-                        className="ml-auto px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors cursor-pointer"
-                      >
-                        친바 리스트
+                      <div className="ml-auto flex items-center gap-1">
+                        {chinbaExpanded && (
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push('/chinba/create');
+                              onClose();
+                            }}
+                            className="p-1 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition-colors cursor-pointer"
+                            title="새 친바 만들기"
+                          >
+                            <FiPlus size={14} />
+                          </div>
+                        )}
+                        <div
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleChinbaToggle(e);
+                          }}
+                          className="px-2 py-1 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded transition-colors cursor-pointer"
+                        >
+                          친바 리스트
+                        </div>
                       </div>
                     )}
                   </button>

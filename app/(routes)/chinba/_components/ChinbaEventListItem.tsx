@@ -35,9 +35,11 @@ export function ChinbaEventListItem({ event, onClick, onDelete, compact = false 
   if (compact) {
     // 사이드바용 축소 버전
     return (
-      <button
+
+      <div
+        role="button"
         onClick={onClick}
-        className={`w-full text-left p-2.5 rounded-lg border transition-all active:scale-[0.98] ${isExpired
+        className={`w-full text-left p-2.5 rounded-lg border transition-all active:scale-[0.98] cursor-pointer ${isExpired
           ? 'border-gray-100 bg-gray-50/50 opacity-60'
           : 'border-gray-200 bg-white hover:border-gray-300'
           }`}
@@ -83,15 +85,16 @@ export function ChinbaEventListItem({ event, onClick, onDelete, compact = false 
             <span className="text-[10px] text-amber-600">미제출</span>
           )}
         </div>
-      </button>
+      </div>
     );
   }
 
   // 기존 전체 버전 (ChinbaHistoryClient용)
   return (
-    <button
+    <div
+      role="button"
       onClick={onClick}
-      className={`w-full text-left p-4 rounded-xl border transition-all active:scale-[0.98] ${isExpired
+      className={`w-full text-left p-4 rounded-xl border transition-all active:scale-[0.98] cursor-pointer ${isExpired
         ? 'border-gray-100 bg-gray-50/50 opacity-60'
         : 'border-gray-200 bg-white hover:border-gray-300'
         }`}
@@ -143,6 +146,6 @@ export function ChinbaEventListItem({ event, onClick, onDelete, compact = false 
           만든이: {event.creator_nickname}
         </p>
       )}
-    </button>
+    </div>
   );
 }
