@@ -62,6 +62,7 @@ export function useUpdateUnavailability(eventId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chinba', 'event', eventId] });
       queryClient.invalidateQueries({ queryKey: ['chinba', 'participation', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['chinba', 'my-events'] });
     },
   });
 }
@@ -73,6 +74,7 @@ export function useImportTimetable(eventId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chinba', 'event', eventId] });
       queryClient.invalidateQueries({ queryKey: ['chinba', 'participation', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['chinba', 'my-events'] });
     },
   });
 }
