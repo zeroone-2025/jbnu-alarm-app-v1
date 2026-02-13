@@ -203,7 +203,9 @@ function HomeContent() {
       }
 
       if (document.visibilityState === 'visible') {
-        refetchUser(); // 유저 상태 및 로그인 정보 동기화
+        if (isLoggedIn) {
+          refetchUser(); // 유저 상태 및 로그인 정보 동기화
+        }
         if (filter === 'ALL') {
           refetch();
         }
