@@ -6,6 +6,7 @@ import { FiUpload, FiTrash2 } from 'react-icons/fi';
 import Button from '@/_components/ui/Button';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 import ConfirmModal from '@/_components/ui/ConfirmModal';
+import { useUser } from '@/_lib/hooks/useUser';
 import {
   getUserTimetable,
   uploadTimetableImage,
@@ -50,6 +51,7 @@ export default function TimetableTab() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { isLoggedIn } = useUser();
 
   const [selectedSemester, setSelectedSemester] = useState(getCurrentSemester);
   const [overlayState, setOverlayState] = useState<OverlayState>(null);
@@ -67,6 +69,7 @@ export default function TimetableTab() {
     queryFn: () => getUserTimetable(selectedSemester),
     staleTime: 1000 * 60 * 5,
     retry: 1,
+    enabled: isLoggedIn,  // ← 로그인 상태일 때만 API 호출
   });
 
   const classes = timetable?.classes ?? [];
