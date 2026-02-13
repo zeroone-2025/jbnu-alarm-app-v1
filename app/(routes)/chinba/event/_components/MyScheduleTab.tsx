@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FiUpload } from 'react-icons/fi';
+import { FiUpload, FiRotateCcw } from 'react-icons/fi';
 import Button from '@/_components/ui/Button';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 import Toast from '@/_components/ui/Toast';
@@ -156,29 +156,38 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
 
   return (
     <div className="px-4 pb-6">
-      {/* Info card */}
-      <div className="mb-4 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2.5">
-        <p className="text-xs text-blue-700 font-medium">
-          불가능한 시간을 드래그로 선택해주세요
-        </p>
-        <p className="text-[10px] text-blue-500 mt-0.5">
-          빨간색으로 표시된 시간이 불가능한 시간입니다
-        </p>
+      {/* Info + Actions (horizontal) */}
+      <div className="mb-4 flex items-center gap-2">
+        <div className="flex-1 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2">
+          <p className="text-[11px] text-blue-700 font-medium leading-tight">
+            불가능한 시간을 드래그로 선택해주세요
+          </p>
+          <p className="text-[10px] text-blue-500 mt-0.5">빨간색으로 표시된 시간이 불가능한 시간입니다</p>
+        </div>
+        <button
+          onClick={handleImport}
+          disabled={importMutation.isPending}
+          className="shrink-0 flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[12px] font-medium text-gray-600 hover:bg-gray-100 active:scale-[0.97] transition-all disabled:opacity-50"
+        >
+          {importMutation.isPending ? (
+            <LoadingSpinner size="sm" />
+          ) : (
+            <FiUpload size={12} />
+          )}
+          내 시간표 불러오기
+        </button>
+        <button
+          onClick={() => {
+            setSelectedSlots(new Set());
+            setHasDraft(false);
+          }}
+          disabled={selectedSlots.size === 0}
+          className="shrink-0 flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-2 text-[11px] font-medium text-red-500 hover:bg-red-50 active:scale-[0.97] transition-all disabled:opacity-30"
+        >
+          <FiRotateCcw size={12} />
+          초기화
+        </button>
       </div>
-
-      {/* Import button */}
-      <button
-        onClick={handleImport}
-        disabled={importMutation.isPending}
-        className="mb-4 w-full flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-100 active:scale-[0.98] transition-all disabled:opacity-50"
-      >
-        {importMutation.isPending ? (
-          <LoadingSpinner size="sm" />
-        ) : (
-          <FiUpload size={14} />
-        )}
-        내 시간표 불러오기
-      </button>
 
       {/* Schedule Grid */}
       <div className="mb-4 rounded-xl border border-gray-200 p-2 overflow-hidden">
