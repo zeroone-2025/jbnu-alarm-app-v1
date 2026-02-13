@@ -68,7 +68,9 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
     setSelectedSlots(slots);
   }, []);
 
+  // draftLoaded 전에는 초기 빈 상태가 localStorage를 덮어쓰지 않도록 가드
   useEffect(() => {
+    if (!draftLoaded) return;
     try {
       localStorage.setItem(
         draftKey,
@@ -77,7 +79,7 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
     } catch {
       // ignore localStorage errors
     }
-  }, [draftKey, selectedSlots]);
+  }, [draftKey, selectedSlots, draftLoaded]);
 
   const handleSave = async () => {
     if (!isLoggedIn) {
