@@ -203,7 +203,9 @@ function HomeContent() {
       }
 
       if (document.visibilityState === 'visible') {
-        refetchUser(); // 유저 상태 및 로그인 정보 동기화
+        if (isLoggedIn) {
+          refetchUser(); // 유저 상태 및 로그인 정보 동기화
+        }
         if (filter === 'ALL') {
           refetch();
         }
@@ -286,13 +288,12 @@ function HomeContent() {
 
   useEffect(() => {
     if (!isAuthLoaded || !isLoggedIn || !user) return;
-    const needsOnboarding =
-      !user.user_type ||
-      (user.user_type === 'student' && !user.dept_code);
+    // user_type이 설정되어 있으면 이미 온보딩을 완료한 것
+    const needsOnboarding = !user.user_type;
     if (needsOnboarding) {
       setShowOnboarding(true);
     }
-  }, [isAuthLoaded, isLoggedIn, user?.dept_code, user?.user_type, user]);
+  }, [isAuthLoaded, isLoggedIn, user]);
 
   const selectedBoardsForList = filter === 'KEYWORD' ? ['keyword'] : selectedBoards;
 

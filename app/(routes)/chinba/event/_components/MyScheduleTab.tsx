@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FiUpload } from 'react-icons/fi';
+import { FiUpload, FiRotateCcw } from 'react-icons/fi';
 import Button from '@/_components/ui/Button';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 import Toast from '@/_components/ui/Toast';
@@ -68,7 +68,9 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
     setSelectedSlots(slots);
   }, []);
 
+  // draftLoaded 전에는 초기 빈 상태가 localStorage를 덮어쓰지 않도록 가드
   useEffect(() => {
+    if (!draftLoaded) return;
     try {
       localStorage.setItem(
         draftKey,
@@ -77,7 +79,7 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
     } catch {
       // ignore localStorage errors
     }
-  }, [draftKey, selectedSlots]);
+  }, [draftKey, selectedSlots, draftLoaded]);
 
   const handleSave = async () => {
     if (!isLoggedIn) {
@@ -154,29 +156,38 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
 
   return (
     <div className="px-4 pb-6">
-      {/* Info card */}
-      <div className="mb-4 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2.5">
-        <p className="text-xs text-blue-700 font-medium">
-          불가능한 시간을 드래그로 선택해주세요
-        </p>
-        <p className="text-[10px] text-blue-500 mt-0.5">
-          빨간색으로 표시된 시간이 불가능한 시간입니다
-        </p>
+      {/* Info + Actions (horizontal) */}
+      <div className="mb-4 flex items-center gap-2">
+        <div className="flex-1 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2">
+          <p className="text-[11px] text-blue-700 font-medium leading-tight">
+            불가능한 시간을 드래그로 선택해주세요
+          </p>
+          <p className="text-[10px] text-blue-500 mt-0.5">빨간색으로 표시된 시간이 불가능한 시간입니다</p>
+        </div>
+        <button
+          onClick={handleImport}
+          disabled={importMutation.isPending}
+          className="shrink-0 flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[12px] font-medium text-gray-600 hover:bg-gray-100 active:scale-[0.97] transition-all disabled:opacity-50"
+        >
+          {importMutation.isPending ? (
+            <LoadingSpinner size="sm" />
+          ) : (
+            <FiUpload size={12} />
+          )}
+          내 시간표 불러오기
+        </button>
+        <button
+          onClick={() => {
+            setSelectedSlots(new Set());
+            setHasDraft(false);
+          }}
+          disabled={selectedSlots.size === 0}
+          className="shrink-0 flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-2 text-[11px] font-medium text-red-500 hover:bg-red-50 active:scale-[0.97] transition-all disabled:opacity-30"
+        >
+          <FiRotateCcw size={12} />
+          초기화
+        </button>
       </div>
-
-      {/* Import button */}
-      <button
-        onClick={handleImport}
-        disabled={importMutation.isPending}
-        className="mb-4 w-full flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs font-medium text-gray-600 hover:bg-gray-100 active:scale-[0.98] transition-all disabled:opacity-50"
-      >
-        {importMutation.isPending ? (
-          <LoadingSpinner size="sm" />
-        ) : (
-          <FiUpload size={14} />
-        )}
-        내 시간표 불러오기
-      </button>
 
       {/* Schedule Grid */}
       <div className="mb-4 rounded-xl border border-gray-200 p-2 overflow-hidden">
@@ -189,27 +200,12 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
         />
       </div>
 
-      {/* Save button */}
-      <Button
-        variant="primary"
-        size="lg"
-        fullWidth
-        onClick={handleSave}
-        disabled={updateMutation.isPending}
-      >
-        {updateMutation.isPending ? (
-          <span className="flex items-center justify-center gap-2">
-            <LoadingSpinner size="sm" />
-            저장 중...
-          </span>
-        ) : (
-          '저장하기'
-        )}
-      </Button>
+      {/* Spacer for fixed button */}
+      <div className="h-16" />
 
       {/* Login prompt overlay */}
       {showLoginPrompt && (
-        <div ref={loginPromptRef} className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+        <div ref={loginPromptRef} className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
           <p className="text-sm font-medium text-gray-800 text-center mb-1">
             저장하려면 로그인이 필요합니다
           </p>
@@ -225,6 +221,28 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
           </button>
         </div>
       )}
+
+      {/* Fixed bottom bar with save button */}
+      <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-gray-100 bg-white px-4 py-3 pb-safe">
+        <div className="mx-auto max-w-md md:max-w-4xl">
+          <Button
+            variant="primary"
+            size="lg"
+            fullWidth
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+          >
+            {updateMutation.isPending ? (
+              <span className="flex items-center justify-center gap-2">
+                <LoadingSpinner size="sm" />
+                저장 중...
+              </span>
+            ) : (
+              '저장하기'
+            )}
+          </Button>
+        </div>
+      </div>
 
       <Toast
         message={toastMessage}
