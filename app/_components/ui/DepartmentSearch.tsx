@@ -11,6 +11,7 @@ interface DepartmentSearchProps {
   selectedDeptCode?: string | null;
   placeholder?: string;
   isReadonly?: boolean;
+  hasError?: boolean;
 }
 
 export default function DepartmentSearch({
@@ -18,6 +19,7 @@ export default function DepartmentSearch({
   selectedDeptCode,
   placeholder = '학과를 검색하세요 (예: 컴퓨터, 경영)',
   isReadonly = false,
+  hasError = false,
 }: DepartmentSearchProps) {
   const [query, setQuery] = useState('');
   const [allDepartments, setAllDepartments] = useState<Department[]>([]);
@@ -93,6 +95,8 @@ export default function DepartmentSearch({
       {selectedDept ? (
         <div className={`flex w-full items-center justify-between rounded-xl px-4 py-3 border transition-all ${isReadonly
           ? 'bg-gray-100 border-gray-200 cursor-not-allowed'
+          : hasError
+            ? 'bg-red-50 border-red-300'
           : 'bg-blue-50 border-blue-200'
           }`}>
           <div className="flex flex-col">
@@ -121,7 +125,11 @@ export default function DepartmentSearch({
           </div>
           <input
             type="text"
-            className="w-full rounded-xl border border-gray-300 bg-white py-3 pl-10 pr-10 text-base font-medium text-gray-900 transition-all focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 placeholder:text-gray-400"
+            className={`w-full rounded-xl border bg-white py-3 pl-10 pr-10 text-base font-medium text-gray-900 transition-all placeholder:text-gray-400 focus:outline-none ${
+              hasError
+                ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
+                : 'border-gray-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10'
+            }`}
             placeholder={placeholder}
             value={query}
             onChange={(e) => {

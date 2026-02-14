@@ -204,7 +204,7 @@ function HomeContent() {
 
       if (document.visibilityState === 'visible') {
         if (isLoggedIn) {
-          refetchUser(); // 유저 상태 및 로그인 정보 동기화
+          refetchUser(); // 로그인 상태에서만 유저 정보 동기화
         }
         if (filter === 'ALL') {
           refetch();
