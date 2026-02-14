@@ -2,13 +2,14 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { FiShare2, FiTrash2, FiCheckCircle, FiLink } from 'react-icons/fi';
-import { LuChevronLeft } from 'react-icons/lu';
+import { FiShare2, FiTrash2, FiCheckCircle, FiLink, FiMenu } from 'react-icons/fi';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 import ConfirmModal from '@/_components/ui/ConfirmModal';
 import Toast from '@/_components/ui/Toast';
+import Sidebar from '@/_components/layout/Sidebar';
 import { useUser } from '@/_lib/hooks/useUser';
 import { useChinbaEventDetail, useDeleteChinbaEvent, useCompleteChinbaEvent } from '@/_lib/hooks/useChinba';
+import { ChinbaHeader } from '@/(routes)/chinba/_components/ChinbaHeader';
 import TeamScheduleTab from './TeamScheduleTab';
 import MyScheduleTab from './MyScheduleTab';
 
@@ -92,9 +93,18 @@ export default function ChinbaDetailClient() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [toastKey, setToastKey] = useState(0);
+
+  const handleShowToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastKey(prev => prev + 1);
+    setToastVisible(true);
+  };
 
   useEffect(() => {
     const toastParam = searchParams.get('toast');
@@ -192,17 +202,12 @@ export default function ChinbaDetailClient() {
   return (
     <div className="fixed inset-0 z-50 bg-gray-50">
       <div className="relative mx-auto flex h-full w-full max-w-md flex-col border-x border-gray-100 bg-white shadow-xl md:max-w-4xl">
-        {/* Sticky Header */}
-        <div className="shrink-0 px-4 pb-2 border-b border-gray-100">
-          <div className="pt-safe" />
-          <div className="relative mt-4 flex items-center justify-between md:mt-4">
-            <button
-              onClick={() => router.push('/chinba')}
-              className="z-10 group -ml-1 rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100 active:scale-95"
-            >
-              <LuChevronLeft size={24} strokeWidth={2.5} />
-            </button>
+        {/* Chinba Header */}
+        <ChinbaHeader onMenuClick={() => setIsSidebarOpen(true)} showBackButton />
 
+        {/* Event Detail Header */}
+        <div className="shrink-0 px-4 pb-2 border-b border-gray-100">
+          <div className="relative flex items-center justify-between">
             <div className="flex-1 text-center mx-2">
               <h1 className="text-sm font-bold text-gray-800 truncate">{event.title}</h1>
               <p className="text-[10px] text-gray-400 mt-0.5">{formatDateRange(event.dates)}</p>
@@ -261,21 +266,19 @@ export default function ChinbaDetailClient() {
           <div className="shrink-0 flex border-b border-gray-200">
             <button
               onClick={() => handleTabChange('team')}
-              className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
-                activeTab === 'team'
-                  ? 'text-gray-900 border-b-2 border-gray-900'
-                  : 'text-gray-400'
-              }`}
+              className={`flex-1 py-2.5 text-sm font-medium transition-colors ${activeTab === 'team'
+                ? 'text-gray-900 border-b-2 border-gray-900'
+                : 'text-gray-400'
+                }`}
             >
               전체 일정
             </button>
             <button
               onClick={() => handleTabChange('my')}
-              className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
-                activeTab === 'my'
-                  ? 'text-gray-900 border-b-2 border-gray-900'
-                  : 'text-gray-400'
-              }`}
+              className={`flex-1 py-2.5 text-sm font-medium transition-colors ${activeTab === 'my'
+                ? 'text-gray-900 border-b-2 border-gray-900'
+                : 'text-gray-400'
+                }`}
             >
               내 일정
             </button>
@@ -311,6 +314,8 @@ export default function ChinbaDetailClient() {
             </div>
           </div>
         </div>
+
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onShowToast={handleShowToast} />
       </div>
 
       {/* Copy toast */}
@@ -318,6 +323,7 @@ export default function ChinbaDetailClient() {
         message={toastMessage}
         isVisible={toastVisible}
         onClose={() => setToastVisible(false)}
+        type={toastType}
         duration={2000}
         triggerKey={toastKey}
       />

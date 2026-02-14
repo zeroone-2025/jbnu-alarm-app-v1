@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -46,7 +46,21 @@ export default function ChinbaScheduleGrid({
     };
   }), [dates]);
 
-  const cellWidth = Math.max(40, Math.floor((typeof window !== 'undefined' ? Math.min(window.innerWidth, 448) - 48 - 40 : 320) / dates.length));
+  const [cellWidth, setCellWidth] = useState(40);
+
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+    const calculate = () => {
+      const containerWidth = el.clientWidth;
+      // 28px for time label column, remaining space divided by number of dates
+      setCellWidth(Math.floor((containerWidth - 28) / dates.length));
+    };
+    calculate();
+    const observer = new ResizeObserver(calculate);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [dates.length]);
 
   const toggleSlot = useCallback((slotKey: string, action: 'add' | 'remove') => {
     const newSlots = new Set(selectedSlots);
@@ -101,12 +115,12 @@ export default function ChinbaScheduleGrid({
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      className="overflow-x-auto select-none"
+      className="overflow-hidden select-none"
     >
       <div className="inline-block min-w-full">
         {/* Header */}
-        <div className="flex">
-          <div className="w-10 shrink-0" />
+        <div className="flex justify-center">
+          <div className="w-7 shrink-0" />
           {dateInfos.map((info) => (
             <div
               key={info.dateStr}
@@ -121,9 +135,9 @@ export default function ChinbaScheduleGrid({
 
         {/* Grid */}
         {timeSlots.map((time) => (
-          <div key={time} className="flex">
+          <div key={time} className="flex justify-center">
             {/* Time label */}
-            <div className="w-10 shrink-0 flex items-center justify-end pr-1.5">
+            <div className="w-7 shrink-0 flex items-center justify-start">
               {time.endsWith(':00') && (
                 <span className="text-[10px] text-gray-400 -mt-2">{parseInt(time)}시</span>
               )}
@@ -139,12 +153,11 @@ export default function ChinbaScheduleGrid({
                   key={key}
                   data-slot-key={key}
                   onPointerDown={(event) => handlePointerDown(event, info.dateStr, time)}
-                  className={`flex items-center justify-center border-r border-gray-100 transition-colors cursor-pointer ${
-                    isSelected ? 'bg-red-400' : 'bg-white hover:bg-gray-50'
-                  } ${
-                    isHourBorder ? 'border-t border-t-gray-200' : 'border-t border-t-gray-100/50'
-                  }`}
-                  style={{ width: cellWidth, height: 24, touchAction: 'none' }}
+                  className={`flex items-center justify-center border-r border-gray-100 transition-colors cursor-pointer ${isSelected ? 'bg-red-400' : 'bg-white hover:bg-gray-50'
+                    } ${isHourBorder ? 'border-t border-t-gray-200' : 'border-t border-t-gray-100/50'
+                    }`}
+                  // 셀 크기 조정
+                  style={{ width: cellWidth, height: 22, touchAction: 'none' }}
                 />
               );
             })}
