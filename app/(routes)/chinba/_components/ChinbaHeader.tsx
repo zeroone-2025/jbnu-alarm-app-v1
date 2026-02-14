@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { FiMenu } from 'react-icons/fi';
+import { FiMenu, FiChevronLeft } from 'react-icons/fi';
 
 interface ChinbaHeaderProps {
     onMenuClick: () => void;
@@ -22,6 +22,15 @@ export function ChinbaHeader({ onMenuClick, showBackButton = false }: ChinbaHead
                 >
                     <FiMenu size={24} />
                 </button>
+                {showBackButton && (
+                    <button
+                        onClick={() => router.back()}
+                        className="absolute left-9 z-10 rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100 active:scale-95"
+                        aria-label="뒤로가기"
+                    >
+                        <FiChevronLeft size={22} />
+                    </button>
+                )}
                 <button
                     onClick={() => router.push('/chinba')}
                     className="text-base font-bold text-gray-800 hover:text-gray-600 transition-colors"

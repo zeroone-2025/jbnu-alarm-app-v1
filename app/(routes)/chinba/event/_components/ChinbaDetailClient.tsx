@@ -203,7 +203,7 @@ export default function ChinbaDetailClient() {
     <div className="fixed inset-0 z-50 bg-gray-50">
       <div className="relative mx-auto flex h-full w-full max-w-md flex-col border-x border-gray-100 bg-white shadow-xl md:max-w-4xl">
         {/* Chinba Header */}
-        <ChinbaHeader onMenuClick={() => setIsSidebarOpen(true)} />
+        <ChinbaHeader onMenuClick={() => setIsSidebarOpen(true)} showBackButton />
 
         {/* Event Detail Header */}
         <div className="shrink-0 px-4 pb-2 border-b border-gray-100">

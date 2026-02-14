@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -46,7 +46,21 @@ export default function ChinbaScheduleGrid({
     };
   }), [dates]);
 
-  const cellWidth = Math.max(50, Math.floor((typeof window !== 'undefined' ? Math.min(window.innerWidth, 448) - 48 - 20 : 320) / dates.length));
+  const [cellWidth, setCellWidth] = useState(40);
+
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+    const calculate = () => {
+      const containerWidth = el.clientWidth;
+      // 28px for time label column, remaining space divided by number of dates
+      setCellWidth(Math.floor((containerWidth - 28) / dates.length));
+    };
+    calculate();
+    const observer = new ResizeObserver(calculate);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [dates.length]);
 
   const toggleSlot = useCallback((slotKey: string, action: 'add' | 'remove') => {
     const newSlots = new Set(selectedSlots);
@@ -101,7 +115,7 @@ export default function ChinbaScheduleGrid({
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      className="overflow-x-auto select-none"
+      className="overflow-hidden select-none"
     >
       <div className="inline-block min-w-full">
         {/* Header */}
