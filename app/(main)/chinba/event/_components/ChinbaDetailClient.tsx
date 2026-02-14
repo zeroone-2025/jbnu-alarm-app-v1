@@ -2,14 +2,13 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { FiShare2, FiTrash2, FiCheckCircle, FiLink, FiMenu } from 'react-icons/fi';
+import { FiShare2, FiTrash2, FiCheckCircle, FiLink } from 'react-icons/fi';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 import ConfirmModal from '@/_components/ui/ConfirmModal';
 import Toast from '@/_components/ui/Toast';
-import Sidebar from '@/_components/layout/Sidebar';
+import FullPageModal from '@/_components/layout/FullPageModal';
 import { useUser } from '@/_lib/hooks/useUser';
 import { useChinbaEventDetail, useDeleteChinbaEvent, useCompleteChinbaEvent } from '@/_lib/hooks/useChinba';
-import { ChinbaHeader } from '@/(routes)/chinba/_components/ChinbaHeader';
 import TeamScheduleTab from './TeamScheduleTab';
 import MyScheduleTab from './MyScheduleTab';
 
@@ -40,6 +39,7 @@ export default function ChinbaDetailClient() {
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
   const [isAnimating, setIsAnimating] = useState(false);
   const pendingTabRef = useRef<'team' | 'my' | null>(null);
+
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab === 'my' || tab === 'team') {
@@ -93,18 +93,10 @@ export default function ChinbaDetailClient() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [toastKey, setToastKey] = useState(0);
-
-  const handleShowToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    setToastMessage(message);
-    setToastType(type);
-    setToastKey(prev => prev + 1);
-    setToastVisible(true);
-  };
 
   useEffect(() => {
     const toastParam = searchParams.get('toast');
@@ -135,7 +127,6 @@ export default function ChinbaDetailClient() {
         // cancelled
       }
     } else {
-      // share 미지원 시 복사로 폴백
       await navigator.clipboard.writeText(url);
       setToastMessage('링크가 복사되었습니다');
       setToastVisible(true);
@@ -174,19 +165,19 @@ export default function ChinbaDetailClient() {
   // Loading state
   if (!isAuthLoaded || isLoading) {
     return (
-      <div className="fixed inset-0 z-50 bg-gray-50">
-        <div className="relative mx-auto flex h-full w-full max-w-md items-center justify-center border-x border-gray-100 bg-white shadow-xl md:max-w-4xl">
+      <FullPageModal isOpen={true} onClose={() => router.back()} title="친바">
+        <div className="flex h-full items-center justify-center">
           <LoadingSpinner size="lg" />
         </div>
-      </div>
+      </FullPageModal>
     );
   }
 
   // Error state
   if (error || !event) {
     return (
-      <div className="fixed inset-0 z-50 bg-gray-50">
-        <div className="relative mx-auto flex h-full w-full max-w-md flex-col items-center justify-center border-x border-gray-100 bg-white shadow-xl md:max-w-4xl">
+      <FullPageModal isOpen={true} onClose={() => router.back()} title="친바">
+        <div className="flex h-full flex-col items-center justify-center">
           <p className="text-sm text-gray-500">이벤트를 찾을 수 없습니다</p>
           <button
             onClick={() => router.push('/')}
@@ -195,16 +186,13 @@ export default function ChinbaDetailClient() {
             홈으로 돌아가기
           </button>
         </div>
-      </div>
+      </FullPageModal>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-50">
-      <div className="relative mx-auto flex h-full w-full max-w-md flex-col border-x border-gray-100 bg-white shadow-xl md:max-w-4xl">
-        {/* Chinba Header */}
-        <ChinbaHeader onMenuClick={() => setIsSidebarOpen(true)} showBackButton />
-
+    <>
+      <FullPageModal isOpen={true} onClose={() => router.back()} title={event.title || '친바'}>
         {/* Event Detail Header */}
         <div className="shrink-0 px-4 pb-2 border-b border-gray-100">
           <div className="relative flex items-center justify-between">
@@ -314,9 +302,7 @@ export default function ChinbaDetailClient() {
             </div>
           </div>
         </div>
-
-        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onShowToast={handleShowToast} />
-      </div>
+      </FullPageModal>
 
       {/* Copy toast */}
       <Toast
@@ -352,6 +338,6 @@ export default function ChinbaDetailClient() {
         <br />
         <span className="text-xs text-gray-400">완료 후에는 일정 수정이 불가합니다</span>
       </ConfirmModal>
-    </div>
+    </>
   );
 }

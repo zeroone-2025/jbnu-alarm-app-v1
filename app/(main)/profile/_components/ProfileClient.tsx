@@ -2,15 +2,13 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import FullPageModal from '@/_components/layout/FullPageModal';
 import { useUser, useUpdateUser } from '@/_lib/hooks/useUser';
 import UserInfoForm, { UserInfoFormData } from '@/_components/auth/UserInfoForm';
-import { FiLogOut, FiEdit3, FiUser, FiMail } from 'react-icons/fi';
-import { useUserStore } from '@/_lib/store/useUserStore';
+import { FiEdit3, FiUser } from 'react-icons/fi';
 import Button from '@/_components/ui/Button';
-import Toast from '@/_components/ui/Toast';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
-import { logoutUser, getAllDepartments } from '@/_lib/api';
+import { getAllDepartments } from '@/_lib/api';
+import { useToast } from '@/_context/ToastContext';
 import ProfileTabs, { ProfileTabType } from './ProfileTabs';
 import { TimetableTab } from '@/_components/timetable';
 import CareerTab from './career/CareerTab';
@@ -22,9 +20,9 @@ function formatAdmissionYear(year: number | null | undefined): string | null {
 
 export default function ProfileClient() {
   const router = useRouter();
+  const { showToast } = useToast();
   const { user, isLoggedIn, isAuthLoaded, isLoading: isUserLoading } = useUser();
   const updateMutation = useUpdateUser();
-  const clearUser = useUserStore((state) => state.clearUser);
   const searchParams = useSearchParams();
   const [isEditing, setIsEditing] = useState(false);
   const initialTab = (searchParams.get('tab') as ProfileTabType) || 'basic';
@@ -35,7 +33,6 @@ export default function ProfileClient() {
 
   const TAB_INDEX: Record<ProfileTabType, number> = { basic: 0, timetable: 1, career: 2 };
 
-  // 폼 상태
   const [formData, setFormData] = useState<UserInfoFormData>({
     nickname: '',
     school: '',
@@ -44,15 +41,6 @@ export default function ProfileClient() {
     admission_year: '',
   });
 
-  // 토스트 관련 상태
-  const [toast, setToast] = useState({
-    message: '',
-    isVisible: false,
-    type: 'success' as 'success' | 'error' | 'info',
-    triggerKey: 0,
-  });
-
-  // dept_code → dept_name 변환
   const [deptName, setDeptName] = useState<string | null>(null);
   const admissionYearText = formatAdmissionYear(user?.admission_year);
 
@@ -69,7 +57,6 @@ export default function ProfileClient() {
       .catch(() => setDeptName(null));
   }, [user?.dept_code]);
 
-  // 유저 정보 로드 시 초기값 설정
   useEffect(() => {
     if (user) {
       setFormData({
@@ -82,16 +69,11 @@ export default function ProfileClient() {
     }
   }, [user]);
 
-  // 비로그인 처리
   useEffect(() => {
     if (isAuthLoaded && !isLoggedIn) {
       router.replace('/');
     }
   }, [isAuthLoaded, isLoggedIn, router]);
-
-  const handleClose = () => {
-    router.back();
-  };
 
   const handleFormChange = (data: Partial<UserInfoFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -123,32 +105,6 @@ export default function ProfileClient() {
     window.history.replaceState(null, '', url.toString());
   };
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
-    setToast({
-      message,
-      type,
-      isVisible: true,
-      triggerKey: Date.now(),
-    });
-  };
-
-  const handleLogout = async () => {
-    if (!confirm('로그아웃 하시겠습니까?')) return;
-
-    // 1. 백엔드에 로그아웃 요청 (refresh token 폐기 + 메모리 토큰 삭제)
-    await logoutUser();
-
-    // 2. localStorage 정리 (구독 카테고리 등)
-    localStorage.removeItem('my_subscribed_categories');
-    localStorage.removeItem('access_token');
-
-    // 3. Zustand Store 정리
-    clearUser();
-
-    // 4. 홈으로 이동
-    window.location.href = '/?logout=success';
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -176,8 +132,8 @@ export default function ProfileClient() {
   }
 
   return (
-    <FullPageModal isOpen={true} onClose={handleClose} title={isEditing ? '프로필 수정' : '프로필'}>
-      <div className="flex items-center gap-4 px-5 py-6">
+    <div className="flex flex-col h-full">
+      <div className="shrink-0 flex items-center gap-4 px-5 py-6">
         {user?.profile_image ? (
           <img
             src={user.profile_image}
@@ -203,110 +159,89 @@ export default function ProfileClient() {
       </div>
 
       {/* Tab bar */}
-      <ProfileTabs activeTab={activeTab} onTabChange={handleTabChange} />
+      <div className="shrink-0">
+        <ProfileTabs activeTab={activeTab} onTabChange={handleTabChange} />
+      </div>
 
       {/* Tab content with slide animation */}
-      <div className="overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden">
         <div
           key={activeTab}
-          className={
+          className={`h-full ${
             isAnimating
               ? slideDirection === 'right'
                 ? 'animate-slideInRight'
                 : 'animate-slideInLeft'
               : ''
-          }
+          }`}
           onAnimationEnd={() => setIsAnimating(false)}
         >
-          {/* Basic info tab */}
-          {activeTab === 'basic' && (
-            <div className="px-5 py-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <UserInfoForm
-                  formData={formData}
-                  onChange={handleFormChange}
-                  email={user?.email}
-                  showNickname={true}
-                  isReadonlyNickname={true}
-                  isReadonly={!isEditing}
-                />
+          <div className="h-full overflow-y-auto">
+            {activeTab === 'basic' && (
+              <div className="px-5 py-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <UserInfoForm
+                    formData={formData}
+                    onChange={handleFormChange}
+                    email={user?.email}
+                    showNickname={true}
+                    isReadonlyNickname={true}
+                    isReadonly={!isEditing}
+                  />
 
-                {/* 모드 전환 버튼 영역 (수정하기 / 취소) */}
-                <div className="mb-4 flex justify-end">
-                  {!isEditing ? (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-900 transition-all hover:bg-gray-200 active:scale-95"
-                    >
-                      <FiEdit3 size={14} />
-                      수정하기
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleCancel}
-                      className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-500 transition-all hover:bg-gray-200 active:scale-95"
-                    >
-                      취소
-                    </button>
-                  )}
-                </div>
-
-                {/* 저장 버튼 - 수정 모드일 때만 표시 */}
-                {isEditing && (
-                  <div className="animate-slide-up pt-4">
-                    <Button
-                      type="submit"
-                      disabled={updateMutation.isPending}
-                      fullWidth
-                      size="lg"
-                      className="shadow-lg active:scale-95"
-                    >
-                      {updateMutation.isPending ? '저장 중...' : '저장하기'}
-                    </Button>
+                  <div className="mb-4 flex justify-end">
+                    {!isEditing ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-900 transition-all hover:bg-gray-200 active:scale-95"
+                      >
+                        <FiEdit3 size={14} />
+                        수정하기
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleCancel}
+                        className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-500 transition-all hover:bg-gray-200 active:scale-95"
+                      >
+                        취소
+                      </button>
+                    )}
                   </div>
-                )}
 
-                {/* 로그아웃 버튼 */}
-                <div className="flex justify-center border-t border-gray-100 pt-10 pb-6">
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 text-sm font-medium text-gray-400 transition-colors hover:text-red-500"
-                  >
-                    <FiLogOut size={16} />
-                    계정 로그아웃
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+                  {isEditing && (
+                    <div className="animate-slide-up pt-4">
+                      <Button
+                        type="submit"
+                        disabled={updateMutation.isPending}
+                        fullWidth
+                        size="lg"
+                        className="shadow-lg active:scale-95"
+                      >
+                        {updateMutation.isPending ? '저장 중...' : '저장하기'}
+                      </Button>
+                    </div>
+                  )}
 
-          {/* Timetable tab */}
-          {activeTab === 'timetable' && (
-            <div className="h-full">
-              <TimetableTab />
-            </div>
-          )}
+                </form>
+              </div>
+            )}
 
-          {/* Career tab */}
-          {activeTab === 'career' && (
-            <div className="h-full">
-              <CareerTab onShowToast={showToast} />
-            </div>
-          )}
+            {activeTab === 'timetable' && (
+              <div className="h-full">
+                <TimetableTab />
+              </div>
+            )}
+
+            {activeTab === 'career' && (
+              <div className="h-full">
+                <CareerTab onShowToast={showToast} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* 토스트 알림 */}
-      <Toast
-        message={toast.message}
-        isVisible={toast.isVisible}
-        type={toast.type}
-        triggerKey={toast.triggerKey}
-        onClose={() => setToast((prev) => ({ ...prev, isVisible: false }))}
-      />
-    </FullPageModal>
+    </div>
   );
 }

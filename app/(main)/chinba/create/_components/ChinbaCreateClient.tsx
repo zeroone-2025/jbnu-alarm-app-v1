@@ -2,10 +2,10 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { LuChevronLeft } from 'react-icons/lu';
 import Button from '@/_components/ui/Button';
 import Toast from '@/_components/ui/Toast';
 import LoginButtonGroup from '@/_components/auth/LoginButtonGroup';
+import FullPageModal from '@/_components/layout/FullPageModal';
 import { useCreateChinbaEvent } from '@/_lib/hooks/useChinba';
 import { useUser } from '@/_lib/hooks/useUser';
 import DateSelector from './DateSelector';
@@ -78,32 +78,16 @@ export default function ChinbaCreateClient() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-50">
-      <div className="relative mx-auto flex h-full w-full max-w-md flex-col border-x border-gray-100 bg-white shadow-xl md:max-w-4xl">
-        {/* Header */}
-        <div className="shrink-0 px-4 pb-3">
-          <div className="pt-safe" />
-          <div className="relative mt-4 flex items-center justify-center md:mt-4">
-            <button
-              onClick={() => router.back()}
-              className="absolute left-0 z-10 group -ml-1 rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100 active:scale-95"
-            >
-              <LuChevronLeft size={24} strokeWidth={2.5} />
-            </button>
-            <h1 className="text-base font-bold text-gray-800">새 일정 만들기</h1>
-          </div>
-        </div>
-
+    <>
+      <FullPageModal isOpen={true} onClose={() => router.back()} title="새 일정 만들기">
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-4">
-          {/* Error */}
           {error && (
             <div className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
               {error}
             </div>
           )}
 
-          {/* Title */}
           <div className="mb-6">
             <label className="block text-sm font-bold text-gray-700 mb-2">
               모임 이름
@@ -119,7 +103,6 @@ export default function ChinbaCreateClient() {
             <p className="mt-1 text-[11px] text-gray-400 text-right">{title.length}/100</p>
           </div>
 
-          {/* Date Selector */}
           <div className="mb-6">
             <label className="block text-sm font-bold text-gray-700 mb-2">
               날짜 선택
@@ -167,7 +150,7 @@ export default function ChinbaCreateClient() {
             {createEvent.isPending ? '만드는 중...' : '만들기'}
           </Button>
         </div>
-      </div>
+      </FullPageModal>
 
       <Toast
         message={toastMessage}
@@ -176,6 +159,6 @@ export default function ChinbaCreateClient() {
         duration={2000}
         triggerKey={toastKey}
       />
-    </div>
+    </>
   );
 }
