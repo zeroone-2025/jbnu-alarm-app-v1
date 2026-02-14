@@ -1,4 +1,5 @@
 import { Notice } from '@/_lib/api';
+import Button from '@/_components/ui/Button';
 import NoticeCard from './NoticeCard';
 
 interface NoticeListProps {
@@ -42,11 +43,6 @@ export default function NoticeList({
     emptyStateVariant === 'error' ? 'text-red-500' : 'text-gray-400';
   const emptyDescriptionClass =
     emptyStateVariant === 'error' ? 'text-red-400' : 'text-gray-400';
-  const emptyActionButtonClass = emptyStateVariant === 'error'
-    ? 'mt-4 rounded-lg bg-red-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-600 active:scale-95'
-    : emptyStateVariant === 'keyword'
-      ? 'mt-4 rounded-lg bg-indigo-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-600 active:scale-95'
-      : 'mt-4 rounded-lg bg-blue-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-600 active:scale-95';
 
   return (
     <div className="min-h-full p-0 bg-gray-50 md:p-5" role="list">
@@ -68,12 +64,9 @@ export default function NoticeList({
           <div className="flex flex-col items-center justify-center py-20 text-center col-span-full">
             <div className="text-6xl">📭</div>
             <p className="mt-4 text-base font-medium text-gray-500">선택된 게시판이 없어요</p>
-            <button
-              onClick={onOpenBoardFilter}
-              className="mt-4 rounded-lg bg-blue-500 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-600 active:scale-95"
-            >
+            <Button onClick={onOpenBoardFilter} size="sm" className="mt-4">
               게시판 선택하기
-            </button>
+            </Button>
           </div>
         ) : filteredNotices.length > 0 ? (
           filteredNotices.map((notice) => (
@@ -97,12 +90,9 @@ export default function NoticeList({
               <p className={`mt-2 text-sm ${emptyDescriptionClass}`}>{emptyDescription}</p>
             )}
             {emptyActionLabel && onEmptyActionClick && (
-              <button
-                onClick={onEmptyActionClick}
-                className={emptyActionButtonClass}
-              >
+              <Button onClick={onEmptyActionClick} size="sm" className="mt-4">
                 {emptyActionLabel}
-              </button>
+              </Button>
             )}
           </div>
         )}

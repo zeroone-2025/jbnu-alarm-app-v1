@@ -11,7 +11,7 @@ import {
 } from '@/_lib/api';
 import Toast from '@/_components/ui/Toast';
 import LoginButtonGroup from '@/_components/auth/LoginButtonGroup';
-import NoticeList from '@/(routes)/(home)/_components/NoticeList';
+import NoticeList from '@/(main)/(home)/_components/NoticeList';
 import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
 import FullPageModal from '@/_components/layout/FullPageModal';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
