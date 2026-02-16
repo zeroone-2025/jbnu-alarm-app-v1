@@ -7,7 +7,9 @@ import UserInfoForm, { UserInfoFormData } from '@/_components/auth/UserInfoForm'
 import { FiEdit3, FiUser } from 'react-icons/fi';
 import Button from '@/_components/ui/Button';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
-import { getAllDepartments } from '@/_lib/api';
+import ConfirmModal from '@/_components/ui/ConfirmModal';
+import { getAllDepartments, deleteUserAccount, logoutUser } from '@/_lib/api';
+import { useUserStore } from '@/_lib/store/useUserStore';
 import { useToast } from '@/_context/ToastContext';
 import ProfileTabs, { ProfileTabType } from './ProfileTabs';
 import { TimetableTab } from '@/_components/timetable';
@@ -23,8 +25,11 @@ export default function ProfileClient() {
   const { showToast } = useToast();
   const { user, isLoggedIn, isAuthLoaded, isLoading: isUserLoading } = useUser();
   const updateMutation = useUpdateUser();
+  const clearUser = useUserStore((state) => state.clearUser);
   const searchParams = useSearchParams();
   const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const initialTab = (searchParams.get('tab') as ProfileTabType) || 'basic';
   const [activeTab, setActiveTab] = useState<ProfileTabType>(initialTab);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
@@ -120,6 +125,23 @@ export default function ProfileClient() {
     } catch (error) {
       console.error('Profile update failed:', error);
       showToast('업데이트 중 오류가 발생했습니다.', 'error');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteUserAccount();
+      await logoutUser();
+      localStorage.removeItem('my_subscribed_categories');
+      localStorage.removeItem('access_token');
+      clearUser();
+      window.location.href = '/?deleted=success';
+    } catch (error) {
+      console.error('Account deletion failed:', error);
+      showToast('탈퇴 처리 중 오류가 발생했습니다.', 'error');
+      setIsDeleting(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -225,6 +247,36 @@ export default function ProfileClient() {
                   )}
 
                 </form>
+
+                {/* 회원 탈퇴 섹션 */}
+                <div className="mt-12 border-t border-gray-100 pt-6">
+                  <p className="text-xs text-gray-400 mb-2">
+                    탈퇴 시 구독, 키워드, 즐겨찾기 등 설정 데이터가 삭제됩니다.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteModal(true)}
+                    className="text-xs text-red-400 underline underline-offset-2 hover:text-red-500 transition-colors"
+                  >
+                    회원 탈퇴하기
+                  </button>
+                </div>
+
+                <ConfirmModal
+                  isOpen={showDeleteModal}
+                  onConfirm={handleDeleteAccount}
+                  onCancel={() => setShowDeleteModal(false)}
+                  title="회원 탈퇴"
+                  confirmLabel={isDeleting ? '처리 중...' : '탈퇴하기'}
+                  cancelLabel="취소"
+                  variant="danger"
+                >
+                  <p>정말 탈퇴하시겠습니까?</p>
+                  <p className="mt-1 text-xs text-gray-400">
+                    구독, 키워드, 즐겨찾기 등이 삭제됩니다.<br />
+                    같은 계정으로 다시 가입할 수 있습니다.
+                  </p>
+                </ConfirmModal>
               </div>
             )}
 

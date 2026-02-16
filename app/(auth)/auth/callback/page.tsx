@@ -92,6 +92,13 @@ function AuthCallbackContent() {
               setUser(saveResult.user);
               localStorage.setItem('my_subscribed_categories', JSON.stringify(saveResult.subscribedBoards));
               clearPendingOnboarding();
+
+              if (pendingData.mentorCareer) {
+                setTimeout(() => {
+                  router.replace('/onboarding?mentor_completed=true');
+                }, 300);
+                return;
+              }
             }
 
             setTimeout(() => {
@@ -102,10 +109,10 @@ function AuthCallbackContent() {
 
           // 4. dept_code 확인
           if (!userProfile.dept_code) {
-            // 신규 사용자: 온보딩 페이지 이동
+            // 신규 사용자: 항상 온보딩 페이지로 이동 (safeRedirect 무시)
             setStatus('환영합니다! 학과 정보를 입력해주세요.');
             setTimeout(() => {
-              router.replace(safeRedirect || '/onboarding?login=success');
+              router.replace('/onboarding?login=success');
             }, 500);
           } else {
             // 기존 사용자: 바로 홈으로
