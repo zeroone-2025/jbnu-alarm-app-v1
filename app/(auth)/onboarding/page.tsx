@@ -24,14 +24,6 @@ function OnboardingPageContent() {
   const [isResumingSubmit, setIsResumingSubmit] = useState(false);
   const didTryResumeRef = useRef(false);
 
-  // 이미 온보딩 완료한 유저는 홈으로 리다이렉트
-  useEffect(() => {
-    if (!isAuthLoaded) return;
-    if (isLoggedIn && user?.dept_code) {
-      router.replace('/');
-    }
-  }, [isAuthLoaded, isLoggedIn, user?.dept_code, router]);
-
   useEffect(() => {
     if (!isAuthLoaded || !isLoggedIn || didTryResumeRef.current) return;
     if (searchParams.get('resume_onboarding') !== 'true') return;
@@ -87,7 +79,7 @@ function OnboardingPageContent() {
   if (!isAuthLoaded || isResumingSubmit) {
     return (
       <div className="min-h-dvh bg-gray-50">
-        <div className="mx-auto flex min-h-dvh w-full max-w-md md:max-w-[calc(280px+56rem)] md:shadow-xl">
+        <div className="mx-auto flex min-h-dvh w-full max-w-md md:max-w-[56rem]">
           <div className="flex min-h-dvh w-full flex-1 items-center justify-center border-x border-gray-100 bg-white shadow-xl md:shadow-none">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
           </div>
@@ -110,7 +102,7 @@ function OnboardingPageContent() {
 function OnboardingFallback() {
   return (
     <div className="min-h-dvh bg-gray-50">
-      <div className="mx-auto flex min-h-dvh w-full max-w-md md:max-w-[calc(280px+56rem)] md:shadow-xl">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md md:max-w-[56rem]">
         <div className="flex min-h-dvh w-full flex-1 items-center justify-center border-x border-gray-100 bg-white shadow-xl md:shadow-none">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
         </div>

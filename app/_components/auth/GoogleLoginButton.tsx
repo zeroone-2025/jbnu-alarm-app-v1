@@ -100,10 +100,16 @@ export default function GoogleLoginButton({
     }
 
     onLoginStart?.();
+    localStorage.setItem('last_login_provider', 'google');
 
     // 플랫폼 감지 (web, android, ios)
     const platform = Capacitor.getPlatform();
     const redirectTo = getRedirectTo();
+    const buildLoginUrl = () => {
+      const baseUrl = getGoogleLoginUrl(redirectTo);
+      const separator = baseUrl.includes('?') ? '&' : '?';
+      return `${baseUrl}${separator}platform=${encodeURIComponent(platform)}`;
+    };
 
     if (Capacitor.isNativePlatform()) {
       if (platform === 'ios') {
@@ -118,7 +124,7 @@ export default function GoogleLoginButton({
         } catch (error) {
           console.error('Failed to get login URL:', error);
           // 실패 시 기존 방식 시도
-          const loginUrl = `${getGoogleLoginUrl(redirectTo)}?platform=${platform}`;
+          const loginUrl = buildLoginUrl();
           await Browser.open({
             url: loginUrl,
             presentationStyle: 'fullscreen'
@@ -126,7 +132,7 @@ export default function GoogleLoginButton({
         }
       } else {
         // Android: In-App Browser (Chrome Custom Tabs) 사용
-        const loginUrl = `${getGoogleLoginUrl(redirectTo)}?platform=${platform}`;
+        const loginUrl = buildLoginUrl();
         await Browser.open({
           url: loginUrl,
           presentationStyle: 'popover'
@@ -134,7 +140,7 @@ export default function GoogleLoginButton({
       }
     } else {
       // Web: 기존 방식 유지
-      const loginUrl = `${getGoogleLoginUrl(redirectTo)}?platform=${platform}`;
+      const loginUrl = buildLoginUrl();
       window.location.href = loginUrl;
     }
   };

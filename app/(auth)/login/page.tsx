@@ -41,7 +41,7 @@ function LoginPageContent() {
   if (!isAuthLoaded || isLoggedIn) {
     return (
       <div className="min-h-dvh bg-gray-50">
-        <div className="mx-auto flex min-h-dvh w-full max-w-md md:max-w-[calc(280px+56rem)] md:shadow-xl">
+        <div className="mx-auto flex min-h-dvh w-full max-w-md md:max-w-[56rem]">
           <div className="flex min-h-dvh w-full flex-1 items-center justify-center border-x border-gray-100 bg-white shadow-xl md:shadow-none">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
           </div>
@@ -52,7 +52,7 @@ function LoginPageContent() {
 
   return (
     <div className="min-h-dvh bg-gray-50">
-      <div className="mx-auto flex min-h-dvh w-full max-w-md md:max-w-[calc(280px+56rem)] md:shadow-xl">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md md:max-w-[56rem]">
         <div className="flex min-h-dvh w-full flex-1 border-x border-gray-100 bg-white px-6 py-10 shadow-xl md:px-10 md:py-12 md:shadow-none">
           <div className="flex w-full flex-1 flex-col">
             <div className="pt-6">
@@ -79,7 +79,7 @@ function LoginPageContent() {
               </div>
               <button
                 type="button"
-                onClick={() => router.push(safeRedirectTo || '/')}
+                onClick={() => router.push('/')}
                 className="w-full pt-2 text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
               >
                 로그인 없이 둘러보기
@@ -95,7 +95,7 @@ function LoginPageContent() {
 function LoginFallback() {
   return (
     <div className="min-h-dvh bg-gray-50">
-      <div className="mx-auto flex min-h-dvh w-full max-w-md md:max-w-[calc(280px+56rem)] md:shadow-xl">
+      <div className="mx-auto flex min-h-dvh w-full max-w-md md:max-w-[56rem]">
         <div className="flex min-h-dvh w-full flex-1 items-center justify-center border-x border-gray-100 bg-white shadow-xl md:shadow-none">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
         </div>
