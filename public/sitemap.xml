@@ -4,9 +4,12 @@
     <loc>https://zerotime.kr/</loc>
   </url>
   <url>
-    <loc>https://zerotime.kr/keywords</loc>
+    <loc>https://zerotime.kr/keywords/</loc>
   </url>
   <url>
-    <loc>https://zerotime.kr/notifications/keyword</loc>
+    <loc>https://zerotime.kr/notifications/</loc>
+  </url>
+  <url>
+    <loc>https://zerotime.kr/filter/</loc>
   </url>
 </urlset>

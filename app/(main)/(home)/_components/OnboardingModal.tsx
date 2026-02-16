@@ -26,6 +26,11 @@ import type {
   CareerSkillsUpdate,
   CareerWorksUpdate,
   Education,
+  CareerContactUpdate,
+  CareerEducationsUpdate,
+  CareerMentorQnAUpdate,
+  CareerSkillsUpdate,
+  CareerWorksUpdate,
   MentorQnA,
   WorkExperience,
 } from '@/_types/career';
@@ -42,6 +47,8 @@ interface OnboardingModalProps {
 
 type UserType = 'student' | 'mentor';
 type VisibilityType = 'public' | 'career_only';
+type EducationDegreeType = Education['degree'];
+type EducationStatusType = Education['status'];
 type MentorStepKey =
   | 'basic'
   | 'contact'
@@ -61,12 +68,12 @@ const MENTOR_STEPS: MentorStep[] = [
   {
     key: 'basic',
     title: '학력 정보',
-    description: '학력 핵심 정보를 입력해 주세요',
+    description: '학력 정보를 입력해 주세요',
   },
   {
     key: 'contact',
     title: '연락 정보',
-    description: '후배들이 볼 공개 범위를 선택해 주세요',
+    description: '연락처와 공개 범위를 설정해 주세요',
   },
   {
     key: 'skills',
@@ -82,7 +89,6 @@ const MENTOR_STEPS: MentorStep[] = [
     key: 'mentor-qna',
     title: '멘토 Q&A',
     description: '후배들을 위한 조언을 남겨 주세요',
-    optional: true,
   },
   {
     key: 'review',
@@ -90,6 +96,7 @@ const MENTOR_STEPS: MentorStep[] = [
     description: '입력한 내용을 확인하고 완료해 주세요',
   },
 ];
+const MENTOR_QNA_STEP_INDEX = MENTOR_STEPS.findIndex((step) => step.key === 'mentor-qna');
 
 const EMPLOYMENT_OPTIONS: WorkExperience['employment_type'][] = [
   'full_time',
@@ -105,6 +112,21 @@ const EMPLOYMENT_LABELS: Record<WorkExperience['employment_type'], string> = {
   freelance: '프리랜서',
   part_time: '파트타임',
 };
+const EDUCATION_DEGREE_OPTIONS: EducationDegreeType[] = ['associate', 'bachelor', 'master', 'doctor'];
+const EDUCATION_DEGREE_LABELS: Record<EducationDegreeType, string> = {
+  associate: '전문학사',
+  bachelor: '학사',
+  master: '석사',
+  doctor: '박사',
+};
+const EDUCATION_STATUS_OPTIONS: EducationStatusType[] = ['enrolled', 'leave', 'graduated', 'completed'];
+const EDUCATION_STATUS_LABELS: Record<EducationStatusType, string> = {
+  enrolled: '재학',
+  leave: '휴학',
+  graduated: '졸업',
+  completed: '수료',
+};
+const GRADUATION_REQUIRED_STATUSES: EducationStatusType[] = ['graduated', 'completed'];
 
 const MENTOR_QNA_STEP_INDEX = MENTOR_STEPS.findIndex((step) => step.key === 'mentor-qna');
 
@@ -180,6 +202,8 @@ export default function OnboardingModal({
   const [skillInput, setSkillInput] = useState<string>('');
   const [skillTags, setSkillTags] = useState<string[]>([]);
   const [works, setWorks] = useState<Omit<WorkExperience, 'id'>[]>([createEmptyWork(false)]);
+  const [educationDegree, setEducationDegree] = useState<EducationDegreeType | ''>('');
+  const [educationStatus, setEducationStatus] = useState<EducationStatusType | ''>('');
   const [graduationYear, setGraduationYear] = useState<string>('');
   const [mentorQna, setMentorQna] = useState<MentorQnA>(createEmptyMentorQna());
   const [mentorQnaSubStep, setMentorQnaSubStep] = useState<1 | 2>(1);
@@ -538,7 +562,7 @@ export default function OnboardingModal({
     }));
 
   const normalizeEducations: Omit<Education, 'id'>[] =
-    formData.dept_code.trim() && formData.admission_year.trim()
+    formData.dept_code.trim() && formData.admission_year.trim() && educationDegree && educationStatus
       ? [
           {
             start_date: `20${formData.admission_year.trim()}`,
@@ -546,8 +570,8 @@ export default function OnboardingModal({
             is_current: false,
             school: (formData.school === '전북대' ? '전북대학교' : formData.school).trim(),
             major: (formData.dept_name || formData.dept_code).trim(),
-            degree: 'bachelor',
-            status: 'graduated',
+            degree: educationDegree,
+            status: educationStatus,
             region: '',
           },
         ]
@@ -646,7 +670,15 @@ export default function OnboardingModal({
                 setFormData((prev: UserInfoFormData) => ({ ...prev, ...data }));
                 if (Object.prototype.hasOwnProperty.call(data, 'school')) clearInvalidField('basic_school');
                 if (Object.prototype.hasOwnProperty.call(data, 'dept_code')) clearInvalidField('basic_dept');
-                if (Object.prototype.hasOwnProperty.call(data, 'admission_year')) clearInvalidField('basic_admission_year');
+                if (Object.prototype.hasOwnProperty.call(data, 'admission_year')) {
+                  clearInvalidField('basic_admission_year');
+                  const nextAdmissionRaw = String(data.admission_year || '').trim();
+                  const nextAdmissionFull = /^\d{2}$/.test(nextAdmissionRaw) ? Number(`20${nextAdmissionRaw}`) : null;
+                  if (nextAdmissionFull && graduationYear && Number(graduationYear) < nextAdmissionFull) {
+                    setGraduationYear('');
+                    clearInvalidField('basic_graduation_year');
+                  }
+                }
               }}
               showNickname={false}
               isReadonlySchool={false}
@@ -656,10 +688,61 @@ export default function OnboardingModal({
                 admission_year: hasInvalidField('basic_admission_year'),
               }}
             />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">학위</label>
+                <select
+                  value={educationDegree}
+                  onChange={(e) => {
+                    setEducationDegree(e.target.value as EducationDegreeType | '');
+                    clearInvalidField('basic_degree');
+                  }}
+                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
+                    hasInvalidField('basic_degree')
+                      ? 'border-red-300 bg-red-50 focus:border-red-500'
+                      : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                  }`}
+                >
+                  <option value="">선택</option>
+                  {EDUCATION_DEGREE_OPTIONS.map((degree) => (
+                    <option key={degree} value={degree}>
+                      {EDUCATION_DEGREE_LABELS[degree]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">상태</label>
+                <select
+                  value={educationStatus}
+                  onChange={(e) => {
+                    const nextStatus = e.target.value as EducationStatusType | '';
+                    setEducationStatus(nextStatus);
+                    clearInvalidField('basic_status');
+                    if (!nextStatus || !GRADUATION_REQUIRED_STATUSES.includes(nextStatus)) {
+                      setGraduationYear('');
+                      clearInvalidField('basic_graduation_year');
+                    }
+                  }}
+                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
+                    hasInvalidField('basic_status')
+                      ? 'border-red-300 bg-red-50 focus:border-red-500'
+                      : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                  }`}
+                >
+                  <option value="">선택</option>
+                  {EDUCATION_STATUS_OPTIONS.map((status) => (
+                    <option key={status} value={status}>
+                      {EDUCATION_STATUS_LABELS[status]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <div className="space-y-1">
               <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
                 <FiCalendar className="text-gray-400" size={14} />
-                졸업년도
+                졸업년도 (졸업/수료 선택 시 필수)
               </label>
               <select
                 value={graduationYear}
@@ -667,14 +750,15 @@ export default function OnboardingModal({
                   setGraduationYear(e.target.value);
                   clearInvalidField('basic_graduation_year');
                 }}
+                disabled={!isGraduationYearRequired}
                 className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
                   hasInvalidField('basic_graduation_year')
                     ? 'border-red-300 bg-red-50 focus:border-red-500'
                     : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
-                }`}
+                } disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400`}
               >
                 <option value="">-- 졸업년도를 선택하세요 --</option>
-                {GRADUATION_YEAR_OPTIONS.map((year) => (
+                {availableGraduationYearOptions.map((year) => (
                   <option key={year} value={year}>
                     {year}년
                   </option>
@@ -697,14 +781,14 @@ export default function OnboardingModal({
                 value={contactData.phone}
                 onChange={(e) => setContactData((prev) => ({ ...prev, phone: e.target.value }))}
                 placeholder="010-1234-5678"
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition-all focus:border-gray-900 focus:bg-white"
+                className="w-full px-4 py-3 text-sm transition-all border border-gray-200 outline-none rounded-xl bg-gray-50 focus:border-gray-900 focus:bg-white"
               />
             </div>
             <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700">
+              <label className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-700">
                 공개 범위
               </label>
-              <div className="space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <div className="p-3 space-y-2 border border-gray-200 rounded-xl bg-gray-50">
                 <label className="flex items-center gap-2 text-sm text-gray-700">
                   <input
                     type="radio"
@@ -752,7 +836,7 @@ export default function OnboardingModal({
               <button
                 onClick={handleAddSkillTag}
                 type="button"
-                className="rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-800"
+                className="px-4 py-3 text-sm font-semibold text-white bg-gray-900 rounded-xl hover:bg-gray-800"
               >
                 추가
               </button>
@@ -770,7 +854,7 @@ export default function OnboardingModal({
                     key={tag}
                     type="button"
                     onClick={() => setSkillTags((prev) => prev.filter((item) => item !== tag))}
-                    className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700 transition-all hover:bg-blue-100"
+                    className="px-3 py-1 text-xs font-medium text-blue-700 transition-all rounded-full bg-blue-50 hover:bg-blue-100"
                   >
                     #{tag} ✕
                   </button>
@@ -864,7 +948,7 @@ export default function OnboardingModal({
                       ),
                     )
                   }
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-900"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none bg-gray-50 focus:border-gray-900"
                 >
                   {EMPLOYMENT_OPTIONS.map((employmentType) => (
                     <option key={employmentType} value={employmentType}>
@@ -881,7 +965,7 @@ export default function OnboardingModal({
                     )
                   }
                   placeholder="근무 지역 (선택)"
-                  className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-900"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none bg-gray-50 focus:border-gray-900"
                 />
               </div>
               );
@@ -889,7 +973,7 @@ export default function OnboardingModal({
             <button
               type="button"
               onClick={() => setWorks((prev) => [...prev, createEmptyWork(false)])}
-              className="w-full rounded-lg border border-dashed border-gray-300 py-2 text-sm font-medium text-gray-600 transition-all hover:border-gray-500 hover:text-gray-800"
+              className="w-full py-2 text-sm font-medium text-gray-600 transition-all border border-gray-300 border-dashed rounded-lg hover:border-gray-500 hover:text-gray-800"
             >
               + 경력 추가
             </button>
@@ -1035,12 +1119,14 @@ export default function OnboardingModal({
 
       case 'review':
         return (
-          <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <div className="p-4 space-y-3 border border-gray-200 rounded-xl bg-gray-50">
             <p className="text-sm font-semibold text-gray-800">입력 요약</p>
             <div className="space-y-2 text-sm text-gray-600">
               <p>학교: {formData.school || '미입력'}</p>
               <p>학과: {formData.dept_name || '미입력'}</p>
               <p>학번: {formData.admission_year ? `${formData.admission_year}학번` : '미입력'}</p>
+              <p>학위: {educationDegree ? EDUCATION_DEGREE_LABELS[educationDegree] : '미입력'}</p>
+              <p>상태: {educationStatus ? EDUCATION_STATUS_LABELS[educationStatus] : '미입력'}</p>
               <p>직무 키워드: {skillTags.length}개</p>
               <p>경력: {normalizeWorks.length}개</p>
               <p>학력: {normalizeEducations.length}개</p>
@@ -1084,9 +1170,9 @@ export default function OnboardingModal({
   return (
     <FullPageModal isOpen={isOpen} onClose={() => {}} title="환영합니다" showBackButton={false}>
       {step === 1 && (
-        <div className="flex min-h-full flex-col px-5 py-8">
+        <div className="flex flex-col min-h-full px-5 py-8">
           <div className="mb-8 text-center">
-            <div className="mb-6 flex justify-center">
+            <div className="flex justify-center mb-6">
               <Logo className="h-12" />
             </div>
             <h2 className="mb-2 text-xl font-bold text-gray-900">
@@ -1105,7 +1191,7 @@ export default function OnboardingModal({
               }`}
             >
               {userType === 'student' && (
-                <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white">
+                <div className="absolute flex items-center justify-center w-5 h-5 text-white bg-blue-500 rounded-full right-2 top-2">
                   <FiCheck size={12} strokeWidth={3} />
                 </div>
               )}
@@ -1123,21 +1209,21 @@ export default function OnboardingModal({
               }`}
             >
               {userType === 'mentor' && (
-                <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white">
+                <div className="absolute flex items-center justify-center w-5 h-5 text-white bg-blue-500 rounded-full right-2 top-2">
                   <FiCheck size={12} strokeWidth={3} />
                 </div>
               )}
               <div className="mb-3 text-4xl">💼</div>
-              <p className="text-base font-bold text-gray-800">선배님</p>
+              <p className="text-base font-bold text-gray-800">멘토님</p>
               <p className="mt-1 text-xs text-gray-400">재직자/멘토</p>
             </button>
           </div>
 
-          <div className="mt-auto flex flex-col gap-3 pt-10 pb-safe">
+          <div className="flex flex-col gap-3 pt-10 mt-auto pb-safe">
             <button
               onClick={handleNext}
               disabled={!userType}
-              className="w-full rounded-xl bg-gray-900 py-4 font-bold text-white transition-all hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              className="w-full py-4 font-bold text-white transition-all bg-gray-900 rounded-xl hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               다음
             </button>
@@ -1146,7 +1232,7 @@ export default function OnboardingModal({
       )}
 
       {step === 2 && userType === 'student' && (
-        <div className="flex min-h-full flex-col px-5 py-8">
+        <div className="flex flex-col min-h-full px-5 py-8">
           <div className="mb-6 text-center">
             <h2 className="mb-2 text-xl font-bold text-gray-900">
               학교 정보를 알려주세요
@@ -1165,7 +1251,7 @@ export default function OnboardingModal({
               }}
               className="mt-3 text-xs font-medium text-gray-400 transition-all hover:text-gray-600"
             >
-              학생/선배님 다시 선택하기
+              학생/멘토님 다시 선택하기
             </button>
           </div>
 
@@ -1178,11 +1264,11 @@ export default function OnboardingModal({
             />
           </div>
 
-          <div className="mt-10 flex flex-col gap-3 pb-safe">
+          <div className="flex flex-col gap-3 mt-10 pb-safe">
             <button
               onClick={handleSubmit}
               disabled={isStudentSubmitDisabled}
-              className="w-full rounded-xl bg-gray-900 py-4 font-bold text-white transition-all hover:bg-gray-800 disabled:bg-gray-300"
+              className="w-full py-4 font-bold text-white transition-all bg-gray-900 rounded-xl hover:bg-gray-800 disabled:bg-gray-300"
             >
               {isSubmitting ? '준비 중...' : isLoggedIn ? '시작하기' : '로그인 후 저장하기'}
             </button>
@@ -1198,7 +1284,7 @@ export default function OnboardingModal({
       )}
 
       {step === 2 && userType === 'mentor' && (
-        <div className="flex h-full min-h-full flex-col px-5 py-6">
+        <div className="flex flex-col h-full min-h-full px-5 py-6">
           <div className="mb-5">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-xs font-semibold text-gray-500">{mentorStepTitle}</p>
@@ -1206,9 +1292,9 @@ export default function OnboardingModal({
                 {currentMentorScreen} / {totalMentorScreens}
               </p>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-gray-200">
+            <div className="h-2 overflow-hidden bg-gray-200 rounded-full">
               <div
-                className="h-full rounded-full bg-blue-500"
+                className="h-full bg-blue-500 rounded-full"
                 style={{
                   width: `${mentorProgress}%`,
                   transition: 'width 280ms cubic-bezier(0.22, 1, 0.36, 1)',
@@ -1239,7 +1325,7 @@ export default function OnboardingModal({
                 }}
                 className="mt-3 text-xs font-medium text-gray-400 transition-all hover:text-gray-600"
               >
-                학생/선배님 다시 선택하기
+                학생/멘토님 다시 선택하기
               </button>
             </div>
             {renderMentorStepContent()}
@@ -1265,7 +1351,7 @@ export default function OnboardingModal({
                   handleMentorNext();
                 }}
                 disabled={isSubmitting}
-                className="w-2/3 rounded-xl bg-gray-900 py-3 text-sm font-bold text-white transition-all hover:bg-gray-800 disabled:bg-gray-300"
+                className="w-2/3 py-3 text-sm font-bold text-white transition-all bg-gray-900 rounded-xl hover:bg-gray-800 disabled:bg-gray-300"
               >
                 {mentorStepIndex === MENTOR_STEPS.length - 1
                   ? isSubmitting
