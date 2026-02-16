@@ -84,7 +84,7 @@ export default function Toast({ message, isVisible, onClose, duration = 3000, ty
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-28 left-1/2 z-[100] -translate-x-1/2 flex flex-col-reverse gap-2">
+    <div className="fixed bottom-28 left-1/2 z-[200] -translate-x-1/2 flex flex-col-reverse gap-2">
       {toasts.map((toast) => (
         <div
           key={toast.id}
