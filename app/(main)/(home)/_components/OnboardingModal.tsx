@@ -26,11 +26,6 @@ import type {
   CareerSkillsUpdate,
   CareerWorksUpdate,
   Education,
-  CareerContactUpdate,
-  CareerEducationsUpdate,
-  CareerMentorQnAUpdate,
-  CareerSkillsUpdate,
-  CareerWorksUpdate,
   MentorQnA,
   WorkExperience,
 } from '@/_types/career';
@@ -128,8 +123,6 @@ const EDUCATION_STATUS_LABELS: Record<EducationStatusType, string> = {
 };
 const GRADUATION_REQUIRED_STATUSES: EducationStatusType[] = ['graduated', 'completed'];
 
-const MENTOR_QNA_STEP_INDEX = MENTOR_STEPS.findIndex((step) => step.key === 'mentor-qna');
-
 const YEAR_REGEX = /^\d{4}$/;
 const GRADUATION_YEAR_OPTIONS = Array.from({ length: 47 }, (_, i) => (2026 - i).toString());
 
@@ -210,6 +203,9 @@ export default function OnboardingModal({
   const [invalidFields, setInvalidFields] = useState<Set<string>>(new Set());
   const [mentorCompleted, setMentorCompleted] = useState<string[] | null>(null);
   const didRestoreRef = useRef(false);
+
+  const isGraduationYearRequired = educationStatus !== '' && GRADUATION_REQUIRED_STATUSES.includes(educationStatus);
+  const availableGraduationYearOptions = GRADUATION_YEAR_OPTIONS;
 
   // localStorage에 저장된 pending 데이터가 있으면 폼 복원
   useEffect(() => {
