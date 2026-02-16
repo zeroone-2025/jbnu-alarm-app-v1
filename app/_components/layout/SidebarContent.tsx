@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { FiUser, FiSettings, FiBell, FiUsers, FiLogOut, FiHome, FiInstagram, FiMail } from 'react-icons/fi';
+import { FiUser, FiSettings, FiBell, FiUsers, FiLogOut, FiHome, FiInstagram, FiMail, FiExternalLink } from 'react-icons/fi';
+import { SiNaver } from 'react-icons/si';
+
 import { IconType } from 'react-icons';
 import { useUser } from '@/_lib/hooks/useUser';
 import { getAllDepartments, logoutUser } from '@/_lib/api';
 import { useUserStore } from '@/_lib/store/useUserStore';
-import LoginButtonGroup from '@/_components/auth/LoginButtonGroup';
 import { useMyChinbaEvents } from '@/_lib/hooks/useChinba';
+import { getLoginUrl } from '@/_lib/utils/requireLogin';
 import { ChinbaEventList } from '@/(main)/chinba/_components/ChinbaEventList';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 
@@ -126,14 +128,19 @@ export default function SidebarContent({ onNavigate, onShowToast }: SidebarConte
               </div>
             </div>
           ) : !isLoggedIn ? (
-            <>
-              <p className="px-1 mb-4 text-sm font-medium text-gray-700">
+            <div className="flex flex-col items-start gap-3">
+              <p className="px-1 text-sm font-medium text-gray-700">
                 로그인하여 설정을 저장하고
                 <br />
                 더 많은 기능을 이용해보세요.
               </p>
-              <LoginButtonGroup onLoginStart={() => { }} />
-            </>
+              <button
+                onClick={() => router.push(getLoginUrl())}
+                className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-800 active:bg-gray-700"
+              >
+                로그인하기
+              </button>
+            </div>
           ) : (
             <div className="flex items-center gap-4">
               {user?.profile_image ? (
@@ -220,6 +227,20 @@ export default function SidebarContent({ onNavigate, onShowToast }: SidebarConte
             <span className="text-sm font-medium">관리자 페이지</span>
           </button>
         )}
+
+        {/* 제로타임 앱 사용하기 - 외부 링크 */}
+        <div className="mt-3">
+          <a
+            href="https://blog.naver.com/zerotime_official/224159496874"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors text-gray-500 hover:bg-gray-50 active:bg-gray-100"
+          >
+            <SiNaver size={16} />
+            <span className="text-sm font-medium">제로타임 앱 사용하기</span>
+            <FiExternalLink size={13} className="ml-auto text-gray-300" />
+          </a>
+        </div>
       </div>
 
       {/* Spacer */}
@@ -285,6 +306,15 @@ export default function SidebarContent({ onNavigate, onShowToast }: SidebarConte
               aria-label="Instagram"
             >
               <FiInstagram size={18} />
+            </a>
+            <a
+              href="https://blog.naver.com/zerotime_official/224159496874"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+              aria-label="Blog"
+            >
+              <SiNaver size={16} />
             </a>
             <a
               href="mailto:zeroone012025@gmail.com"

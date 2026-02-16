@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FiUpload, FiRotateCcw } from 'react-icons/fi';
 import Button from '@/_components/ui/Button';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 import Toast from '@/_components/ui/Toast';
 import ConfirmModal from '@/_components/ui/ConfirmModal';
-import LoginButtonGroup from '@/_components/auth/LoginButtonGroup';
 import ChinbaScheduleGrid from './ChinbaScheduleGrid';
+import { getLoginUrl } from '@/_lib/utils/requireLogin';
 import { useMyParticipation, useUpdateUnavailability, useImportTimetable } from '@/_lib/hooks/useChinba';
 
 interface MyScheduleTabProps {
@@ -30,13 +30,11 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
   const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set());
   const [hasDraft, setHasDraft] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showNoTimetableModal, setShowNoTimetableModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [toastVisible, setToastVisible] = useState(false);
   const [toastKey, setToastKey] = useState(0);
-  const loginPromptRef = useRef<HTMLDivElement>(null);
 
   // Load existing unavailable slots (logged in only)
   useEffect(() => {
@@ -83,10 +81,11 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
 
   const handleSave = async () => {
     if (!isLoggedIn) {
-      setShowLoginPrompt(true);
-      requestAnimationFrame(() => {
-        loginPromptRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
+      setToastMessage('로그인이 필요합니다');
+      setToastType('info');
+      setToastVisible(true);
+      setToastKey(prev => prev + 1);
+      router.push(getLoginUrl());
       return;
     }
     try {
@@ -113,7 +112,11 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
 
   const handleImport = async () => {
     if (!isLoggedIn) {
-      setShowLoginPrompt(true);
+      setToastMessage('로그인이 필요합니다');
+      setToastType('info');
+      setToastVisible(true);
+      setToastKey(prev => prev + 1);
+      router.push(getLoginUrl());
       return;
     }
     try {
@@ -200,48 +203,24 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
         />
       </div>
 
-      {/* Spacer for fixed button */}
-      <div className="h-16" />
-
-      {/* Login prompt overlay */}
-      {showLoginPrompt && (
-        <div ref={loginPromptRef} className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
-          <p className="text-sm font-medium text-gray-800 text-center mb-1">
-            저장하려면 로그인이 필요합니다
-          </p>
-          <p className="text-xs text-gray-500 text-center mb-4">
-            소셜 로그인으로 1초만에 가입하세요!
-          </p>
-          <LoginButtonGroup />
-          <button
-            onClick={() => setShowLoginPrompt(false)}
-            className="mt-3 w-full text-center text-xs text-gray-400 hover:text-gray-600"
-          >
-            닫기
-          </button>
-        </div>
-      )}
-
-      {/* Fixed bottom bar with save button */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-gray-100 bg-white px-4 py-3 pb-safe">
-        <div className="mx-auto max-w-md md:max-w-4xl">
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            onClick={handleSave}
-            disabled={updateMutation.isPending}
-          >
-            {updateMutation.isPending ? (
-              <span className="flex items-center justify-center gap-2">
-                <LoadingSpinner size="sm" />
-                저장 중...
-              </span>
-            ) : (
-              '저장하기'
-            )}
-          </Button>
-        </div>
+      {/* Sticky bottom bar with save button */}
+      <div className="sticky bottom-0 z-10 -mx-4 border-t border-gray-100 bg-white px-4 py-3 pb-safe">
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
+          onClick={handleSave}
+          disabled={updateMutation.isPending}
+        >
+          {updateMutation.isPending ? (
+            <span className="flex items-center justify-center gap-2">
+              <LoadingSpinner size="sm" />
+              저장 중...
+            </span>
+          ) : (
+            '저장하기'
+          )}
+        </Button>
       </div>
 
       <Toast

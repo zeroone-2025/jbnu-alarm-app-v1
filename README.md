@@ -99,6 +99,59 @@ jbnu-alarm-app-v1/
 └── .env.production          # 배포용 환경 변수
 ```
 
+## 🧪 E2E 테스트 (Testing)
+
+Playwright 기반 E2E 테스트 스위트로, 백엔드 없이 API 모킹으로 모든 페이지를 테스트합니다.
+
+### 작동 원리
+
+- **API Route Mocking**: `page.route()`로 백엔드 API를 가로채서 목 데이터 반환
+- **인증 상태 제어**: `asGuest` / `asLoggedInUser` 픽스처로 로그인/비로그인 상태 전환
+- **비주얼 리그레션**: `toHaveScreenshot()`으로 스크린샷 비교 (기준 이미지 git 관리)
+
+### 실행 방법
+
+```bash
+# 전체 테스트 실행
+npm run test:e2e
+
+# 특정 페이지만 실행
+npx playwright test e2e/filter.spec.ts
+
+# UI 모드로 디버깅
+npm run test:e2e:ui
+
+# headed 모드로 확인
+npm run test:e2e:headed
+
+# 스크린샷 기준 이미지 갱신
+npx playwright test e2e/visual/ --update-snapshots
+```
+
+### 테스트 파일 구조
+
+```
+e2e/
+├── fixtures/
+│   ├── auth.fixture.ts      # test 확장 (asGuest / asLoggedInUser 픽스처)
+│   ├── api-mocks.ts         # page.route() 모킹 팩토리
+│   ├── test-data.ts         # 목 데이터 (notices, user, keywords 등)
+│   └── storage.ts           # localStorage 설정 헬퍼
+├── home.spec.ts             # / (홈)
+├── login.spec.ts            # /login
+├── auth-callback.spec.ts    # /auth/callback
+├── onboarding.spec.ts       # /onboarding
+├── filter.spec.ts           # /filter
+├── keywords.spec.ts         # /keywords
+├── notifications.spec.ts    # /notifications
+├── profile.spec.ts          # /profile
+├── chinba.spec.ts           # /chinba
+├── chinba-create.spec.ts    # /chinba/create
+├── chinba-event.spec.ts     # /chinba/event
+└── visual/
+    └── screenshots.spec.ts  # 전 페이지 스크린샷 비교
+```
+
 ## 🤝 기여하기 (Contributing)
 
 이슈 제보와 Pull Request는 언제나 환영합니다.

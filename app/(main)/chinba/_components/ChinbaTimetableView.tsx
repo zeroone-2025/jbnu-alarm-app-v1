@@ -24,55 +24,53 @@ export default function ChinbaTimetableView() {
   }
 
   return (
-    <div className="relative flex flex-col h-full">
+    <div className="flex flex-col h-full">
       {/* Chinba Event List */}
-      {isLoggedIn && (
-        <div className="shrink-0 px-4 pb-3 border-b border-gray-100">
-          {chinbaEvents && chinbaEvents.length > 0 ? (
-            <div>
-              <h2 className="text-xs font-semibold text-gray-600 mb-2">내 친바 일정</h2>
-              <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
-                {chinbaEvents.map((event) => (
-                  <div key={event.event_id} className="w-[280px] shrink-0 snap-start">
-                    <ChinbaEventList
-                      events={[event]}
-                      isLoading={false}
-                      onEventClick={(eventId) => router.push(`/chinba/event?id=${eventId}`)}
-                      onDeleteSuccess={refetch}
-                      onShowToast={showToast}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : isLoadingChinbaEvents ? (
-            <div className="flex justify-center py-4">
-              <LoadingSpinner size="sm" />
-            </div>
-          ) : (
-            <button
-              onClick={() => router.push('/chinba/create')}
-              className="w-full py-4 px-4 text-center text-sm text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors active:scale-[0.99]"
-            >
-              친바를 생성하세요
-            </button>
-          )}
+      <div className="shrink-0 px-4 pb-3 border-b border-gray-100">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xs font-semibold text-gray-600">내 친바 일정</h2>
+          <button
+            onClick={() => router.push('/chinba/create')}
+            className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors active:scale-95"
+          >
+            <FiPlus size={14} />
+            생성
+          </button>
         </div>
-      )}
-
-      {/* Timetable Content */}
-      <div className="flex-1 overflow-hidden">
-        <TimetableTab />
+        {isLoggedIn && chinbaEvents && chinbaEvents.length > 0 ? (
+          <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
+            {chinbaEvents.map((event) => (
+              <div key={event.event_id} className="w-[280px] shrink-0 snap-start">
+                <ChinbaEventList
+                  events={[event]}
+                  isLoading={false}
+                  onEventClick={(eventId) => router.push(`/chinba/event?id=${eventId}`)}
+                  onDeleteSuccess={refetch}
+                  onShowToast={showToast}
+                />
+              </div>
+            ))}
+          </div>
+        ) : isLoggedIn && isLoadingChinbaEvents ? (
+          <div className="flex justify-center py-4">
+            <LoadingSpinner size="sm" />
+          </div>
+        ) : (
+          <p className="text-center text-sm text-gray-400 py-4">
+            아직 참여 중인 친바가 없어요
+          </p>
+        )}
       </div>
 
-      {/* Floating + Button */}
-      <button
-        onClick={() => router.push('/chinba/create')}
-        className="absolute bottom-8 right-8 z-10 h-14 w-14 rounded-full bg-gray-900 text-white shadow-xl flex items-center justify-center active:scale-95 transition-all"
-        aria-label="새로 만들기"
-      >
-        <FiPlus size={24} />
-      </button>
+      {/* Timetable Content */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="shrink-0 px-4 pt-3 pb-2">
+          <h2 className="text-xs font-semibold text-gray-600">내 시간표 관리</h2>
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <TimetableTab />
+        </div>
+      </div>
     </div>
   );
 }

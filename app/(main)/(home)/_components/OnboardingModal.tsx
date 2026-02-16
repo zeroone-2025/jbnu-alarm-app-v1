@@ -415,7 +415,7 @@ export default function OnboardingModal({ isOpen, onComplete, onShowToast }: Onb
   };
 
   const handleSkillKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleAddSkillTag();
     }

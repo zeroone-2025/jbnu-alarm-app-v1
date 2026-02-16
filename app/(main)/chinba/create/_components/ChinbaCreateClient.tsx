@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/_components/ui/Button';
 import Toast from '@/_components/ui/Toast';
-import LoginButtonGroup from '@/_components/auth/LoginButtonGroup';
 import FullPageModal from '@/_components/layout/FullPageModal';
+import { getLoginUrl } from '@/_lib/utils/requireLogin';
 import { useCreateChinbaEvent } from '@/_lib/hooks/useChinba';
 import { useUser } from '@/_lib/hooks/useUser';
 import DateSelector from './DateSelector';
@@ -19,11 +19,9 @@ export default function ChinbaCreateClient() {
   const [title, setTitle] = useState('');
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const [toastKey, setToastKey] = useState(0);
-  const loginPromptRef = useRef<HTMLDivElement>(null);
 
   const canSubmit = title.trim().length > 0 && selectedDates.length > 0 && !createEvent.isPending;
 
@@ -53,10 +51,7 @@ export default function ChinbaCreateClient() {
       setToastMessage('로그인이 필요합니다');
       setToastVisible(true);
       setToastKey(prev => prev + 1);
-      setShowLoginPrompt(true);
-      requestAnimationFrame(() => {
-        loginPromptRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
+      router.push(getLoginUrl('/chinba/create'));
       return;
     }
     setError(null);
@@ -118,23 +113,6 @@ export default function ChinbaCreateClient() {
             </div>
           </div>
 
-          {showLoginPrompt && (
-            <div ref={loginPromptRef} className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
-              <p className="text-sm font-medium text-gray-800 text-center mb-1">
-                만들려면 로그인이 필요합니다
-              </p>
-              <p className="text-xs text-gray-500 text-center mb-4">
-                소셜 로그인으로 1초만에 가입하세요!
-              </p>
-              <LoginButtonGroup />
-              <button
-                onClick={() => setShowLoginPrompt(false)}
-                className="mt-3 w-full text-center text-xs text-gray-400 hover:text-gray-600"
-              >
-                닫기
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Footer */}

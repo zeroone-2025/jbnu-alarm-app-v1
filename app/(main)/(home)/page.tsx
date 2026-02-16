@@ -229,6 +229,9 @@ function HomeContent() {
     } else if (loginStatus === 'failed') {
       showToast('로그인 처리에 실패했습니다.', 'error');
       router.replace('/');
+    } else if (params.get('deleted') === 'success') {
+      showToast('회원 탈퇴가 완료되었습니다.', 'info');
+      router.replace('/');
     } else if (logoutStatus === 'success') {
       showToast('로그아웃되었습니다.', 'info');
       router.replace('/');
@@ -253,7 +256,7 @@ function HomeContent() {
       <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} onShowToast={showToast} />
 
       {/* User Stats Banner */}
-      <UserStatsBanner isLoggedIn={isLoggedIn} />
+      <UserStatsBanner isLoggedIn={isLoggedIn} onSignupClick={() => router.push('/login')} />
 
       {/* 카테고리 필터 */}
       <div className="shrink-0" style={{ touchAction: 'none' }}>
