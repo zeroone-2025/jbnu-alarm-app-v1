@@ -92,6 +92,13 @@ function AuthCallbackContent() {
               setUser(saveResult.user);
               localStorage.setItem('my_subscribed_categories', JSON.stringify(saveResult.subscribedBoards));
               clearPendingOnboarding();
+
+              if (pendingData.mentorCareer) {
+                setTimeout(() => {
+                  router.replace('/onboarding?mentor_completed=true');
+                }, 300);
+                return;
+              }
             }
 
             setTimeout(() => {
