@@ -5,6 +5,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getUserProfile } from '@/_lib/api';
 import { useUserStore } from '@/_lib/store/useUserStore';
 import { setAccessToken } from '@/_lib/auth/tokenStore';
+import {
+  clearPendingOnboarding,
+  loadPendingOnboarding,
+  submitPendingOnboarding,
+} from '@/_lib/onboarding/pendingSubmission';
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -21,6 +26,7 @@ function AuthCallbackContent() {
     const error = searchParams.get('error');
     const redirectTo = searchParams.get('redirect_to');
     const safeRedirect = redirectTo?.startsWith('/') ? redirectTo : null;
+    const shouldResumeOnboarding = safeRedirect?.includes('resume_onboarding=true') ?? false;
 
     // 사용자가 로그인을 취소한 경우
     if (error === 'access_denied') {
@@ -62,12 +68,44 @@ function AuthCallbackContent() {
           // 3. Zustand Store 업데이트 (리다이렉트 전 즉시 반영)
           setUser(userProfile);
 
+          // 온보딩 재개 저장 플로우: 콜백에서 바로 저장 후 홈으로 이동
+          if (shouldResumeOnboarding) {
+            setStatus('온보딩 정보를 저장하는 중...');
+            const pendingData = loadPendingOnboarding();
+
+            if (pendingData) {
+              const payloadToSubmit = pendingData.mentorCareer
+                ? {
+                    ...pendingData,
+                    mentorCareer: {
+                      ...pendingData.mentorCareer,
+                      contact: {
+                        ...pendingData.mentorCareer.contact,
+                        name: pendingData.mentorCareer.contact.name || userProfile.nickname || null,
+                        email: pendingData.mentorCareer.contact.email || userProfile.email || null,
+                      },
+                    },
+                  }
+                : pendingData;
+
+              const saveResult = await submitPendingOnboarding(payloadToSubmit);
+              setUser(saveResult.user);
+              localStorage.setItem('my_subscribed_categories', JSON.stringify(saveResult.subscribedBoards));
+              clearPendingOnboarding();
+            }
+
+            setTimeout(() => {
+              router.replace('/?login=success');
+            }, 300);
+            return;
+          }
+
           // 4. dept_code 확인
           if (!userProfile.dept_code) {
-            // 신규 사용자: 온보딩 모달 표시
+            // 신규 사용자: 온보딩 페이지 이동
             setStatus('환영합니다! 학과 정보를 입력해주세요.');
             setTimeout(() => {
-              router.replace(safeRedirect || '/?login=success&show_onboarding=true');
+              router.replace(safeRedirect || '/onboarding?login=success');
             }, 500);
           } else {
             // 기존 사용자: 바로 홈으로
