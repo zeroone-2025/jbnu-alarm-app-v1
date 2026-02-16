@@ -27,7 +27,7 @@ test.describe('Auth Callback 페이지', () => {
     await mockAuthenticatedAPIs(page);
     await page.goto('/auth/callback?access_token=test-token');
     // 홈으로 이동 (login=success 쿼리 파라미터는 Next.js router에 의해 제거될 수 있음)
-    await expect(page).toHaveURL(/^\/$|\/\?login=success/, { timeout: 10_000 });
+    await expect(page).toHaveURL(/\/(\?login=success)?$/, { timeout: 10_000 });
   });
 
   test('신규 유저 토큰 수신 시 온보딩으로 이동한다', async ({ page }) => {

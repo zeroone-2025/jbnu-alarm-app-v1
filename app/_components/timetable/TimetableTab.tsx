@@ -7,6 +7,7 @@ import Button from '@/_components/ui/Button';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 import ConfirmModal from '@/_components/ui/ConfirmModal';
 import { useUser } from '@/_lib/hooks/useUser';
+import { useToast } from '@/_context/ToastContext';
 import {
   getUserTimetable,
   uploadTimetableImage,
@@ -52,6 +53,7 @@ export default function TimetableTab() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { isLoggedIn } = useUser();
+  const { showToast } = useToast();
 
   const [selectedSemester, setSelectedSemester] = useState(getCurrentSemester);
   const [overlayState, setOverlayState] = useState<OverlayState>(null);
@@ -213,7 +215,13 @@ export default function TimetableTab() {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              if (!isLoggedIn) {
+                showToast('로그인 후 이용할 수 있습니다.', 'error');
+                return;
+              }
+              fileInputRef.current?.click();
+            }}
             className="flex items-center gap-1 rounded-lg bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-200 active:scale-95 transition-all"
           >
             <FiUpload size={12} />

@@ -95,7 +95,7 @@ test.describe('비주얼 리그레션 - 로그인 사용자', () => {
 
   test('친바 이벤트 상세 페이지', async ({ asLoggedInUser }) => {
     await asLoggedInUser.goto('/chinba/event?id=evt-001');
-    await expect(asLoggedInUser.getByText('조별과제 회의')).toBeVisible({ timeout: 10_000 });
+    await expect(asLoggedInUser.getByRole('heading', { name: '조별과제 회의' }).first()).toBeVisible({ timeout: 10_000 });
     await expect(asLoggedInUser).toHaveScreenshot('chinba-event-auth.png', SCREENSHOT_OPTIONS);
   });
 });
