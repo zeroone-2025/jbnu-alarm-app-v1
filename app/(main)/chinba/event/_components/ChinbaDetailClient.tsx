@@ -274,8 +274,8 @@ export default function ChinbaDetailClient() {
         )}
 
         {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto pt-4 pb-safe">
-          <div className="overflow-hidden">
+        <div className="flex-1 overflow-y-auto pt-4">
+          <div className="overflow-clip">
             <div
               key={activeTab}
               className={

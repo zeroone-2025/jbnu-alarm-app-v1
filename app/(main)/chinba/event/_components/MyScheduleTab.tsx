@@ -158,7 +158,7 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
   }
 
   return (
-    <div className="px-4 pb-6">
+    <div className="px-4 pb-20">
       {/* Info + Actions */}
       <div className="mb-4 space-y-2">
         {/* Instruction banner */}
