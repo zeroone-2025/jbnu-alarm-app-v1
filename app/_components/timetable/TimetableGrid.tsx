@@ -298,8 +298,8 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
 
           {/* Empty state hint */}
           {classes.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <p className="text-xs text-gray-400">드래그하여 내 고정 일정 추가/수정</p>
+            <div className="absolute inset-0 flex items-start justify-center pointer-events-none pt-[14vh]">
+              <p className="text-lg text-gray-300">드래그하여 내 고정 일정 추가/수정</p>
             </div>
           )}
         </div>
