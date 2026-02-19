@@ -87,6 +87,19 @@ body {
   animation: slideUp 0.3s ease-out;
 }
 
+@keyframes bottomSheetUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-bottom-sheet-up {
+  animation: bottomSheetUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 @keyframes blink-orange {
   0% {
     background-color: #fff7ed;
