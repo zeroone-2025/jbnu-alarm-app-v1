@@ -11,6 +11,8 @@ interface ChinbaScheduleGridProps {
   endHour: number;
   selectedSlots: Set<string>;
   onSlotsChange: (slots: Set<string>) => void;
+  disabled?: boolean;
+  onDisabledInteraction?: () => void;
 }
 
 export default function ChinbaScheduleGrid({

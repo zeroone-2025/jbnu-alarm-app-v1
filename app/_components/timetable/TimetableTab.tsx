@@ -253,6 +253,8 @@ export default function TimetableTab() {
           classes={classes}
           cellHeight={cellHeight}
           showWeekends={showWeekends}
+          disabled={!isLoggedIn}
+          onDisabledInteraction={() => showToast('로그인 후 이용할 수 있습니다.', 'error')}
           onAdd={handleAddClass}
           onDelete={handleDeleteClass}
         />

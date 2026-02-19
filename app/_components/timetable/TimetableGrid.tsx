@@ -23,6 +23,8 @@ interface TimetableGridProps {
   classes: TimetableClass[];
   cellHeight: number;        // px per 1 hour (dynamic, calculated by parent)
   showWeekends?: boolean;
+  disabled?: boolean;
+  onDisabledInteraction?: () => void;
   onAdd: (data: { name: string; location?: string; day: number; start_time: string; end_time: string }) => void;
   onDelete: (classId: number) => void;
 }
@@ -40,7 +42,7 @@ function minutesToTime(minutes: number): string {
 
 const TIME_COL_WIDTH = 28; // px
 
-export default function TimetableGrid({ classes, cellHeight, showWeekends = false, onAdd, onDelete }: TimetableGridProps) {
+export default function TimetableGrid({ classes, cellHeight, showWeekends = false, disabled = false, onDisabledInteraction, onAdd, onDelete }: TimetableGridProps) {
   const dayLabels = showWeekends ? DAY_LABELS_ALL : DAY_LABELS_WEEKDAY;
   const dayCount = dayLabels.length;
   const halfHour = cellHeight / 2;
@@ -98,12 +100,13 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
 
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
+      if (disabled) { onDisabledInteraction?.(); return; }
       const touch = e.touches[0];
       const pos = getGridPosition(touch.clientX, touch.clientY);
       if (!pos) return;
       setDragState({ isDragging: true, day: pos.day, startRow: pos.row, endRow: pos.row });
     },
-    [getGridPosition]
+    [disabled, onDisabledInteraction, getGridPosition]
   );
 
   const handleTouchMove = useCallback(
@@ -154,12 +157,13 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
   // Mouse drag for desktop
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      if (disabled) { onDisabledInteraction?.(); return; }
       if (e.button !== 0) return;
       const pos = getGridPosition(e.clientX, e.clientY);
       if (!pos) return;
       setDragState({ isDragging: true, day: pos.day, startRow: pos.row, endRow: pos.row });
     },
-    [getGridPosition]
+    [disabled, onDisabledInteraction, getGridPosition]
   );
 
   const handleMouseMove = useCallback(

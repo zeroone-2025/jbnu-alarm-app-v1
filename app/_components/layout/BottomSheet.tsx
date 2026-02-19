@@ -11,6 +11,10 @@ interface BottomSheetProps {
   peekHeight?: number;
   /** 펼쳤을 때 최대 높이 (vh 비율, 0~1). 기본값 0.65 */
   maxHeightRatio?: number;
+  /** 드래그/탭 차단 여부. true이면 조작 불가 */
+  disabled?: boolean;
+  /** disabled일 때 드래그/탭 시도 시 호출되는 콜백 */
+  onDisabledInteraction?: () => void;
   /** 시트 내부에 렌더링할 컨텐츠 */
   children: ReactNode;
   /** 추가 className (외부에서 스타일 오버라이드용) */
@@ -36,6 +40,8 @@ export default function BottomSheet({
   minHeight = 56,
   peekHeight = 200,
   maxHeightRatio = 0.65,
+  disabled = false,
+  onDisabledInteraction,
   children,
   className = '',
 }: BottomSheetProps) {
@@ -48,12 +54,16 @@ export default function BottomSheet({
   );
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
+    if (disabled) {
+      onDisabledInteraction?.();
+      return;
+    }
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     const el = sheetRef.current;
     if (!el) return;
     el.style.transition = 'none';
     dragInfo.current = { active: true, startY: e.clientY, startH: el.offsetHeight };
-  }, []);
+  }, [disabled, onDisabledInteraction]);
 
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
