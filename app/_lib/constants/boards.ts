@@ -34,6 +34,9 @@ export const BOARD_MAP: Record<string, BoardMeta> = {
   home_housing: { name: "자취/하숙", color: "blue", category: "전북대" },
   home_lostandfound: { name: "분실/습득", color: "blue", category: "전북대" },
   home_poster: { name: "전자대자보", color: "blue", category: "전북대" },
+  home_likehome: { name: "생활관", color: "green", category: "전북대" },
+  home_library: { name: "도서관", color: "green", category: "전북대" },
+
 
   // 단과대
   college_nursing: { name: "간호대학", color: "gray", category: "단과대" },
@@ -143,8 +146,6 @@ export const BOARD_MAP: Record<string, BoardMeta> = {
   dept_hanyak: { name: "한약자원학과", color: "orange", category: "학과" },
   dept_defense: { name: "첨단방위산업학과", color: "orange", category: "학과" },
   agency_sw: { name: "SW중심대학사업단", color: "green", category: "사업단" },
-  agency_likehome: { name: "생활관", color: "green", category: "사업단" },
-  agency_library: { name: "도서관", color: "green", category: "사업단" },
   agency_juice_semi: { name: "반도체특성화대학사업단", color: "green", category: "사업단" },
 };
 
@@ -196,15 +197,26 @@ export const GUEST_DEFAULT_BOARDS = [
 
 
 /**
- * 전체 게시판 목록 (카테고리 포함)
- */
-export const BOARD_LIST = Object.entries(BOARD_MAP).map(([id, meta]) => ({
-  id,
-  name: meta.name,
-  category: meta.category,
-}));
-
-/**
  * 카테고리 표시 순서
  */
 export const CATEGORY_ORDER: BoardCategory[] = ['전북대', '단과대', '학과', '사업단'];
+
+/**
+ * 전체 게시판 목록 (카테고리 포함)
+ * - 카테고리 순서: CATEGORY_ORDER
+ * - 카테고리 내부 정렬: 이름 가나다순
+ */
+export const BOARD_LIST = Object.entries(BOARD_MAP)
+  .map(([id, meta]) => ({
+    id,
+    name: meta.name,
+    category: meta.category,
+  }))
+  .sort((a, b) => {
+    const categoryOrderDiff =
+      CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
+    if (categoryOrderDiff !== 0) {
+      return categoryOrderDiff;
+    }
+    return a.name.localeCompare(b.name, 'ko-KR');
+  });

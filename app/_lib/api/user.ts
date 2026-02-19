@@ -33,6 +33,12 @@ export const updateUserSubscriptions = async (boardCodes: string[]) => {
     return response.data;
 };
 
+// 회원 탈퇴
+export const deleteUserAccount = async () => {
+    const response = await api.delete<{ message: string; deleted_at: string }>('/users/me');
+    return response.data;
+};
+
 // 온보딩 완료 처리
 export const completeOnboarding = async (data: OnboardingRequest) => {
     const response = await api.post<{ message: string; user: UserProfile; subscribed_boards: string[] }>(

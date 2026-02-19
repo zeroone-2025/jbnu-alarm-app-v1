@@ -16,6 +16,9 @@ export * from './auth';
 // User
 export * from './user';
 
+// Board groups
+export * from './boardGroups';
+
 // Departments
 export * from './departments';
 

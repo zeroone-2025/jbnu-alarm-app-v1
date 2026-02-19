@@ -1,0 +1,247 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { FiUpload, FiRotateCcw } from 'react-icons/fi';
+import Button from '@/_components/ui/Button';
+import LoadingSpinner from '@/_components/ui/LoadingSpinner';
+import Toast from '@/_components/ui/Toast';
+import ConfirmModal from '@/_components/ui/ConfirmModal';
+import ChinbaScheduleGrid from './ChinbaScheduleGrid';
+import { getLoginUrl } from '@/_lib/utils/requireLogin';
+import { useMyParticipation, useUpdateUnavailability, useImportTimetable } from '@/_lib/hooks/useChinba';
+
+interface MyScheduleTabProps {
+  eventId: string;
+  dates: string[];
+  startHour: number;
+  endHour: number;
+  isLoggedIn: boolean;
+}
+
+export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLoggedIn }: MyScheduleTabProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { data: participation, isLoading } = useMyParticipation(isLoggedIn ? eventId : undefined);
+  const updateMutation = useUpdateUnavailability(eventId);
+  const importMutation = useImportTimetable(eventId);
+
+  const draftKey = `chinba:event:${eventId}:draft-unavailable`;
+  const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set());
+  const [hasDraft, setHasDraft] = useState(false);
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const [showNoTimetableModal, setShowNoTimetableModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastKey, setToastKey] = useState(0);
+
+  // Load existing unavailable slots (logged in only)
+  useEffect(() => {
+    if (participation?.unavailable_slots && !hasDraft) {
+      setSelectedSlots(new Set(participation.unavailable_slots));
+    }
+  }, [participation?.unavailable_slots, hasDraft]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(draftKey);
+      if (!stored) {
+        setDraftLoaded(true);
+        return;
+      }
+      const parsed = JSON.parse(stored) as { slots?: string[]; updatedAt?: number };
+      if (Array.isArray(parsed?.slots)) {
+        setSelectedSlots(new Set(parsed.slots));
+        setHasDraft(true);
+      }
+    } catch {
+      // ignore localStorage errors
+    } finally {
+      setDraftLoaded(true);
+    }
+  }, [draftKey]);
+
+  const handleSlotsChange = useCallback((slots: Set<string>) => {
+    setSelectedSlots(slots);
+  }, []);
+
+  // draftLoaded 전에는 초기 빈 상태가 localStorage를 덮어쓰지 않도록 가드
+  useEffect(() => {
+    if (!draftLoaded) return;
+    try {
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({ slots: Array.from(selectedSlots), updatedAt: Date.now() })
+      );
+    } catch {
+      // ignore localStorage errors
+    }
+  }, [draftKey, selectedSlots, draftLoaded]);
+
+  const handleSave = async () => {
+    if (!isLoggedIn) {
+      setToastMessage('로그인이 필요합니다');
+      setToastType('info');
+      setToastVisible(true);
+      setToastKey(prev => prev + 1);
+      router.push(getLoginUrl());
+      return;
+    }
+    try {
+      await updateMutation.mutateAsync({
+        unavailable_slots: Array.from(selectedSlots),
+      });
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('tab', 'team');
+      params.set('toast', 'save');
+      router.replace(`/chinba/event?${params.toString()}`);
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {
+        // ignore localStorage errors
+      }
+      setHasDraft(false);
+    } catch (err: any) {
+      setToastMessage(err.response?.data?.detail || '저장에 실패했습니다');
+      setToastType('error');
+      setToastVisible(true);
+      setToastKey(prev => prev + 1);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!isLoggedIn) {
+      setToastMessage('로그인이 필요합니다');
+      setToastType('info');
+      setToastVisible(true);
+      setToastKey(prev => prev + 1);
+      router.push(getLoginUrl());
+      return;
+    }
+    try {
+      const result = await importMutation.mutateAsync();
+      setToastMessage(result.message);
+      setToastType('success');
+      setToastVisible(true);
+      setToastKey(prev => prev + 1);
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {
+        // ignore localStorage errors
+      }
+      setHasDraft(false);
+    } catch (err: any) {
+      const detail = err.response?.data?.detail as string | undefined;
+      const status = err.response?.status as number | undefined;
+      const isNoTimetable =
+        status === 404 && !!detail && (detail.includes('시간표를 찾을 수 없습니다') || detail.includes('시간표에 수업이 없습니다'));
+
+      if (isNoTimetable) {
+        setShowNoTimetableModal(true);
+        return;
+      }
+
+      setToastMessage(detail || '시간표 불러오기에 실패했습니다');
+      setToastType('error');
+      setToastVisible(true);
+      setToastKey(prev => prev + 1);
+    }
+  };
+
+  if (isLoggedIn && (isLoading || !draftLoaded)) {
+    return (
+      <div className="flex h-40 items-center justify-center">
+        <LoadingSpinner size="md" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 pb-6">
+      {/* Info + Actions (horizontal) */}
+      <div className="mb-4 flex items-center gap-2">
+        <div className="flex-1 rounded-xl bg-blue-50 border border-blue-100 px-3 py-2">
+          <p className="text-[11px] text-blue-700 font-medium leading-tight">
+            불가능한 시간을 드래그로 선택해주세요
+          </p>
+          <p className="text-[10px] text-blue-500 mt-0.5">빨간색으로 표시된 시간이 불가능한 시간입니다</p>
+        </div>
+        <button
+          onClick={handleImport}
+          disabled={importMutation.isPending}
+          className="shrink-0 flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-4 text-[12px] font-medium text-gray-600 hover:bg-gray-100 active:scale-[0.97] transition-all disabled:opacity-50"
+        >
+          {importMutation.isPending ? (
+            <LoadingSpinner size="sm" />
+          ) : (
+            <FiUpload size={12} />
+          )}
+          내 시간표 불러오기
+        </button>
+        <button
+          onClick={() => {
+            setSelectedSlots(new Set());
+            setHasDraft(false);
+          }}
+          disabled={selectedSlots.size === 0}
+          className="shrink-0 flex items-center gap-1 rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-2 text-[11px] font-medium text-red-500 hover:bg-red-50 active:scale-[0.97] transition-all disabled:opacity-30"
+        >
+          <FiRotateCcw size={12} />
+          초기화
+        </button>
+      </div>
+
+      {/* Schedule Grid */}
+      <div className="mb-4 rounded-xl border border-gray-200 p-2 overflow-hidden">
+        <ChinbaScheduleGrid
+          dates={dates}
+          startHour={startHour}
+          endHour={endHour}
+          selectedSlots={selectedSlots}
+          onSlotsChange={handleSlotsChange}
+        />
+      </div>
+
+      {/* Sticky bottom bar with save button */}
+      <div className="sticky bottom-0 z-10 -mx-4 border-t border-gray-100 bg-white px-4 py-3 pb-safe">
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
+          onClick={handleSave}
+          disabled={updateMutation.isPending}
+        >
+          {updateMutation.isPending ? (
+            <span className="flex items-center justify-center gap-2">
+              <LoadingSpinner size="sm" />
+              저장 중...
+            </span>
+          ) : (
+            '저장하기'
+          )}
+        </Button>
+      </div>
+
+      <Toast
+        message={toastMessage}
+        isVisible={toastVisible}
+        onClose={() => setToastVisible(false)}
+        duration={2000}
+        type={toastType}
+        triggerKey={toastKey}
+      />
+
+      <ConfirmModal
+        isOpen={showNoTimetableModal}
+        title="저장된 시간표가 없습니다"
+        confirmLabel="등록하러 가기"
+        cancelLabel="취소"
+        onConfirm={() => router.push('/profile?tab=timetable')}
+        onCancel={() => setShowNoTimetableModal(false)}
+      >
+        시간표를 등록하고 1초만에 불러오세요.
+      </ConfirmModal>
+    </div>
+  );
+}
