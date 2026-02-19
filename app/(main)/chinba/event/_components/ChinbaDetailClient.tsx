@@ -195,13 +195,10 @@ export default function ChinbaDetailClient() {
       <FullPageModal isOpen={true} onClose={() => router.back()} title={event.title || '친바'}>
         {/* Event Detail Header */}
         <div className="shrink-0 px-4 pb-2 border-b border-gray-100">
-          <div className="relative flex items-center justify-between">
-            <div className="flex-1 text-center mx-2">
-              <h1 className="text-sm font-bold text-gray-800 truncate">{event.title}</h1>
-              <p className="text-[10px] text-gray-400 mt-0.5">{formatDateRange(event.dates)}</p>
-            </div>
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-gray-500 truncate">{formatDateRange(event.dates)}</p>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               {isCreator && isActive && (
                 <button
                   onClick={() => setShowCompleteModal(true)}
@@ -274,8 +271,8 @@ export default function ChinbaDetailClient() {
         )}
 
         {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto pt-4 pb-safe">
-          <div className="overflow-hidden">
+        <div className="flex-1 overflow-y-auto pt-4">
+          <div className="overflow-clip">
             <div
               key={activeTab}
               className={
