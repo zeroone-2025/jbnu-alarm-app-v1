@@ -114,6 +114,19 @@ export default function TimetableTab() {
     try {
       const result = await uploadTimetableImage(selectedFile, selectedSemester);
       queryClient.setQueryData(['timetable', selectedSemester], result.timetable);
+
+      const totalClasses = result.timetable.classes.length;
+      const matchedCount = Math.round(result.confidence * totalClasses);
+      if (result.confidence >= 1.0 || totalClasses === 0) {
+        showToast('시간표 분석 완료!', 'success');
+      } else {
+        showToast(
+          `시간표 분석 완료 (${matchedCount}/${totalClasses}개 수강편람 매칭)`,
+          'success'
+        );
+      }
+
+      // 매칭 실패 경고는 별도 에러 배너로 표시
       if (result.warnings.length > 0) {
         setError(result.warnings.join('\n'));
       }
@@ -127,7 +140,7 @@ export default function TimetableTab() {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
     }
-  }, [selectedFile, selectedSemester, previewUrl, queryClient]);
+  }, [selectedFile, selectedSemester, previewUrl, queryClient, showToast]);
 
   const handleCancelPreview = useCallback(() => {
     setOverlayState(null);

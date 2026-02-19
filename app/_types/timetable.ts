@@ -19,6 +19,8 @@ export interface TimetableData {
 
 export interface TimetableAnalysisResponse {
   timetable: TimetableData;
+  /** 수강편람 매칭 성공 비율 (0.0~1.0) */
   confidence: number;
+  /** 매칭 실패 수업 안내 등 경고 메시지 */
   warnings: string[];
 }
