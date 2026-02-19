@@ -48,15 +48,24 @@ const PROVIDER_CONFIGS: Record<OAuthProvider, ProviderConfig> = {
 interface SocialLoginButtonProps {
   provider: OAuthProvider;
   onLoginStart?: () => void;
+  redirectTo?: string;
 }
 
 export default function SocialLoginButton({
   provider,
   onLoginStart,
+  redirectTo,
 }: SocialLoginButtonProps) {
   const { openModal } = useInAppBrowser();
   const router = useRouter();
   const config = PROVIDER_CONFIGS[provider];
+
+  const getRedirectTo = () => {
+    if (redirectTo?.startsWith('/')) return redirectTo;
+    if (typeof window === 'undefined') return undefined;
+    const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    return currentPath.startsWith('/') ? currentPath : undefined;
+  };
 
   // Deep Link 이벤트 리스너 (iOS/Android) - 모든 프로바이더 공통
   useEffect(() => {
@@ -86,8 +95,10 @@ export default function SocialLoginButton({
             // 브라우저가 이미 닫혀있을 수 있음
           }
 
+          const redirectTo = url.searchParams.get('redirect_to');
+          const safeRedirect = redirectTo?.startsWith('/') ? redirectTo : '/';
           setTimeout(() => {
-            router.replace('/');
+            router.replace(safeRedirect);
           }, 300);
         }
       }
@@ -120,34 +131,42 @@ export default function SocialLoginButton({
     }
 
     onLoginStart?.();
+    localStorage.setItem('last_login_provider', provider);
 
     const platform = Capacitor.getPlatform();
+
+    const redirectTo = getRedirectTo();
+    const buildLoginUrl = () => {
+      const baseUrl = getSocialLoginUrl(provider, redirectTo);
+      const separator = baseUrl.includes('?') ? '&' : '?';
+      return `${baseUrl}${separator}platform=${encodeURIComponent(platform)}`;
+    };
 
     if (Capacitor.isNativePlatform()) {
       if (platform === 'ios') {
         try {
-          const loginUrl = await fetchSocialLoginUrl(provider, platform);
+          const loginUrl = await fetchSocialLoginUrl(provider, platform, redirectTo);
           await Browser.open({
             url: loginUrl,
             presentationStyle: 'fullscreen',
           });
         } catch (error) {
           console.error('Failed to get login URL:', error);
-          const loginUrl = `${getSocialLoginUrl(provider)}?platform=${platform}`;
+          const loginUrl = buildLoginUrl();
           await Browser.open({
             url: loginUrl,
             presentationStyle: 'fullscreen',
           });
         }
       } else {
-        const loginUrl = `${getSocialLoginUrl(provider)}?platform=${platform}`;
+        const loginUrl = buildLoginUrl();
         await Browser.open({
           url: loginUrl,
           presentationStyle: 'popover',
         });
       }
     } else {
-      const loginUrl = `${getSocialLoginUrl(provider)}?platform=${platform}`;
+      const loginUrl = buildLoginUrl();
       window.location.href = loginUrl;
     }
   };

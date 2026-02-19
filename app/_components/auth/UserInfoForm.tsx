@@ -20,6 +20,13 @@ interface UserInfoFormProps {
     isReadonlyNickname?: boolean;
     isReadonlySchool?: boolean;
     isReadonly?: boolean;
+    showRequirementBadges?: boolean;
+    requirementMap?: Partial<Record<'nickname' | 'school' | 'dept_code' | 'admission_year', 'required' | 'optional'>>;
+    invalidFields?: {
+        school?: boolean;
+        dept_code?: boolean;
+        admission_year?: boolean;
+    };
 }
 
 export default function UserInfoForm({
@@ -30,6 +37,9 @@ export default function UserInfoForm({
     isReadonlyNickname = false,
     isReadonlySchool = false,
     isReadonly = false,
+    showRequirementBadges = false,
+    requirementMap = {},
+    invalidFields = {},
 }: UserInfoFormProps) {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -43,6 +53,17 @@ export default function UserInfoForm({
         });
     };
 
+    const renderBadge = (key: 'nickname' | 'school' | 'dept_code' | 'admission_year') => {
+        if (!showRequirementBadges) return null;
+        const rule = requirementMap[key];
+        if (rule !== 'optional') return null;
+        return (
+            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-500">
+                선택
+            </span>
+        );
+    };
+
     return (
         <div className="space-y-6">
             {/* 닉네임 */}
@@ -51,6 +72,7 @@ export default function UserInfoForm({
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                         <FiUser className="text-gray-400" />
                         닉네임
+                        {renderBadge('nickname')}
                     </label>
                     <input
                         type="text"
@@ -78,7 +100,7 @@ export default function UserInfoForm({
                         type="email"
                         value={email}
                         readOnly
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none bg-gray-100 text-gray-500 cursor-not-allowed"
+                        className="w-full px-4 py-3 text-gray-500 bg-gray-100 border border-gray-200 outline-none cursor-not-allowed rounded-xl"
                     />
                 </div>
             )}
@@ -88,6 +110,7 @@ export default function UserInfoForm({
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                     <FiHome className="text-gray-400" />
                     학교
+                    {renderBadge('school')}
                 </label>
                 <div className="relative">
                     <select
@@ -97,6 +120,8 @@ export default function UserInfoForm({
                         disabled={isReadonlySchool || isReadonly}
                         className={`w-full appearance-none rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all ${(isReadonlySchool || isReadonly)
                             ? 'bg-gray-100 text-gray-500 cursor-not-allowed font-medium'
+                            : invalidFields.school
+                                ? 'border-red-300 bg-red-50 focus:border-red-500'
                             : 'bg-gray-50 focus:border-gray-900 focus:bg-white'
                             }`}
                     >
@@ -104,8 +129,8 @@ export default function UserInfoForm({
                         <option value="기타">기타</option>
                     </select>
                     {!(isReadonlySchool || isReadonly) && (
-                        <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
-                            <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+                        <div className="absolute inset-y-0 flex items-center text-gray-400 pointer-events-none right-4">
+                            <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
                                 <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                             </svg>
                         </div>
@@ -118,12 +143,14 @@ export default function UserInfoForm({
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                     <FiBook className="text-gray-400" />
                     학과
+                    {renderBadge('dept_code')}
                 </label>
                 <DepartmentSearch
                     onSelect={handleDeptSelect}
                     selectedDeptCode={formData.dept_code}
-                    placeholder="학과를 검색하세요 (예: 컴퓨터, 경영)"
+                    placeholder="학과를 검색하세요"
                     isReadonly={isReadonly}
+                    hasError={Boolean(invalidFields.dept_code)}
                 />
             </div>
 
@@ -131,7 +158,8 @@ export default function UserInfoForm({
             <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                     <FiHash className="text-gray-400" />
-                    학번 (입학년도)
+                    학번
+                    {renderBadge('admission_year')}
                 </label>
                 <div className="relative">
                     <select
@@ -141,6 +169,8 @@ export default function UserInfoForm({
                         disabled={isReadonly}
                         className={`w-full appearance-none rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all ${isReadonly
                             ? 'bg-gray-100 text-gray-500 cursor-not-allowed font-medium'
+                            : invalidFields.admission_year
+                                ? 'border-red-300 bg-red-50 focus:border-red-500'
                             : 'bg-gray-50 focus:border-gray-900 focus:bg-white'
                             }`}
                     >
@@ -152,8 +182,8 @@ export default function UserInfoForm({
                         ))}
                     </select>
                     {!isReadonly && (
-                        <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
-                            <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+                        <div className="absolute inset-y-0 flex items-center text-gray-400 pointer-events-none right-4">
+                            <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
                                 <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
                             </svg>
                         </div>

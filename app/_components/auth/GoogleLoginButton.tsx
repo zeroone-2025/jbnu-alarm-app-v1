@@ -23,6 +23,12 @@ export default function GoogleLoginButton({
   const { openModal } = useInAppBrowser();
   const router = useRouter();
 
+  const getRedirectTo = () => {
+    if (typeof window === 'undefined') return undefined;
+    const redirectTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    return redirectTo.startsWith('/') ? redirectTo : undefined;
+  };
+
   // Deep Link 이벤트 리스너 (iOS/Android)
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -56,8 +62,10 @@ export default function GoogleLoginButton({
             // 브라우저가 이미 닫혀있을 수 있음
           }
 
+          const redirectTo = url.searchParams.get('redirect_to');
+          const safeRedirect = redirectTo?.startsWith('/') ? redirectTo : '/';
           setTimeout(() => {
-            router.replace('/');
+            router.replace(safeRedirect);
           }, 300);
         }
       }
@@ -92,16 +100,23 @@ export default function GoogleLoginButton({
     }
 
     onLoginStart?.();
+    localStorage.setItem('last_login_provider', 'google');
 
     // 플랫폼 감지 (web, android, ios)
     const platform = Capacitor.getPlatform();
+    const redirectTo = getRedirectTo();
+    const buildLoginUrl = () => {
+      const baseUrl = getGoogleLoginUrl(redirectTo);
+      const separator = baseUrl.includes('?') ? '&' : '?';
+      return `${baseUrl}${separator}platform=${encodeURIComponent(platform)}`;
+    };
 
     if (Capacitor.isNativePlatform()) {
       if (platform === 'ios') {
         try {
           // iOS: In-App Browser (SFSafariViewController) 사용
           // Deep Link로 앱으로 돌아올 수 있도록 in-app browser 사용
-          const googleUrl = await fetchGoogleLoginUrl(platform);
+          const googleUrl = await fetchGoogleLoginUrl(platform, redirectTo);
           await Browser.open({
             url: googleUrl,
             presentationStyle: 'fullscreen'  // In-app browser로 열기
@@ -109,7 +124,7 @@ export default function GoogleLoginButton({
         } catch (error) {
           console.error('Failed to get login URL:', error);
           // 실패 시 기존 방식 시도
-          const loginUrl = `${getGoogleLoginUrl()}?platform=${platform}`;
+          const loginUrl = buildLoginUrl();
           await Browser.open({
             url: loginUrl,
             presentationStyle: 'fullscreen'
@@ -117,7 +132,7 @@ export default function GoogleLoginButton({
         }
       } else {
         // Android: In-App Browser (Chrome Custom Tabs) 사용
-        const loginUrl = `${getGoogleLoginUrl()}?platform=${platform}`;
+        const loginUrl = buildLoginUrl();
         await Browser.open({
           url: loginUrl,
           presentationStyle: 'popover'
@@ -125,7 +140,7 @@ export default function GoogleLoginButton({
       }
     } else {
       // Web: 기존 방식 유지
-      const loginUrl = `${getGoogleLoginUrl()}?platform=${platform}`;
+      const loginUrl = buildLoginUrl();
       window.location.href = loginUrl;
     }
   };

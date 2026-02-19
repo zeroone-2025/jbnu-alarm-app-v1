@@ -34,6 +34,9 @@ export const BOARD_MAP: Record<string, BoardMeta> = {
   home_housing: { name: "자취/하숙", color: "blue", category: "전북대" },
   home_lostandfound: { name: "분실/습득", color: "blue", category: "전북대" },
   home_poster: { name: "전자대자보", color: "blue", category: "전북대" },
+  home_likehome: { name: "생활관", color: "green", category: "전북대" },
+  home_library: { name: "도서관", color: "green", category: "전북대" },
+
 
   // 단과대
   college_nursing: { name: "간호대학", color: "gray", category: "단과대" },
@@ -89,7 +92,61 @@ export const BOARD_MAP: Record<string, BoardMeta> = {
   dept_chemical: { name: "화학공학부", color: "orange", category: "학과" },
   dept_chemedu: { name: "화학교육학과", color: "orange", category: "학과" },
   dept_accounting: { name: "회계학과", color: "orange", category: "학과" },
+  dept_archi: { name: "건축공학과", color: "orange", category: "학과" },
+  dept_polynano: { name: "고분자나노공학과", color: "orange", category: "학과" },
+  dept_mdesign: { name: "기계설계공학부", color: "orange", category: "학과" },
+  dept_urban: { name: "도시공학과", color: "orange", category: "학과" },
+  dept_biomedical: { name: "바이오메디컬공학부", color: "orange", category: "학과" },
+  dept_ise: { name: "산업정보시스템공학과", color: "orange", category: "학과" },
+  dept_software: { name: "소프트웨어공학과", color: "orange", category: "학과" },
+  dept_metal: { name: "금속시스템공학전공", color: "orange", category: "학과" },
+  dept_materials: { name: "전자재료공학전공", color: "orange", category: "학과" },
+  dept_itmat: { name: "정보소재공학전공", color: "orange", category: "학과" },
+  dept_atom: { name: "양자시스템공학과", color: "orange", category: "학과" },
+  dept_org: { name: "유기소재섬유공학과", color: "orange", category: "학과" },
+  dept_cte: { name: "IT융합기전공학", color: "orange", category: "학과" },
+  dept_itase: { name: "IT응용시스템공학과", color: "orange", category: "학과" },
+  dept_ee: { name: "전기공학과", color: "orange", category: "학과" },
+  dept_res: { name: "자원에너지공학과", color: "orange", category: "학과" },
+  dept_civil: { name: "토목공학과", color: "orange", category: "학과" },
+  dept_envi: { name: "환경공학과", color: "orange", category: "학과" },
+  dept_aerospace: { name: "항공우주공학과", color: "orange", category: "학과" },
+  dept_frme: { name: "농업경제학전공", color: "orange", category: "학과" },
+  dept_agrifm: { name: "식품유통학전공", color: "orange", category: "학과" },
+  dept_animalbio: { name: "동물생명공학과", color: "orange", category: "학과" },
+  dept_wse: { name: "목재응용과학과", color: "orange", category: "학과" },
+  dept_fore: { name: "산림환경과학과", color: "orange", category: "학과" },
+  dept_barr: { name: "생명자원융합학과", color: "orange", category: "학과" },
+  dept_jsf: { name: "스마트팜학과", color: "orange", category: "학과" },
+  dept_plantmed: { name: "식물의학과", color: "orange", category: "학과" },
+  dept_hort: { name: "원예학과", color: "orange", category: "학과" },
+  dept_la: { name: "조경학과", color: "orange", category: "학과" },
+  dept_agrieng: { name: "지역건설공학과", color: "orange", category: "학과" },
+  dept_culture: { name: "고고문화인류학과", color: "orange", category: "학과" },
+  dept_korean: { name: "국어국문학과", color: "orange", category: "학과" },
+  dept_tsis: { name: "국제학부", color: "orange", category: "학과" },
+  dept_deutsch: { name: "독일학과", color: "orange", category: "학과" },
+  dept_spanish: { name: "스페인중남미학과", color: "orange", category: "학과" },
+  dept_japan: { name: "일본학과", color: "orange", category: "학과" },
+  dept_philos: { name: "철학과", color: "orange", category: "학과" },
+  dept_ss: { name: "과학학과", color: "orange", category: "학과" },
+  dept_bio: { name: "생명과학과", color: "orange", category: "학과" },
+  dept_math: { name: "수학과", color: "orange", category: "학과" },
+  dept_sportscience: { name: "스포츠과학과", color: "orange", category: "학과" },
+  dept_ees: { name: "지구환경과학과", color: "orange", category: "학과" },
+  dept_koredu: { name: "국어교육과", color: "orange", category: "학과" },
+  dept_germanedu: { name: "독어교육과", color: "orange", category: "학과" },
+  dept_mathedu: { name: "수학교육과", color: "orange", category: "학과" },
+  dept_englishedu: { name: "영어교육과", color: "orange", category: "학과" },
+  dept_historyedu: { name: "역사교육전공", color: "orange", category: "학과" },
+  dept_socialedu: { name: "일반사회교육전공", color: "orange", category: "학과" },
+  dept_geoedu: { name: "지리교육전공", color: "orange", category: "학과" },
+  dept_media: { name: "미디어커뮤니케이션학과", color: "orange", category: "학과" },
+  dept_psy: { name: "심리학과", color: "orange", category: "학과" },
+  dept_hanyak: { name: "한약자원학과", color: "orange", category: "학과" },
+  dept_defense: { name: "첨단방위산업학과", color: "orange", category: "학과" },
   agency_sw: { name: "SW중심대학사업단", color: "green", category: "사업단" },
+  agency_juice_semi: { name: "반도체특성화대학사업단", color: "green", category: "사업단" },
 };
 
 /**
@@ -140,15 +197,26 @@ export const GUEST_DEFAULT_BOARDS = [
 
 
 /**
- * 전체 게시판 목록 (카테고리 포함)
- */
-export const BOARD_LIST = Object.entries(BOARD_MAP).map(([id, meta]) => ({
-  id,
-  name: meta.name,
-  category: meta.category,
-}));
-
-/**
  * 카테고리 표시 순서
  */
 export const CATEGORY_ORDER: BoardCategory[] = ['전북대', '단과대', '학과', '사업단'];
+
+/**
+ * 전체 게시판 목록 (카테고리 포함)
+ * - 카테고리 순서: CATEGORY_ORDER
+ * - 카테고리 내부 정렬: 이름 가나다순
+ */
+export const BOARD_LIST = Object.entries(BOARD_MAP)
+  .map(([id, meta]) => ({
+    id,
+    name: meta.name,
+    category: meta.category,
+  }))
+  .sort((a, b) => {
+    const categoryOrderDiff =
+      CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
+    if (categoryOrderDiff !== 0) {
+      return categoryOrderDiff;
+    }
+    return a.name.localeCompare(b.name, 'ko-KR');
+  });

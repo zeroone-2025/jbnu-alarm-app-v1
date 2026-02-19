@@ -6,6 +6,7 @@ import { useUserStore } from '@/_lib/store/useUserStore';
 import type { UserProfileUpdate } from '@/_types/user';
 import { useEffect, useState } from 'react';
 import { useAuthInitialized } from '@/providers';
+import axios from 'axios';
 
 /**
  * 유저 프로필 조회 및 관리 훅
@@ -25,7 +26,13 @@ export function useUser() {
         queryFn: getUserProfile,
         staleTime: 1000 * 60 * 5, // 5분
         enabled: hasToken,
-        retry: 1,
+        retry: (failureCount, error) => {
+            // 인증 실패(401)는 재시도하지 않아 users/me, auth/refresh 중복 호출을 방지
+            if (axios.isAxiosError(error) && error.response?.status === 401) {
+                return false;
+            }
+            return failureCount < 1;
+        },
     });
 
     // 조회 성공 시 Zustand Store 업데이트 / 실패 시 초기화

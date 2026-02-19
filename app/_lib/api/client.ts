@@ -82,9 +82,10 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
+        const hasAuthHeader = !!originalRequest?.headers?.Authorization;
 
-        // 401 에러이고, 재시도가 아닌 경우
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // 401 에러이고, 재시도가 아니며 Authorization 헤더가 있는 경우만 refresh 시도
+        if (error.response?.status === 401 && originalRequest && !originalRequest._retry && hasAuthHeader) {
             // 이미 갱신 중이면 대기
             if (isRefreshing) {
                 return new Promise((resolve) => {

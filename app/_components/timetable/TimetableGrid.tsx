@@ -3,11 +3,11 @@
 import { useState, useRef, useCallback, useMemo } from 'react';
 import type { TimetableClass } from '@/_types/timetable';
 import AddClassModal from './AddClassModal';
-import ConfirmModal from '@/_components/ui/ConfirmModal';
+import ClassDetailSheet from './ClassDetailSheet';
 
 const DAY_LABELS_WEEKDAY = ['월', '화', '수', '목', '금'];
 const DAY_LABELS_ALL = ['월', '화', '수', '목', '금', '토', '일'];
-const HOURS = Array.from({ length: 12 }, (_, i) => i + 9); // 9~20
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8~20
 const BLOCK_COLORS = [
   { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200' },
   { bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-200' },
@@ -21,10 +21,13 @@ const BLOCK_COLORS = [
 
 interface TimetableGridProps {
   classes: TimetableClass[];
-  cellHeight: number;        // px per 1 hour (dynamic, calculated by parent)
+  cellHeight: number;
   showWeekends?: boolean;
+  disabled?: boolean;
+  onDisabledInteraction?: () => void;
   onAdd: (data: { name: string; location?: string; day: number; start_time: string; end_time: string }) => void;
   onDelete: (classId: number) => void;
+  semester?: string;
 }
 
 function timeToMinutes(time: string): number {
@@ -40,7 +43,7 @@ function minutesToTime(minutes: number): string {
 
 const TIME_COL_WIDTH = 28; // px
 
-export default function TimetableGrid({ classes, cellHeight, showWeekends = false, onAdd, onDelete }: TimetableGridProps) {
+export default function TimetableGrid({ classes, cellHeight, showWeekends = false, disabled = false, onDisabledInteraction, onAdd, onDelete, semester }: TimetableGridProps) {
   const dayLabels = showWeekends ? DAY_LABELS_ALL : DAY_LABELS_WEEKDAY;
   const dayCount = dayLabels.length;
   const halfHour = cellHeight / 2;
@@ -50,7 +53,7 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
     day: number;
     startTime: string;
     endTime: string;
-  }>({ isOpen: false, day: 0, startTime: '09:00', endTime: '10:00' });
+  }>({ isOpen: false, day: 0, startTime: '08:00', endTime: '09:00' });
 
   const [dragState, setDragState] = useState<{
     isDragging: boolean;
@@ -98,12 +101,13 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
 
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
+      if (disabled) { onDisabledInteraction?.(); return; }
       const touch = e.touches[0];
       const pos = getGridPosition(touch.clientX, touch.clientY);
       if (!pos) return;
       setDragState({ isDragging: true, day: pos.day, startRow: pos.row, endRow: pos.row });
     },
-    [getGridPosition]
+    [disabled, onDisabledInteraction, getGridPosition]
   );
 
   const handleTouchMove = useCallback(
@@ -145,8 +149,8 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
     const minRow = Math.min(dragState.startRow, dragState.endRow);
     const maxRow = Math.max(dragState.startRow, dragState.endRow);
 
-    const startMinutes = 9 * 60 + minRow * 30;
-    const endMinutes = 9 * 60 + (maxRow + 1) * 30;
+    const startMinutes = 8 * 60 + minRow * 30;
+    const endMinutes = 8 * 60 + (maxRow + 1) * 30;
     openModalIfNoOverlap(dragState.day, minutesToTime(startMinutes), minutesToTime(endMinutes));
     setDragState(null);
   }, [dragState, openModalIfNoOverlap]);
@@ -154,12 +158,13 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
   // Mouse drag for desktop
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      if (disabled) { onDisabledInteraction?.(); return; }
       if (e.button !== 0) return;
       const pos = getGridPosition(e.clientX, e.clientY);
       if (!pos) return;
       setDragState({ isDragging: true, day: pos.day, startRow: pos.row, endRow: pos.row });
     },
-    [getGridPosition]
+    [disabled, onDisabledInteraction, getGridPosition]
   );
 
   const handleMouseMove = useCallback(
@@ -177,8 +182,8 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
     const minRow = Math.min(dragState.startRow, dragState.endRow);
     const maxRow = Math.max(dragState.startRow, dragState.endRow);
 
-    const startMinutes = 9 * 60 + minRow * 30;
-    const endMinutes = 9 * 60 + (maxRow + 1) * 30;
+    const startMinutes = 8 * 60 + minRow * 30;
+    const endMinutes = 8 * 60 + (maxRow + 1) * 30;
     openModalIfNoOverlap(dragState.day, minutesToTime(startMinutes), minutesToTime(endMinutes));
     setDragState(null);
   }, [dragState, openModalIfNoOverlap]);
@@ -258,12 +263,11 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
           {classes.map((cls) => {
             const startMin = timeToMinutes(cls.start_time);
             const endMin = timeToMinutes(cls.end_time);
-            const baseMin = 9 * 60;
+            const baseMin = 8 * 60;
             const top = ((startMin - baseMin) / 60) * cellHeight + 8; // +8 for pt-2
             const height = ((endMin - startMin) / 60) * cellHeight;
             const colorIdx = colorMap.get(cls.name) ?? 0;
             const color = BLOCK_COLORS[colorIdx];
-            const colWidth = `calc((100% - ${TIME_COL_WIDTH}px) / ${dayCount})`;
             const left = `calc(${TIME_COL_WIDTH}px + ${cls.day} * (100% - ${TIME_COL_WIDTH}px) / ${dayCount})`;
 
             return (
@@ -298,8 +302,8 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
 
           {/* Empty state hint */}
           {classes.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <p className="text-xs text-gray-300">드래그하여 일정 추가</p>
+            <div className="absolute inset-0 flex items-start justify-center pointer-events-none pt-[14vh]">
+              <p className="text-lg text-gray-300">드래그하여 내 고정 일정 추가/수정</p>
             </div>
           )}
         </div>
@@ -314,19 +318,12 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
         onClose={() => setModalState((prev) => ({ ...prev, isOpen: false }))}
       />
 
-      {/* 삭제 확인 모달 */}
-      <ConfirmModal
-        isOpen={!!deleteTarget}
-        variant="danger"
-        confirmLabel="삭제"
-        onConfirm={() => {
-          if (deleteTarget) onDelete(deleteTarget.id);
-          setDeleteTarget(null);
-        }}
-        onCancel={() => setDeleteTarget(null)}
-      >
-        &quot;{deleteTarget?.name}&quot; 삭제하시겠습니까?
-      </ConfirmModal>
+      <ClassDetailSheet
+        cls={deleteTarget}
+        semester={semester}
+        onClose={() => setDeleteTarget(null)}
+        onDelete={(id) => { onDelete(id); }}
+      />
     </>
   );
 }
