@@ -1,23 +1,21 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
 import Button from '@/_components/ui/Button';
 import type { TimetableClass } from '@/_types/timetable';
 
 const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
+const HOURS = Array.from({ length: 15 }, (_, i) => i + 8); // 8~22
+const MINUTES = ['00', '15', '30', '45'];
 
-function generateTimeOptions(): string[] {
-  const options: string[] = [];
-  for (let h = 8; h <= 21; h++) {
-    options.push(`${h.toString().padStart(2, '0')}:00`);
-    if (h < 21) {
-      options.push(`${h.toString().padStart(2, '0')}:15`);
-      options.push(`${h.toString().padStart(2, '0')}:30`);
-      options.push(`${h.toString().padStart(2, '0')}:45`);
-    }
-  }
-  return options;
+function parseTime(time: string): { hour: number; minute: string } {
+  const [h, m] = time.split(':');
+  return { hour: parseInt(h, 10), minute: m };
+}
+
+function formatTime(hour: number, minute: string): string {
+  return `${hour.toString().padStart(2, '0')}:${minute}`;
 }
 
 interface AddClassModalProps {
@@ -34,23 +32,32 @@ export default function AddClassModal({ isOpen, day, startTime, endTime, editing
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [selectedDay, setSelectedDay] = useState(day);
-  const [selectedStartTime, setSelectedStartTime] = useState(startTime);
-  const [selectedEndTime, setSelectedEndTime] = useState(endTime);
+  const [startHour, setStartHour] = useState(8);
+  const [startMinute, setStartMinute] = useState('00');
+  const [endHour, setEndHour] = useState(9);
+  const [endMinute, setEndMinute] = useState('00');
 
   const isEditMode = !!editingClass;
-  const timeOptions = useMemo(() => generateTimeOptions(), []);
 
   useEffect(() => {
     if (isOpen && editingClass) {
       setName(editingClass.name);
       setLocation(editingClass.location ?? '');
       setSelectedDay(editingClass.day);
-      setSelectedStartTime(editingClass.start_time);
-      setSelectedEndTime(editingClass.end_time);
+      const start = parseTime(editingClass.start_time);
+      const end = parseTime(editingClass.end_time);
+      setStartHour(start.hour);
+      setStartMinute(start.minute);
+      setEndHour(end.hour);
+      setEndMinute(end.minute);
     } else if (isOpen && !editingClass) {
       setSelectedDay(day);
-      setSelectedStartTime(startTime);
-      setSelectedEndTime(endTime);
+      const start = parseTime(startTime);
+      const end = parseTime(endTime);
+      setStartHour(start.hour);
+      setStartMinute(start.minute);
+      setEndHour(end.hour);
+      setEndMinute(end.minute);
     } else if (!isOpen) {
       setName('');
       setLocation('');
@@ -66,8 +73,8 @@ export default function AddClassModal({ isOpen, day, startTime, endTime, editing
       name: name.trim(),
       location: location.trim() || undefined,
       day: selectedDay,
-      start_time: selectedStartTime,
-      end_time: selectedEndTime,
+      start_time: formatTime(startHour, startMinute),
+      end_time: formatTime(endHour, endMinute),
     });
     setName('');
     setLocation('');
@@ -89,7 +96,7 @@ export default function AddClassModal({ isOpen, day, startTime, endTime, editing
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* 시간 정보 - 수정 모드에서는 편집 가능 */}
           {isEditMode ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-600">요일</label>
                 <select
@@ -102,28 +109,48 @@ export default function AddClassModal({ isOpen, day, startTime, endTime, editing
                   ))}
                 </select>
               </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="mb-1 block text-xs font-medium text-gray-600">시작</label>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-600">시작</label>
+                <div className="flex items-center gap-2">
                   <select
-                    value={selectedStartTime}
-                    onChange={(e) => setSelectedStartTime(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-900 bg-white"
+                    value={startHour}
+                    onChange={(e) => setStartHour(Number(e.target.value))}
+                    className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-900 bg-white"
                   >
-                    {timeOptions.map((time) => (
-                      <option key={time} value={time}>{time}</option>
+                    {HOURS.map((h) => (
+                      <option key={h} value={h}>{h}시</option>
+                    ))}
+                  </select>
+                  <select
+                    value={startMinute}
+                    onChange={(e) => setStartMinute(e.target.value)}
+                    className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-900 bg-white"
+                  >
+                    {MINUTES.map((m) => (
+                      <option key={m} value={m}>{m}분</option>
                     ))}
                   </select>
                 </div>
-                <div className="flex-1">
-                  <label className="mb-1 block text-xs font-medium text-gray-600">종료</label>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-600">종료</label>
+                <div className="flex items-center gap-2">
                   <select
-                    value={selectedEndTime}
-                    onChange={(e) => setSelectedEndTime(e.target.value)}
-                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-900 bg-white"
+                    value={endHour}
+                    onChange={(e) => setEndHour(Number(e.target.value))}
+                    className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-900 bg-white"
                   >
-                    {timeOptions.map((time) => (
-                      <option key={time} value={time}>{time}</option>
+                    {HOURS.map((h) => (
+                      <option key={h} value={h}>{h}시</option>
+                    ))}
+                  </select>
+                  <select
+                    value={endMinute}
+                    onChange={(e) => setEndMinute(e.target.value)}
+                    className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-900 bg-white"
+                  >
+                    {MINUTES.map((m) => (
+                      <option key={m} value={m}>{m}분</option>
                     ))}
                   </select>
                 </div>
