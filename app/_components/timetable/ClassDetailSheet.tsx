@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { FiX, FiTrash2, FiMapPin, FiUser, FiClock, FiBook, FiAward, FiActivity, FiAlertCircle } from 'react-icons/fi';
+import { FiX, FiTrash2, FiEdit2, FiMapPin, FiUser, FiClock, FiBook, FiAward, FiActivity, FiAlertCircle } from 'react-icons/fi';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 import { getClassDetail } from '@/_lib/api/timetable';
 import type { ClassDetail, TimetableClass } from '@/_types/timetable';
@@ -14,6 +14,7 @@ interface ClassDetailSheetProps {
   cls: TimetableClass | null;
   semester?: string;
   onClose: () => void;
+  onEdit: (cls: TimetableClass) => void;
   onDelete: (classId: number) => void;
 }
 
@@ -25,7 +26,7 @@ function formatGradeType(gradeType: string): string {
   return raw;
 }
 
-export default function ClassDetailSheet({ cls, semester, onClose, onDelete }: ClassDetailSheetProps) {
+export default function ClassDetailSheet({ cls, semester, onClose, onEdit, onDelete }: ClassDetailSheetProps) {
   const [detail, setDetail] = useState<ClassDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -238,8 +239,8 @@ export default function ClassDetailSheet({ cls, semester, onClose, onDelete }: C
           )}
         </div>
 
-        {/* 삭제 버튼 영역 */}
-        <div className="shrink-0 px-5 pb-8 pt-2">
+        {/* 버튼 영역 */}
+        <div className="shrink-0 px-5 pb-8 pt-2 space-y-2">
           {confirmDelete ? (
             <div className="flex gap-3">
               <button
@@ -256,13 +257,25 @@ export default function ClassDetailSheet({ cls, semester, onClose, onDelete }: C
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 text-sm font-medium text-red-500 hover:bg-red-50 active:scale-95 transition-all"
-            >
-              <FiTrash2 size={14} />
-              시간표에서 삭제
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  if (cls) onEdit(cls);
+                  onClose();
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white hover:bg-gray-800 active:scale-95 transition-all"
+              >
+                <FiEdit2 size={14} />
+                수정하기
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 text-sm font-medium text-red-500 hover:bg-red-50 active:scale-95 transition-all"
+              >
+                <FiTrash2 size={14} />
+                시간표에서 삭제
+              </button>
+            </>
           )}
         </div>
       </div>

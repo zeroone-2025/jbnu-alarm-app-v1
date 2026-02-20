@@ -26,6 +26,7 @@ interface TimetableGridProps {
   disabled?: boolean;
   onDisabledInteraction?: () => void;
   onAdd: (data: { name: string; location?: string; day: number; start_time: string; end_time: string }) => void;
+  onEdit: (cls: TimetableClass) => void;
   onDelete: (classId: number) => void;
   semester?: string;
 }
@@ -43,7 +44,7 @@ function minutesToTime(minutes: number): string {
 
 const TIME_COL_WIDTH = 28; // px
 
-export default function TimetableGrid({ classes, cellHeight, showWeekends = false, disabled = false, onDisabledInteraction, onAdd, onDelete, semester }: TimetableGridProps) {
+export default function TimetableGrid({ classes, cellHeight, showWeekends = false, disabled = false, onDisabledInteraction, onAdd, onEdit, onDelete, semester }: TimetableGridProps) {
   const dayLabels = showWeekends ? DAY_LABELS_ALL : DAY_LABELS_WEEKDAY;
   const dayCount = dayLabels.length;
   const halfHour = cellHeight / 2;
@@ -322,6 +323,7 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
         cls={deleteTarget}
         semester={semester}
         onClose={() => setDeleteTarget(null)}
+        onEdit={onEdit}
         onDelete={(id) => { onDelete(id); }}
       />
     </>

@@ -12,13 +12,14 @@ import {
   getUserTimetable,
   uploadTimetableImage,
   addTimetableClass,
+  updateTimetableClass,
   deleteTimetableClass,
   deleteTimetable,
 } from '@/_lib/api/timetable';
-import type { TimetableData } from '@/_types/timetable';
-import type { UnmatchedClass } from '@/_types/timetable';
+import type { TimetableData, TimetableClass, UnmatchedClass } from '@/_types/timetable';
 import TimetableGrid from './TimetableGrid';
 import UnmatchedQueue from './UnmatchedQueue';
+import AddClassModal from './AddClassModal';
 
 type OverlayState = null | 'PREVIEW' | 'ANALYZING';
 
@@ -65,6 +66,7 @@ export default function TimetableTab() {
   const [gridHeight, setGridHeight] = useState(0);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [unmatchedQueue, setUnmatchedQueue] = useState<UnmatchedClass[]>([]);
+  const [editingClass, setEditingClass] = useState<TimetableClass | null>(null);
 
   const semesterOptions = useMemo(() => getSemesterOptions(), []);
 
@@ -217,6 +219,27 @@ export default function TimetableTab() {
     [selectedSemester, queryClient]
   );
 
+  const handleEditClass = useCallback((cls: TimetableClass) => {
+    setEditingClass(cls);
+  }, []);
+
+  const handleUpdateClass = useCallback(
+    async (data: { name: string; location?: string; day: number; start_time: string; end_time: string }) => {
+      if (!editingClass) return;
+      try {
+        const updated = await updateTimetableClass(editingClass.id, data);
+        queryClient.setQueryData(['timetable', selectedSemester], (old: TimetableData | null | undefined) => {
+          if (!old) return old;
+          return { ...old, classes: old.classes.map((c) => c.id === updated.id ? updated : c) };
+        });
+        setEditingClass(null);
+      } catch (err: any) {
+        setError(err.response?.data?.detail || '수정 중 오류가 발생했습니다.');
+      }
+    },
+    [editingClass, selectedSemester, queryClient]
+  );
+
   const handleQueueDismiss = useCallback((index: number) => {
     setUnmatchedQueue((prev) => prev.filter((_, i) => i !== index));
   }, []);
@@ -303,6 +326,7 @@ export default function TimetableTab() {
           disabled={!isLoggedIn}
           onDisabledInteraction={() => showToast('로그인 후 이용할 수 있습니다.', 'error')}
           onAdd={handleAddClass}
+          onEdit={handleEditClass}
           onDelete={handleDeleteClass}
           semester={selectedSemester}
         />
@@ -344,6 +368,17 @@ export default function TimetableTab() {
       >
         시간표를 전체 삭제하시겠습니까?
       </ConfirmModal>
+
+      {/* 수정 모달 */}
+      <AddClassModal
+        isOpen={!!editingClass}
+        day={editingClass?.day ?? 0}
+        startTime={editingClass?.start_time ?? '08:00'}
+        endTime={editingClass?.end_time ?? '09:00'}
+        editingClass={editingClass}
+        onSubmit={handleUpdateClass}
+        onClose={() => setEditingClass(null)}
+      />
     </div>
   );
 }

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
 import Button from '@/_components/ui/Button';
+import type { TimetableClass } from '@/_types/timetable';
 
 const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
 
@@ -11,13 +12,26 @@ interface AddClassModalProps {
   day: number;
   startTime: string;
   endTime: string;
+  editingClass?: TimetableClass | null;
   onSubmit: (data: { name: string; location?: string; day: number; start_time: string; end_time: string }) => void;
   onClose: () => void;
 }
 
-export default function AddClassModal({ isOpen, day, startTime, endTime, onSubmit, onClose }: AddClassModalProps) {
+export default function AddClassModal({ isOpen, day, startTime, endTime, editingClass, onSubmit, onClose }: AddClassModalProps) {
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
+
+  const isEditMode = !!editingClass;
+
+  useEffect(() => {
+    if (isOpen && editingClass) {
+      setName(editingClass.name);
+      setLocation(editingClass.location ?? '');
+    } else if (!isOpen) {
+      setName('');
+      setLocation('');
+    }
+  }, [isOpen, editingClass]);
 
   if (!isOpen) return null;
 
@@ -42,7 +56,7 @@ export default function AddClassModal({ isOpen, day, startTime, endTime, onSubmi
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-base font-bold text-gray-800">일정 추가</h3>
+          <h3 className="text-base font-bold text-gray-800">{isEditMode ? '일정 수정' : '일정 추가'}</h3>
           <button onClick={onClose} className="rounded-full p-1 text-gray-400 hover:bg-gray-100">
             <FiX size={18} />
           </button>
@@ -81,7 +95,7 @@ export default function AddClassModal({ isOpen, day, startTime, endTime, onSubmi
             size="md"
             className="mt-2"
           >
-            추가
+            {isEditMode ? '수정' : '추가'}
           </Button>
         </form>
       </div>

@@ -57,6 +57,19 @@ export const addTimetableClass = async (data: {
   return response.data;
 };
 
+// 수업/일정 개별 수정
+export const updateTimetableClass = async (classId: number, data: {
+  name?: string;
+  professor?: string;
+  location?: string;
+  day?: number;
+  start_time?: string;
+  end_time?: string;
+}) => {
+  const response = await api.patch<TimetableClass>(`/timetable/classes/${classId}`, data);
+  return response.data;
+};
+
 // 수업/일정 개별 삭제
 export const deleteTimetableClass = async (classId: number) => {
   const response = await api.delete<DeleteTimetableClassResponse>(`/timetable/classes/${classId}`);
