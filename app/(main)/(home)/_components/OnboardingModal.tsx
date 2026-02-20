@@ -33,7 +33,7 @@ import type { PendingOnboardingSubmission } from '@/_lib/onboarding/pendingSubmi
 
 interface OnboardingModalProps {
   isOpen: boolean;
-  onComplete: (categories: string[]) => void;
+  onComplete: (categories: string[]) => void | Promise<void>;
   onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
   isLoggedIn?: boolean;
   onRequireLogin?: (pendingData: PendingOnboardingSubmission) => void;
@@ -323,11 +323,10 @@ export default function OnboardingModal({
       setUser(result.user);
       localStorage.setItem('my_subscribed_categories', JSON.stringify(result.subscribed_boards));
       onShowToast?.('제로타임에 오신 것을 환영합니다! 🎉', 'success');
-      onComplete(result.subscribed_boards);
+      await onComplete(result.subscribed_boards);
     } catch (error) {
       console.error('온보딩 처리 실패:', error);
       alert('정보 저장에 실패했습니다. 다시 시도해주세요.');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -361,10 +360,10 @@ export default function OnboardingModal({
       setUser(result.user);
       localStorage.setItem('my_subscribed_categories', JSON.stringify(defaultBoards));
       onShowToast?.('제로타임에 오신 것을 환영합니다! 🎉', 'success');
-      onComplete(defaultBoards);
+      await onComplete(defaultBoards);
     } catch (error) {
       console.error('건너뛰기 실패:', error);
-    } finally {
+      onShowToast?.('저장에 실패했습니다. 다시 시도해주세요.', 'error');
       setIsSubmitting(false);
     }
   };
