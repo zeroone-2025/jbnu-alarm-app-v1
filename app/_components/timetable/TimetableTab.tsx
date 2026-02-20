@@ -230,7 +230,7 @@ export default function TimetableTab() {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col">
       {/* Error banner (시스템 경고만) */}
       {error && (
         <div className="mx-4 mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 shrink-0">
@@ -306,33 +306,33 @@ export default function TimetableTab() {
           onDelete={handleDeleteClass}
           semester={selectedSemester}
         />
-
-        {/* Preview overlay */}
-        {overlayState === 'PREVIEW' && previewUrl && (
-          <div className="absolute inset-0 z-30 flex flex-col bg-white/95 p-4">
-            <div className="w-full flex-1 min-h-0 overflow-hidden rounded-xl border border-gray-200">
-              <img src={previewUrl} alt="시간표 미리보기" className="w-full h-full object-contain" />
-            </div>
-            <div className="mt-3 flex w-full gap-3 shrink-0">
-              <Button variant="outline" size="sm" fullWidth onClick={handleCancelPreview}>
-                취소
-              </Button>
-              <Button variant="primary" size="sm" fullWidth onClick={handleAnalyze}>
-                분석하기
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Analyzing overlay */}
-        {overlayState === 'ANALYZING' && (
-          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/95">
-            <LoadingSpinner size="lg" />
-            <p className="mt-4 text-sm text-gray-500">시간표를 분석하고 있습니다...</p>
-            <p className="mt-1 text-xs text-gray-400">최대 20초 정도 소요될 수 있습니다</p>
-          </div>
-        )}
       </div>
+
+      {/* Preview overlay - positioned over entire TimetableTab */}
+      {overlayState === 'PREVIEW' && previewUrl && (
+        <div className="absolute inset-0 z-30 flex flex-col bg-white/95 p-4">
+          <div className="w-full flex-1 min-h-0 overflow-hidden rounded-xl border border-gray-200">
+            <img src={previewUrl} alt="시간표 미리보기" className="w-full h-full object-contain" />
+          </div>
+          <div className="mt-3 flex w-full gap-3 shrink-0">
+            <Button variant="outline" size="sm" fullWidth onClick={handleCancelPreview}>
+              취소
+            </Button>
+            <Button variant="primary" size="sm" fullWidth onClick={handleAnalyze}>
+              분석하기
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Analyzing overlay */}
+      {overlayState === 'ANALYZING' && (
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/95">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-sm text-gray-500">시간표를 분석하고 있습니다...</p>
+          <p className="mt-1 text-xs text-gray-400">최대 20초 정도 소요될 수 있습니다</p>
+        </div>
+      )}
 
       {/* 전체 삭제 확인 모달 */}
       <ConfirmModal

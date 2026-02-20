@@ -41,7 +41,7 @@ export default function BottomSheet({
   title,
   minHeight = 56,
   peekHeight = 200,
-  midHeightRatio = 0.8,
+  midHeightRatio = 0.75,
   maxHeightRatio = 0.99,
   disabled = false,
   onDisabledInteraction,
