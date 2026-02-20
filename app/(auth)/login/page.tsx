@@ -75,7 +75,7 @@ function LoginPageContent() {
             </div>
             <button
               type="button"
-              onClick={() => router.push(safeRedirectTo || '/')}
+              onClick={() => router.push('/')}
               className="w-full pt-2 text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
             >
               로그인 없이 둘러보기
