@@ -332,9 +332,9 @@ export default function TimetableTab() {
         />
       </div>
 
-      {/* Preview overlay - positioned over entire TimetableTab */}
+      {/* Preview overlay - fixed to viewport */}
       {overlayState === 'PREVIEW' && previewUrl && (
-        <div className="absolute inset-0 z-30 flex flex-col bg-white/95 p-4">
+        <div className="fixed inset-0 z-50 flex flex-col bg-white p-4 pb-8">
           <div className="w-full flex-1 min-h-0 overflow-hidden rounded-xl border border-gray-200">
             <img src={previewUrl} alt="시간표 미리보기" className="w-full h-full object-contain" />
           </div>
@@ -349,9 +349,9 @@ export default function TimetableTab() {
         </div>
       )}
 
-      {/* Analyzing overlay */}
+      {/* Analyzing overlay - fixed to viewport */}
       {overlayState === 'ANALYZING' && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-white/95">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white">
           <LoadingSpinner size="lg" />
           <p className="mt-4 text-sm text-gray-500">시간표를 분석하고 있습니다...</p>
           <p className="mt-1 text-xs text-gray-400">최대 20초 정도 소요될 수 있습니다</p>
