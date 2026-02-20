@@ -9,7 +9,9 @@ interface BottomSheetProps {
   minHeight?: number;
   /** 기본 resting 높이 (px). 기본값 200 */
   peekHeight?: number;
-  /** 펼쳤을 때 최대 높이 (vh 비율, 0~1). 기본값 0.65 */
+  /** 중간 높이 (vh 비율, 0~1). 기본값 0.5 */
+  midHeightRatio?: number;
+  /** 펼쳤을 때 최대 높이 (vh 비율, 0~1). 기본값 0.80 */
   maxHeightRatio?: number;
   /** 드래그/탭 차단 여부. true이면 조작 불가 */
   disabled?: boolean;
@@ -39,7 +41,8 @@ export default function BottomSheet({
   title,
   minHeight = 56,
   peekHeight = 200,
-  maxHeightRatio = 0.80,
+  midHeightRatio = 0.8,
+  maxHeightRatio = 0.99,
   disabled = false,
   onDisabledInteraction,
   children,
@@ -47,6 +50,11 @@ export default function BottomSheet({
 }: BottomSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const dragInfo = useRef({ active: false, startY: 0, startH: 0 });
+
+  const getMidHeight = useCallback(
+    () => window.innerHeight * midHeightRatio,
+    [midHeightRatio],
+  );
 
   const getMaxHeight = useCallback(
     () => window.innerHeight * maxHeightRatio,
@@ -83,9 +91,10 @@ export default function BottomSheet({
     dragInfo.current.active = false;
 
     const cur = el.offsetHeight;
+    const midH = getMidHeight();
     const maxH = getMaxHeight();
     const moved = Math.abs(cur - dragInfo.current.startH);
-    const snaps = [minHeight, peekHeight, maxH];
+    const snaps = [minHeight, peekHeight, midH, maxH];
 
     el.style.transition = 'height 300ms ease-out';
 
@@ -94,16 +103,18 @@ export default function BottomSheet({
       const startH = dragInfo.current.startH;
       if (startH <= minHeight + 10) {
         el.style.height = `${peekHeight}px`;
-      } else if (startH >= maxH - 10) {
-        el.style.height = `${peekHeight}px`;
-      } else {
+      } else if (startH <= peekHeight + 10) {
+        el.style.height = `${midH}px`;
+      } else if (startH <= midH + 10) {
         el.style.height = `${maxH}px`;
+      } else {
+        el.style.height = `${peekHeight}px`;
       }
     } else {
-      // Drag: snap to nearest of 3 points
+      // Drag: snap to nearest of 4 points
       el.style.height = `${findClosestSnap(cur, snaps)}px`;
     }
-  }, [minHeight, peekHeight, getMaxHeight]);
+  }, [minHeight, peekHeight, getMidHeight, getMaxHeight]);
 
   return (
     <div
