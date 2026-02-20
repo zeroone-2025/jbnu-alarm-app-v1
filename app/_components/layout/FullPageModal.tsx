@@ -69,7 +69,7 @@ export default function FullPageModal({
         </div>
       </div>
       {/* 컨텐츠 영역 */}
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">{children}</div>
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col">{children}</div>
     </div>
   );
 

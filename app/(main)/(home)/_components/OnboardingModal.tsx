@@ -1280,7 +1280,7 @@ export default function OnboardingModal({
       )}
 
       {step === 2 && userType === 'mentor' && (
-        <div className="flex flex-col min-h-full px-5 py-6 overflow-y-auto">
+        <div className="flex flex-col px-5 py-6">
           <div className="mb-5">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-xs font-semibold text-gray-500">{mentorStepTitle}</p>
