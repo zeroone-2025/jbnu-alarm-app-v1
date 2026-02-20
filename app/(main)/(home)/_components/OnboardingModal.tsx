@@ -1140,7 +1140,7 @@ export default function OnboardingModal({
 
   if (mentorCompleted) {
     return (
-      <FullPageModal isOpen={isOpen} onClose={() => {}} title="" showBackButton={false}>
+      <FullPageModal isOpen={isOpen} onClose={() => {}} title="" showBackButton={false} mode="overlay">
         <div className="flex min-h-full flex-col items-center justify-center px-5 py-12">
           <div className="mb-6 text-7xl">🎉</div>
           <h2 className="mb-3 text-2xl font-bold text-gray-900">환영합니다, 선배님!</h2>
@@ -1164,7 +1164,7 @@ export default function OnboardingModal({
   }
 
   return (
-    <FullPageModal isOpen={isOpen} onClose={() => {}} title="환영합니다" showBackButton={false}>
+    <FullPageModal isOpen={isOpen} onClose={() => {}} title="환영합니다" showBackButton={false} mode="overlay">
       {step === 1 && (
         <div className="flex flex-col min-h-full px-5 py-8">
           <div className="mb-8 text-center">
