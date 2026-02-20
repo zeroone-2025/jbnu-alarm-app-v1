@@ -1,6 +1,21 @@
 import { test, expect } from './fixtures/auth.fixture';
 
 test.describe('홈 페이지 - 게스트', () => {
+  test('show_onboarding=true 쿼리면 /onboarding으로 이동한다', async ({ asGuest }) => {
+    await asGuest.goto('/?login=success&show_onboarding=true');
+    await expect(asGuest).toHaveURL(/\/onboarding/, { timeout: 10_000 });
+  });
+
+  test('login=success만 있으면 홈에 머문다', async ({ asGuest }) => {
+    await asGuest.goto('/?login=success');
+    await expect(asGuest).toHaveURL('/', { timeout: 10_000 });
+  });
+
+  test('login=failed면 홈에 머문다', async ({ asGuest }) => {
+    await asGuest.goto('/?login=failed');
+    await expect(asGuest).toHaveURL('/', { timeout: 10_000 });
+  });
+
   test('페이지가 정상적으로 로드된다', async ({ asGuest }) => {
     await asGuest.goto('/');
     await expect(asGuest.locator('.animate-spin')).toHaveCount(0, { timeout: 10_000 });

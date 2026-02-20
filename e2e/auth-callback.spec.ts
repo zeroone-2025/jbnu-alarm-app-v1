@@ -1,5 +1,6 @@
-import { test, expect } from './fixtures/auth.fixture';
 import { mockAuthenticatedAPIs } from './fixtures/api-mocks';
+import { test, expect } from './fixtures/auth.fixture';
+import { MOCK_USER } from './fixtures/test-data';
 
 test.describe('Auth Callback 페이지', () => {
   test('로딩 스피너가 표시된다', async ({ asGuest }) => {
@@ -34,5 +35,35 @@ test.describe('Auth Callback 페이지', () => {
     await mockAuthenticatedAPIs(page, { isNewUser: true });
     await page.goto('/auth/callback?access_token=test-token');
     await expect(page).toHaveURL(/\/onboarding/, { timeout: 10_000 });
+  });
+
+  test('온보딩 완료 플래그가 true면 dept_code가 없어도 홈으로 이동한다', async ({ page }) => {
+    await mockAuthenticatedAPIs(page, {
+      user: {
+        ...MOCK_USER,
+        dept_code: null,
+        onboarding_completed: true,
+      },
+    });
+    await page.goto('/auth/callback?access_token=test-token');
+    await expect(page).toHaveURL(/\/(\?login=success)?$/, { timeout: 10_000 });
+  });
+
+  test('온보딩 완료 플래그가 false여도 dept_code가 있으면 홈으로 이동한다', async ({ page }) => {
+    await mockAuthenticatedAPIs(page, {
+      user: {
+        ...MOCK_USER,
+        dept_code: 'dept_csai',
+        onboarding_completed: false,
+      },
+    });
+    await page.goto('/auth/callback?access_token=test-token');
+    await expect(page).toHaveURL(/\/(\?login=success)?$/, { timeout: 10_000 });
+  });
+
+  test('safe redirect_to가 있으면 해당 경로로 이동한다', async ({ page }) => {
+    await mockAuthenticatedAPIs(page);
+    await page.goto('/auth/callback?access_token=test-token&redirect_to=%2Ffilter');
+    await expect(page).toHaveURL(/\/filter\/?$/, { timeout: 10_000 });
   });
 });

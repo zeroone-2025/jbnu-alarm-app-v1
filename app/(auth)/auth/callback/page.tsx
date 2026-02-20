@@ -107,10 +107,11 @@ function AuthCallbackContent() {
             return;
           }
 
-          // 4. dept_code 확인
-          if (!userProfile.dept_code) {
-            // 신규 사용자: 항상 온보딩 페이지로 이동 (safeRedirect 무시)
-            setStatus('환영합니다! 학과 정보를 입력해주세요.');
+          // 4. 온보딩 완료 여부 확인 (레거시 데이터 보호: dept_code가 있으면 완료로 간주)
+          const isOnboardingCompleted = userProfile.onboarding_completed || !!userProfile.dept_code;
+          if (!isOnboardingCompleted) {
+            // 미완료 사용자: 항상 온보딩 페이지로 이동 (safeRedirect 무시)
+            setStatus('환영합니다! 온보딩을 완료해주세요.');
             setTimeout(() => {
               router.replace('/onboarding?login=success');
             }, 500);

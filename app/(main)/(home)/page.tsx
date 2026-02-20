@@ -16,7 +16,6 @@ import { useFilterState } from './_hooks/useFilterState';
 import { useKeywordNotices } from './_hooks/useKeywordNotices';
 import { useNoticeActions } from './_hooks/useNoticeActions';
 import { useNoticeFiltering } from './_hooks/useNoticeFiltering';
-import OnboardingModal from './_components/OnboardingModal';
 import NoticeList from './_components/NoticeList';
 import CategoryFilter from '@/_components/ui/CategoryFilter';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
@@ -33,7 +32,6 @@ function HomeContent() {
   const router = useRouter();
   const { showToast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   // Infinite scroll root element state
   const [scrollRoot, setScrollRoot] = useState<HTMLElement | null>(null);
   // 초기 마운트 시 visibilitychange 무시를 위한 ref
@@ -45,10 +43,9 @@ function HomeContent() {
   }, []);
 
   // Custom Hooks
-  const { isLoggedIn, isAuthLoaded, refetch: refetchUser, user } = useUser();
+  const { isLoggedIn, isAuthLoaded, refetch: refetchUser } = useUser();
   const {
     selectedCategories,
-    updateSelectedCategories,
     isLoading: isCategoriesLoading
   } = useSelectedCategories();
 
@@ -205,12 +202,6 @@ function HomeContent() {
     };
   }, [filter, isLoggedIn, refetch, refetchUser, loadKeywordCount, loadKeywordNoticesSilent]);
 
-  // 온보딩 완료 핸들러
-  const handleOnboardingComplete = (categories: string[]) => {
-    updateSelectedCategories(categories);
-    setShowOnboarding(false);
-  };
-
   // 로그인 결과 처리 (쿼리 파라미터 확인)
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -221,10 +212,11 @@ function HomeContent() {
     const loginCancelled = params.get('login_cancelled');
 
     if (loginStatus === 'success') {
-      if (showOnboardingParam === 'true') {
-        setShowOnboarding(true);
-      }
       showToast('로그인에 성공했습니다!', 'success');
+      if (showOnboardingParam === 'true') {
+        router.replace('/onboarding?login=success');
+        return;
+      }
       router.replace('/');
     } else if (loginStatus === 'failed') {
       showToast('로그인 처리에 실패했습니다.', 'error');
@@ -241,20 +233,10 @@ function HomeContent() {
     }
   }, [router, showToast]);
 
-  useEffect(() => {
-    if (!isAuthLoaded || !isLoggedIn || !user) return;
-    const needsOnboarding = !user.user_type;
-    if (needsOnboarding) {
-      setShowOnboarding(true);
-    }
-  }, [isAuthLoaded, isLoggedIn, user]);
-
   const selectedBoardsForList = filter === 'KEYWORD' ? ['keyword'] : selectedBoards;
 
   return (
     <>
-      <OnboardingModal isOpen={showOnboarding} onComplete={handleOnboardingComplete} onShowToast={showToast} />
-
       {/* User Stats Banner */}
       <UserStatsBanner isLoggedIn={isLoggedIn} onSignupClick={() => router.push('/login')} />
 

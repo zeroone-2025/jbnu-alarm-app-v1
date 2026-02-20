@@ -11,6 +11,7 @@ export interface UserProfile {
     profile_image: string | null;
     role: string; // "user" | "admin" | "super_admin"
     user_type: 'student' | 'mentor';
+    onboarding_completed: boolean;
     created_at: string;
 }
 

@@ -14,6 +14,7 @@ export const MOCK_USER = {
   profile_image: null,
   role: 'user',
   user_type: 'student' as const,
+  onboarding_completed: true,
   created_at: '2024-01-01T00:00:00',
 };
 
@@ -29,6 +30,7 @@ export const MOCK_NEW_USER = {
   profile_image: null,
   role: 'user',
   user_type: 'student' as const,
+  onboarding_completed: false,
   created_at: '2024-06-01T00:00:00',
 };
 

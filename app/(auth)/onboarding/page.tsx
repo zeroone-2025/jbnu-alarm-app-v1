@@ -43,10 +43,11 @@ function OnboardingPageContent() {
   useEffect(() => {
     if (!isAuthLoaded) return;
     if (onboardingCompletedRef.current) return;
-    if (isLoggedIn && user?.dept_code) {
+    const isOnboardingCompleted = !!user?.onboarding_completed || !!user?.dept_code;
+    if (isLoggedIn && isOnboardingCompleted) {
       router.replace('/');
     }
-  }, [isAuthLoaded, isLoggedIn, user?.dept_code, router]);
+  }, [isAuthLoaded, isLoggedIn, user?.onboarding_completed, user?.dept_code, router]);
 
   useEffect(() => {
     if (!isAuthLoaded || !isLoggedIn || didTryResumeRef.current) return;
