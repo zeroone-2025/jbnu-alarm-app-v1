@@ -1280,7 +1280,7 @@ export default function OnboardingModal({
       )}
 
       {step === 2 && userType === 'mentor' && (
-        <div className="flex flex-col h-full min-h-full px-5 py-6">
+        <div className="flex flex-col min-h-full px-5 py-6 overflow-y-auto">
           <div className="mb-5">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-xs font-semibold text-gray-500">{mentorStepTitle}</p>
@@ -1301,7 +1301,7 @@ export default function OnboardingModal({
 
           <div
             key={`mentor-step-${mentorStepIndex}-${currentMentorStep?.key === 'mentor-qna' ? mentorQnaSubStep : 0}`}
-            className="mentor-step-animated flex-1 overflow-y-auto"
+            className="mentor-step-animated flex-1"
             style={{
               animation:
                 slideDirection === 1
@@ -1327,7 +1327,7 @@ export default function OnboardingModal({
             {renderMentorStepContent()}
           </div>
 
-          <div className="mt-5 space-y-2 pb-safe">
+          <div className="mt-5 space-y-2 pb-safe sticky bottom-0 bg-white pt-3">
             <div className="flex items-center gap-2">
               <button
                 type="button"
