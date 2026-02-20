@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { FiXCircle } from 'react-icons/fi';
 import Button from '@/_components/ui/Button';
 import Toast from '@/_components/ui/Toast';
 import FullPageModal from '@/_components/layout/FullPageModal';
@@ -87,14 +88,25 @@ export default function ChinbaCreateClient() {
             <label className="block text-sm font-bold text-gray-700 mb-2">
               모임 이름
             </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="예: 조별과제 회의, 동아리 정기모임"
-              maxLength={100}
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-gray-900 transition-colors"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="예: 조별과제 회의, 동아리 정기모임"
+                maxLength={100}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 pr-10 text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-gray-900 transition-colors"
+              />
+              {title.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setTitle('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-500 transition-colors"
+                >
+                  <FiXCircle size={18} />
+                </button>
+              )}
+            </div>
             <p className="mt-1 text-[11px] text-gray-400 text-right">{title.length}/100</p>
           </div>
 

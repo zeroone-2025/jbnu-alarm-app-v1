@@ -95,10 +95,10 @@ function OnboardingPageContent() {
     })();
   }, [isAuthLoaded, isLoggedIn, queryClient, router, searchParams, setUser, showToast, user?.email, user?.nickname]);
 
-  const handleOnboardingComplete = (categories: string[]) => {
+  const handleOnboardingComplete = async (categories: string[]) => {
     localStorage.setItem('my_subscribed_categories', JSON.stringify(categories));
     clearPendingOnboarding();
-    router.replace('/');
+    await router.replace('/');
   };
 
   const handleRequireLogin = () => {

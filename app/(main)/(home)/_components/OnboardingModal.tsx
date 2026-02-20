@@ -33,7 +33,7 @@ import type { PendingOnboardingSubmission } from '@/_lib/onboarding/pendingSubmi
 
 interface OnboardingModalProps {
   isOpen: boolean;
-  onComplete: (categories: string[]) => void;
+  onComplete: (categories: string[]) => void | Promise<void>;
   onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
   isLoggedIn?: boolean;
   onRequireLogin?: (pendingData: PendingOnboardingSubmission) => void;
@@ -323,11 +323,10 @@ export default function OnboardingModal({
       setUser(result.user);
       localStorage.setItem('my_subscribed_categories', JSON.stringify(result.subscribed_boards));
       onShowToast?.('제로타임에 오신 것을 환영합니다! 🎉', 'success');
-      onComplete(result.subscribed_boards);
+      await onComplete(result.subscribed_boards);
     } catch (error) {
       console.error('온보딩 처리 실패:', error);
       alert('정보 저장에 실패했습니다. 다시 시도해주세요.');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -361,10 +360,10 @@ export default function OnboardingModal({
       setUser(result.user);
       localStorage.setItem('my_subscribed_categories', JSON.stringify(defaultBoards));
       onShowToast?.('제로타임에 오신 것을 환영합니다! 🎉', 'success');
-      onComplete(defaultBoards);
+      await onComplete(defaultBoards);
     } catch (error) {
       console.error('건너뛰기 실패:', error);
-    } finally {
+      onShowToast?.('저장에 실패했습니다. 다시 시도해주세요.', 'error');
       setIsSubmitting(false);
     }
   };
@@ -1140,7 +1139,7 @@ export default function OnboardingModal({
 
   if (mentorCompleted) {
     return (
-      <FullPageModal isOpen={isOpen} onClose={() => {}} title="" showBackButton={false}>
+      <FullPageModal isOpen={isOpen} onClose={() => {}} title="" showBackButton={false} mode="overlay">
         <div className="flex min-h-full flex-col items-center justify-center px-5 py-12">
           <div className="mb-6 text-7xl">🎉</div>
           <h2 className="mb-3 text-2xl font-bold text-gray-900">환영합니다, 선배님!</h2>
@@ -1164,7 +1163,7 @@ export default function OnboardingModal({
   }
 
   return (
-    <FullPageModal isOpen={isOpen} onClose={() => {}} title="환영합니다" showBackButton={false}>
+    <FullPageModal isOpen={isOpen} onClose={() => {}} title="환영합니다" showBackButton={false} mode="overlay">
       {step === 1 && (
         <div className="flex flex-col min-h-full px-5 py-8">
           <div className="mb-8 text-center">
@@ -1280,7 +1279,7 @@ export default function OnboardingModal({
       )}
 
       {step === 2 && userType === 'mentor' && (
-        <div className="flex flex-col h-full min-h-full px-5 py-6">
+        <div className="flex flex-col px-5 py-6">
           <div className="mb-5">
             <div className="mb-2 flex items-center justify-between">
               <p className="text-xs font-semibold text-gray-500">{mentorStepTitle}</p>
@@ -1301,7 +1300,7 @@ export default function OnboardingModal({
 
           <div
             key={`mentor-step-${mentorStepIndex}-${currentMentorStep?.key === 'mentor-qna' ? mentorQnaSubStep : 0}`}
-            className="mentor-step-animated flex-1 overflow-y-auto"
+            className="mentor-step-animated flex-1"
             style={{
               animation:
                 slideDirection === 1
@@ -1327,7 +1326,7 @@ export default function OnboardingModal({
             {renderMentorStepContent()}
           </div>
 
-          <div className="mt-5 space-y-2 pb-safe">
+          <div className="mt-5 space-y-2 pb-safe sticky bottom-0 bg-white pt-3">
             <div className="flex items-center gap-2">
               <button
                 type="button"
