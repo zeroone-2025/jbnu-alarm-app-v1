@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import Script from 'next/script';
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
+
 import './globals.css';
-import Providers from './providers';
-import ServiceWorkerRegistration from './_components/system/ServiceWorkerRegistration';
 import DevHostMetaTag from './_components/system/DevHostMetaTag';
-import { InAppBrowserProvider } from './_context/InAppBrowserContext';
+import ServiceWorkerRegistration from './_components/system/ServiceWorkerRegistration';
+import Providers from './providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -56,12 +56,10 @@ gtag('config', 'G-SMF31V39T9');`}
         </Script>
       </head>
       <body className={`${inter.className} flex h-screen flex-col bg-gray-50 text-gray-900`}>
-        <InAppBrowserProvider>
-          <ServiceWorkerRegistration />
-          <Providers>
-            <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
-          </Providers>
-        </InAppBrowserProvider>
+        <ServiceWorkerRegistration />
+        <Providers>
+          <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
+        </Providers>
       </body>
     </html>
   );

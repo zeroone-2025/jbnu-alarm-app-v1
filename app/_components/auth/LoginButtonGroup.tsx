@@ -1,7 +1,11 @@
 'use client';
 
-import SocialLoginButton from './SocialLoginButton';
+import { useEffect, useState } from 'react';
+
 import { OAuthProvider } from '@/_lib/api';
+import { isInAppBrowser } from '@/_lib/utils/external-browser';
+
+import SocialLoginButton from './SocialLoginButton';
 
 interface LoginButtonGroupProps {
   onLoginStart?: () => void;
@@ -13,9 +17,22 @@ interface LoginButtonGroupProps {
 const PROVIDER_ORDER: OAuthProvider[] = ['google', 'apple', 'naver', 'kakao'];
 
 export default function LoginButtonGroup({ onLoginStart, layout = 'grid', redirectTo }: LoginButtonGroupProps) {
+  const [visibleProviders, setVisibleProviders] = useState<OAuthProvider[] | null>(null);
+
+  useEffect(() => {
+    const providers = isInAppBrowser()
+      ? PROVIDER_ORDER.filter((provider) => provider !== 'google')
+      : PROVIDER_ORDER;
+    setVisibleProviders(providers);
+  }, []);
+
+  if (!visibleProviders) {
+    return null;
+  }
+
   return (
     <div className={layout === 'stack' ? 'flex flex-col gap-2' : 'grid grid-cols-2 gap-2'}>
-      {PROVIDER_ORDER.map((provider) => (
+      {visibleProviders.map((provider) => (
         <SocialLoginButton
           key={provider}
           provider={provider}
