@@ -4,7 +4,6 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
 import ServiceWorkerRegistration from './_components/system/ServiceWorkerRegistration';
-import InAppBrowserGuideModal from './_components/system/InAppBrowserGuideModal';
 import DevHostMetaTag from './_components/system/DevHostMetaTag';
 import { InAppBrowserProvider } from './_context/InAppBrowserContext';
 
@@ -58,7 +57,6 @@ gtag('config', 'G-SMF31V39T9');`}
       </head>
       <body className={`${inter.className} flex h-screen flex-col bg-gray-50 text-gray-900`}>
         <InAppBrowserProvider>
-          <InAppBrowserGuideModal />
           <ServiceWorkerRegistration />
           <Providers>
             <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
