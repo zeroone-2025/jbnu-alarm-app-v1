@@ -1,9 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
 import { FiEdit3, FiX } from 'react-icons/fi';
+
 import { useSaveCareerSkills } from '@/_lib/hooks/useCareer';
 import type { CareerProfile } from '@/_types/career';
+
+const SKILL_TAG_CLASS = 'border-sky-200 bg-sky-50 text-sky-800 hover:border-sky-300';
 
 interface SkillTagsSectionProps {
   profile: CareerProfile | null;
@@ -85,7 +89,7 @@ export default function SkillTagsSection({
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="예: 인사, 세무, 프로그래밍"
+                placeholder="예: 백엔드 개발, UX/UI 디자인, 회계·재무"
                 className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-900"
               />
               <button
@@ -99,14 +103,20 @@ export default function SkillTagsSection({
 
           <div className="flex flex-wrap gap-2">
             {skillTags.map((tag, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleRemoveTag(tag)}
-                className="flex items-center gap-1.5 rounded-lg bg-gray-800 px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-gray-700"
+              <div
+                key={`${tag}-${idx}`}
+                className={`inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-3 text-xs font-semibold leading-none transition-all hover:brightness-95 ${SKILL_TAG_CLASS}`}
               >
-                {tag}
-                <FiX size={12} strokeWidth={3} />
-              </button>
+                <span className="inline-flex h-full max-w-[11rem] items-center truncate leading-none">{tag}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(tag)}
+                  className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/70 text-current opacity-70 transition-opacity hover:opacity-100"
+                  aria-label={`${tag} 키워드 삭제`}
+                >
+                  <FiX size={11} className="translate-y-px" />
+                </button>
+              </div>
             ))}
           </div>
 

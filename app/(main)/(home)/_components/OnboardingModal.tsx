@@ -1,9 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
+
 import { useQueryClient } from '@tanstack/react-query';
-import { MAJOR_PRESETS } from '@/_lib/constants/presets';
-import { GUEST_DEFAULT_BOARDS } from '@/_lib/constants/boards';
+import { FiCalendar, FiCheck, FiX } from 'react-icons/fi';
+
+import UserInfoForm, { UserInfoFormData } from '@/_components/auth/UserInfoForm';
+import FullPageModal from '@/_components/layout/FullPageModal';
+import Logo from '@/_components/ui/Logo';
 import {
   completeOnboarding,
   saveCareerContact,
@@ -12,13 +16,11 @@ import {
   saveCareerSkills,
   saveCareerWorks,
 } from '@/_lib/api';
-import { savePendingOnboarding, loadPendingOnboarding } from '@/_lib/onboarding/pendingSubmission';
-import UserInfoForm, { UserInfoFormData } from '@/_components/auth/UserInfoForm';
-import FullPageModal from '@/_components/layout/FullPageModal';
-import Logo from '@/_components/ui/Logo';
+import { GUEST_DEFAULT_BOARDS } from '@/_lib/constants/boards';
+import { MAJOR_PRESETS } from '@/_lib/constants/presets';
+import { clearPendingOnboarding, savePendingOnboarding, loadPendingOnboarding } from '@/_lib/onboarding/pendingSubmission';
+import type { PendingOnboardingSubmission } from '@/_lib/onboarding/pendingSubmission';
 import { useUserStore } from '@/_lib/store/useUserStore';
-import { FiCalendar, FiCheck } from 'react-icons/fi';
-import type { OnboardingRequest } from '@/_types/user';
 import type {
   CareerContactUpdate,
   CareerEducationsUpdate,
@@ -29,37 +31,40 @@ import type {
   MentorQnA,
   WorkExperience,
 } from '@/_types/career';
-import type { PendingOnboardingSubmission } from '@/_lib/onboarding/pendingSubmission';
+import type { OnboardingRequest } from '@/_types/user';
+
+import ReviewSummary from './onboarding/ReviewSummary';
 
 interface OnboardingModalProps {
   isOpen: boolean;
-  onComplete: (categories: string[]) => void;
+  onComplete: (categories: string[], options?: { redirectTo?: string }) => void;
   onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
   isLoggedIn?: boolean;
   onRequireLogin?: (pendingData: PendingOnboardingSubmission) => void;
-  onMentorCompleted?: () => void;
+  onSeniorCompleted?: () => void;
 }
 
-type UserType = 'student' | 'mentor';
+type UserType = 'student' | 'senior';
 type VisibilityType = 'public' | 'career_only';
 type EducationDegreeType = Education['degree'];
 type EducationStatusType = Education['status'];
-type MentorStepKey =
+type SeniorStepKey =
   | 'basic'
   | 'contact'
   | 'skills'
   | 'works'
-  | 'mentor-qna'
+  | 'senior-qna'
   | 'review';
+type ReviewEditableStepKey = Exclude<SeniorStepKey, 'review'>;
 
-interface MentorStep {
-  key: MentorStepKey;
+interface SeniorStep {
+  key: SeniorStepKey;
   title: string;
   description: string;
   optional?: boolean;
 }
 
-const MENTOR_STEPS: MentorStep[] = [
+const SENIOR_STEPS: SeniorStep[] = [
   {
     key: 'basic',
     title: '학력 정보',
@@ -81,8 +86,8 @@ const MENTOR_STEPS: MentorStep[] = [
     description: '회사와 직무 경험을 입력해 주세요',
   },
   {
-    key: 'mentor-qna',
-    title: '멘토 Q&A',
+    key: 'senior-qna',
+    title: '선배님 Q&A',
     description: '후배들을 위한 조언을 남겨 주세요',
   },
   {
@@ -91,7 +96,7 @@ const MENTOR_STEPS: MentorStep[] = [
     description: '입력한 내용을 확인하고 완료해 주세요',
   },
 ];
-const MENTOR_QNA_STEP_INDEX = MENTOR_STEPS.findIndex((step) => step.key === 'mentor-qna');
+const SENIOR_QNA_STEP_INDEX = SENIOR_STEPS.findIndex((step) => step.key === 'senior-qna');
 
 const EMPLOYMENT_OPTIONS: WorkExperience['employment_type'][] = [
   'full_time',
@@ -107,8 +112,17 @@ const EMPLOYMENT_LABELS: Record<WorkExperience['employment_type'], string> = {
   freelance: '프리랜서',
   part_time: '파트타임',
 };
-const EDUCATION_DEGREE_OPTIONS: EducationDegreeType[] = ['associate', 'bachelor', 'master', 'doctor'];
+const EDUCATION_DEGREE_OPTIONS: EducationDegreeType[] = [
+  'middle_school',
+  'high_school',
+  'associate',
+  'bachelor',
+  'master',
+  'doctor',
+];
 const EDUCATION_DEGREE_LABELS: Record<EducationDegreeType, string> = {
+  middle_school: '중졸',
+  high_school: '고졸',
   associate: '전문학사',
   bachelor: '학사',
   master: '석사',
@@ -125,6 +139,8 @@ const GRADUATION_REQUIRED_STATUSES: EducationStatusType[] = ['graduated', 'compl
 
 const YEAR_REGEX = /^\d{4}$/;
 const GRADUATION_YEAR_OPTIONS = Array.from({ length: 47 }, (_, i) => (2026 - i).toString());
+const ADMISSION_YEAR_OPTIONS = Array.from({ length: 17 }, (_, i) => (26 - i).toString());
+const SKILL_TAG_CLASS = 'border-sky-200 bg-sky-50 text-sky-800 hover:border-sky-300';
 
 const createEmptyWork = (isCurrent = false): Omit<WorkExperience, 'id'> => ({
   start_date: '',
@@ -136,7 +152,7 @@ const createEmptyWork = (isCurrent = false): Omit<WorkExperience, 'id'> => ({
   region: '',
 });
 
-const createEmptyMentorQna = (): MentorQnA => ({
+const createEmptySeniorQna = (): MentorQnA => ({
   targeted_capital: null,
   reason_for_local: null,
   helpful_organizations: null,
@@ -144,6 +160,57 @@ const createEmptyMentorQna = (): MentorQnA => ({
   local_disadvantages: null,
   advice_for_juniors: null,
 });
+
+const toLocalUserType = (userType: OnboardingRequest['user_type']): UserType =>
+  userType === 'mentor' ? 'senior' : 'student';
+
+const toApiUserType = (userType: UserType): OnboardingRequest['user_type'] =>
+  userType === 'senior' ? 'mentor' : 'student';
+
+const ONBOARDING_DRAFT_STORAGE_KEY = 'onboarding_draft_v1';
+
+interface OnboardingDraftState {
+  version: 1;
+  step: 1 | 2;
+  userType: UserType | null;
+  formData: UserInfoFormData;
+  seniorStepIndex: number;
+  seniorQnaSubStep: 1 | 2;
+  contactData: {
+    phone: string;
+    visibility: VisibilityType;
+  };
+  skillTags: string[];
+  works: Omit<WorkExperience, 'id'>[];
+  educationDegree: EducationDegreeType | '';
+  educationStatus: EducationStatusType | '';
+  graduationYear: string;
+  seniorQna: MentorQnA;
+  hasPrivacyConsent: boolean;
+}
+
+const loadOnboardingDraft = (): OnboardingDraftState | null => {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem(ONBOARDING_DRAFT_STORAGE_KEY);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as OnboardingDraftState;
+    if (parsed?.version !== 1) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const saveOnboardingDraft = (draft: OnboardingDraftState): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(ONBOARDING_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+};
+
+const clearOnboardingDraft = (): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(ONBOARDING_DRAFT_STORAGE_KEY);
+};
 
 const toNullable = (value: string): string | null => {
   const trimmed = value.trim();
@@ -167,7 +234,7 @@ export default function OnboardingModal({
   onShowToast,
   isLoggedIn = true,
   onRequireLogin,
-  onMentorCompleted,
+  onSeniorCompleted,
 }: OnboardingModalProps) {
   const queryClient = useQueryClient();
   const setUser = useUserStore((state) => state.setUser);
@@ -177,13 +244,13 @@ export default function OnboardingModal({
   const [userType, setUserType] = useState<UserType | null>(null);
   const [formData, setFormData] = useState<UserInfoFormData>({
     nickname: '',
-    school: '전북대',
+    school: '',
     dept_code: '',
     dept_name: '',
     admission_year: '',
   });
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [mentorStepIndex, setMentorStepIndex] = useState<number>(0);
+  const [seniorStepIndex, setSeniorStepIndex] = useState<number>(0);
   const [slideDirection, setSlideDirection] = useState<1 | -1>(1);
   const [contactData, setContactData] = useState<{
     phone: string;
@@ -198,59 +265,181 @@ export default function OnboardingModal({
   const [educationDegree, setEducationDegree] = useState<EducationDegreeType | ''>('');
   const [educationStatus, setEducationStatus] = useState<EducationStatusType | ''>('');
   const [graduationYear, setGraduationYear] = useState<string>('');
-  const [mentorQna, setMentorQna] = useState<MentorQnA>(createEmptyMentorQna());
-  const [mentorQnaSubStep, setMentorQnaSubStep] = useState<1 | 2>(1);
+  const [seniorQna, setSeniorQna] = useState<MentorQnA>(createEmptySeniorQna());
+  const [seniorQnaSubStep, setSeniorQnaSubStep] = useState<1 | 2>(1);
   const [invalidFields, setInvalidFields] = useState<Set<string>>(new Set());
-  const [mentorCompleted, setMentorCompleted] = useState<string[] | null>(null);
+  const [seniorCompleted, setSeniorCompleted] = useState<string[] | null>(null);
+  const [hasPrivacyConsent, setHasPrivacyConsent] = useState<boolean>(false);
+  const [reviewEditStepKey, setReviewEditStepKey] = useState<ReviewEditableStepKey | null>(null);
+  const [isDraftLoaded, setIsDraftLoaded] = useState<boolean>(false);
   const didRestoreRef = useRef(false);
 
   const isGraduationYearRequired = educationStatus !== '' && GRADUATION_REQUIRED_STATUSES.includes(educationStatus);
   const availableGraduationYearOptions = GRADUATION_YEAR_OPTIONS;
+  const admissionYearFull = /^\d{2}$/.test(formData.admission_year.trim())
+    ? Number(`20${formData.admission_year.trim()}`)
+    : null;
+  const availableGraduationYearOptionsByAdmission = admissionYearFull
+    ? availableGraduationYearOptions.filter((year) => Number(year) >= admissionYearFull)
+    : availableGraduationYearOptions;
 
   // localStorage에 저장된 pending 데이터가 있으면 폼 복원
   useEffect(() => {
     if (didRestoreRef.current) return;
     didRestoreRef.current = true;
 
-    const pending = loadPendingOnboarding();
-    if (!pending) return;
+    const draft = loadOnboardingDraft();
+    if (draft) {
+      setStep(draft.step === 2 ? 2 : 1);
+      setUserType(draft.userType === 'student' || draft.userType === 'senior' ? draft.userType : null);
+      setFormData((prev) => ({ ...prev, ...draft.formData }));
+      setSeniorStepIndex(Math.min(Math.max(draft.seniorStepIndex || 0, 0), SENIOR_STEPS.length - 1));
+      setSeniorQnaSubStep(draft.seniorQnaSubStep === 2 ? 2 : 1);
+      setContactData({
+        phone: draft.contactData?.phone || '',
+        visibility: draft.contactData?.visibility === 'career_only' ? 'career_only' : 'public',
+      });
+      setSkillTags(Array.isArray(draft.skillTags) ? draft.skillTags : []);
+      setWorks(Array.isArray(draft.works) && draft.works.length > 0 ? draft.works : [createEmptyWork(false)]);
+      setEducationDegree(draft.educationDegree || '');
+      setEducationStatus(draft.educationStatus || '');
+      setGraduationYear(draft.graduationYear || '');
+      setSeniorQna(draft.seniorQna || createEmptySeniorQna());
+      setHasPrivacyConsent(Boolean(draft.hasPrivacyConsent));
+      setIsDraftLoaded(true);
+      return;
+    }
 
-    const { onboarding, mentorCareer } = pending;
-    setUserType(onboarding.user_type as UserType);
+    const pending = loadPendingOnboarding();
+    if (!pending) {
+      setIsDraftLoaded(true);
+      return;
+    }
+
+    const { onboarding, seniorCareer } = pending;
+    const restoredUserType = toLocalUserType(onboarding.user_type);
+    setUserType(restoredUserType);
     setFormData((prev) => ({
       ...prev,
-      school: onboarding.school || '전북대',
+      school: onboarding.school || '',
       dept_code: onboarding.dept_code || '',
+      dept_name: restoredUserType === 'senior' ? onboarding.dept_code || '' : prev.dept_name,
       admission_year: onboarding.admission_year != null ? String(onboarding.admission_year) : '',
     }));
     setStep(2);
 
-    if (onboarding.user_type === 'mentor' && mentorCareer) {
+    if (restoredUserType === 'senior' && seniorCareer) {
       setContactData({
-        phone: mentorCareer.contact.phone || '',
-        visibility: (mentorCareer.contact.visibility as VisibilityType) || 'public',
+        phone: seniorCareer.contact.phone || '',
+        visibility: (seniorCareer.contact.visibility as VisibilityType) || 'public',
       });
-      setSkillTags(mentorCareer.skills.skill_tags || []);
-      if (mentorCareer.works.works.length > 0) {
-        setWorks(mentorCareer.works.works);
+      setSkillTags(seniorCareer.skills.skill_tags || []);
+      if (seniorCareer.works.works.length > 0) {
+        setWorks(seniorCareer.works.works);
       }
-      if (mentorCareer.educations.educations.length > 0) {
-        const edu = mentorCareer.educations.educations[0];
+      if (seniorCareer.educations.educations.length > 0) {
+        const edu = seniorCareer.educations.educations[0];
+        setEducationDegree((edu.degree as EducationDegreeType) || '');
+        setEducationStatus((edu.status as EducationStatusType) || '');
         if (edu.end_date) setGraduationYear(edu.end_date);
       }
-      setMentorQna(mentorCareer.mentor_qna.mentor_qna);
+      setSeniorQna(seniorCareer.mentor_qna.mentor_qna);
+      setHasPrivacyConsent(Boolean(pending.seniorPrivacyConsent));
       // 최종 확인 단계로 이동
-      setMentorStepIndex(MENTOR_STEPS.length - 1);
+      setSeniorStepIndex(SENIOR_STEPS.length - 1);
     }
+    setIsDraftLoaded(true);
   }, []);
+
+  useEffect(() => {
+    if (!isDraftLoaded) return;
+
+    saveOnboardingDraft({
+      version: 1,
+      step,
+      userType,
+      formData,
+      seniorStepIndex,
+      seniorQnaSubStep,
+      contactData,
+      skillTags,
+      works,
+      educationDegree,
+      educationStatus,
+      graduationYear,
+      seniorQna,
+      hasPrivacyConsent,
+    });
+  }, [
+    isDraftLoaded,
+    step,
+    userType,
+    formData,
+    seniorStepIndex,
+    seniorQnaSubStep,
+    contactData,
+    skillTags,
+    works,
+    educationDegree,
+    educationStatus,
+    graduationYear,
+    seniorQna,
+    hasPrivacyConsent,
+  ]);
+
+  // 학번(입학년도)보다 이른 졸업년도는 자동으로 정리
+  useEffect(() => {
+    if (!admissionYearFull || !graduationYear) return;
+    if (Number(graduationYear) >= admissionYearFull) return;
+
+    setGraduationYear('');
+    setInvalidFields((prev) => {
+      if (!prev.has('basic_graduation_year')) return prev;
+      const next = new Set(prev);
+      next.delete('basic_graduation_year');
+      return next;
+    });
+  }, [admissionYearFull, graduationYear]);
 
   const handleUserTypeSelect = (type: UserType) => {
     setUserType(type);
-    if (type === 'mentor') {
-      setMentorStepIndex(0);
-      setMentorQnaSubStep(1);
+    setReviewEditStepKey(null);
+    if (type === 'senior') {
+      setSeniorStepIndex(0);
+      setSeniorQnaSubStep(1);
       setSlideDirection(1);
     }
+  };
+
+  const handleResetOnboardingSelection = () => {
+    clearOnboardingDraft();
+    clearPendingOnboarding();
+    setStep(1);
+    setUserType(null);
+    setFormData({
+      nickname: '',
+      school: '',
+      dept_code: '',
+      dept_name: '',
+      admission_year: '',
+    });
+    setSeniorStepIndex(0);
+    setSlideDirection(1);
+    setContactData({
+      phone: '',
+      visibility: 'public',
+    });
+    setSkillInput('');
+    setSkillTags([]);
+    setWorks([createEmptyWork(false)]);
+    setEducationDegree('');
+    setEducationStatus('');
+    setGraduationYear('');
+    setSeniorQna(createEmptySeniorQna());
+    setSeniorQnaSubStep(1);
+    setInvalidFields(new Set());
+    setHasPrivacyConsent(false);
+    setReviewEditStepKey(null);
   };
 
   const handleNext = () => {
@@ -302,8 +491,8 @@ export default function OnboardingModal({
 
     const boardCodes = buildStudentBoardCodes();
     const onboardingPayload: OnboardingRequest = {
-      user_type: userType,
-      school: formData.school || '전북대',
+      user_type: toApiUserType(userType),
+      school: formData.school.trim(),
       dept_code: formData.dept_code || undefined,
       admission_year: formData.admission_year ? parseInt(formData.admission_year, 10) : undefined,
       board_codes: boardCodes,
@@ -322,6 +511,7 @@ export default function OnboardingModal({
       queryClient.setQueryData(['user', 'profile'], result.user);
       setUser(result.user);
       localStorage.setItem('my_subscribed_categories', JSON.stringify(result.subscribed_boards));
+      clearOnboardingDraft();
       onShowToast?.('제로타임에 오신 것을 환영합니다! 🎉', 'success');
       onComplete(result.subscribed_boards);
     } catch (error) {
@@ -342,8 +532,8 @@ export default function OnboardingModal({
     if (!confirm(confirmMessage)) return;
 
     const onboardingPayload: OnboardingRequest = {
-      user_type: userType,
-      school: '전북대',
+      user_type: toApiUserType(userType),
+      school: '',
       board_codes: [...GUEST_DEFAULT_BOARDS],
     };
 
@@ -360,6 +550,7 @@ export default function OnboardingModal({
       queryClient.setQueryData(['user', 'profile'], result.user);
       setUser(result.user);
       localStorage.setItem('my_subscribed_categories', JSON.stringify(defaultBoards));
+      clearOnboardingDraft();
       onShowToast?.('제로타임에 오신 것을 환영합니다! 🎉', 'success');
       onComplete(defaultBoards);
     } catch (error) {
@@ -379,23 +570,31 @@ export default function OnboardingModal({
   };
   const hasInvalidField = (fieldKey: string) => invalidFields.has(fieldKey);
 
-  const currentMentorStep = MENTOR_STEPS[mentorStepIndex];
-  const totalMentorScreens = MENTOR_STEPS.length + 1; // 멘토 Q&A를 2페이지로 분리
-  const currentMentorScreen = (() => {
-    let current = mentorStepIndex + 1;
-    if (mentorStepIndex > MENTOR_QNA_STEP_INDEX) current += 1;
-    if (mentorStepIndex === MENTOR_QNA_STEP_INDEX && mentorQnaSubStep === 2) current += 1;
+  const currentSeniorStep = SENIOR_STEPS[seniorStepIndex];
+  const totalSeniorScreens = SENIOR_STEPS.length + 1; // 선배님 Q&A를 2페이지로 분리
+  const currentSeniorScreen = (() => {
+    let current = seniorStepIndex + 1;
+    if (seniorStepIndex > SENIOR_QNA_STEP_INDEX) current += 1;
+    if (seniorStepIndex === SENIOR_QNA_STEP_INDEX && seniorQnaSubStep === 2) current += 1;
     return current;
   })();
-  const mentorProgress = (currentMentorScreen / totalMentorScreens) * 100;
-  const mentorStepTitle =
-    currentMentorStep?.key === 'mentor-qna' ? `멘토 Q&A (${mentorQnaSubStep}/2)` : currentMentorStep?.title || '';
-  const mentorStepDescription =
-    currentMentorStep?.key === 'mentor-qna'
-      ? mentorQnaSubStep === 1
+  const seniorProgress = (currentSeniorScreen / totalSeniorScreens) * 100;
+  const seniorStepDescription =
+    currentSeniorStep?.key === 'senior-qna'
+      ? seniorQnaSubStep === 1
         ? '경험과 배경 관련 질문에 답변해 주세요'
         : '인사이트와 조언 관련 질문에 답변해 주세요'
-      : currentMentorStep?.description || '';
+      : currentSeniorStep?.description || '';
+  const isReviewEditMode = reviewEditStepKey !== null && currentSeniorStep?.key !== 'review';
+  const seniorStepTitle = (() => {
+    if (!currentSeniorStep) return '';
+    if (currentSeniorStep.key !== 'senior-qna') return currentSeniorStep.title;
+    if (isReviewEditMode) return '선배님 Q&A 수정';
+    return `선배님 Q&A (${seniorQnaSubStep}/2)`;
+  })();
+  const seniorStepDescriptionText = isReviewEditMode
+    ? '수정 후 하단의 수정완료 버튼을 눌러 최종 확인으로 돌아가세요.'
+    : seniorStepDescription;
   const isStudentSubmitDisabled =
     isSubmitting ||
     !formData.school.trim() ||
@@ -406,26 +605,28 @@ export default function OnboardingModal({
   const hasAnyWorkInput = (work: Omit<WorkExperience, 'id'>) =>
     Boolean(work.company.trim() || work.position.trim() || work.region || work.is_current);
 
-  const getMentorMissingFields = (): string[] => {
-    if (!currentMentorStep) return [];
+  const getSeniorMissingFields = (): string[] => {
+    if (!currentSeniorStep) return [];
     const missing: string[] = [];
 
-    if (currentMentorStep.key === 'basic') {
+    if (currentSeniorStep.key === 'basic') {
       if (!formData.school.trim()) missing.push('basic_school');
-      if (!formData.dept_code.trim()) missing.push('basic_dept');
+      if (!formData.dept_name.trim()) missing.push('basic_major');
       if (!formData.admission_year.trim()) missing.push('basic_admission_year');
-      if (!graduationYear.trim()) missing.push('basic_graduation_year');
+      if (!educationDegree) missing.push('basic_degree');
+      if (!educationStatus) missing.push('basic_status');
+      if (isGraduationYearRequired && !graduationYear.trim()) missing.push('basic_graduation_year');
     }
 
-    if (currentMentorStep.key === 'contact') {
+    if (currentSeniorStep.key === 'contact') {
       // name, email은 currentUser에서 자동으로 가져옴
     }
 
-    if (currentMentorStep.key === 'skills' && skillTags.length === 0) {
+    if (currentSeniorStep.key === 'skills' && skillTags.length === 0) {
       missing.push('skills_tags');
     }
 
-    if (currentMentorStep.key === 'works') {
+    if (currentSeniorStep.key === 'works') {
       const hasAtLeastOneWork = works.some((work) => hasAnyWorkInput(work));
       if (!hasAtLeastOneWork) {
         missing.push('works_0_company');
@@ -441,37 +642,49 @@ export default function OnboardingModal({
       }
     }
 
-    if (currentMentorStep.key === 'mentor-qna') {
-      if (mentorQnaSubStep === 1) {
-        if (mentorQna.targeted_capital === null) missing.push('mentor_qna_targeted_capital');
-        if (!toNullable(mentorQna.reason_for_local || '')) missing.push('mentor_qna_reason_for_local');
-        if (!toNullable(mentorQna.helpful_organizations || '')) missing.push('mentor_qna_helpful_organizations');
+    if (currentSeniorStep.key === 'senior-qna') {
+      if (seniorQnaSubStep === 1) {
+        if (seniorQna.targeted_capital === null) missing.push('senior_qna_targeted_capital');
+        if (!toNullable(seniorQna.reason_for_local || '')) missing.push('senior_qna_reason_for_local');
+        if (!toNullable(seniorQna.helpful_organizations || '')) missing.push('senior_qna_helpful_organizations');
       } else {
-        if (!toNullable(mentorQna.local_advantages || '')) missing.push('mentor_qna_local_advantages');
-        if (!toNullable(mentorQna.local_disadvantages || '')) missing.push('mentor_qna_local_disadvantages');
+        if (!toNullable(seniorQna.local_advantages || '')) missing.push('senior_qna_local_advantages');
+        if (!toNullable(seniorQna.local_disadvantages || '')) missing.push('senior_qna_local_disadvantages');
       }
+    }
+
+    if (currentSeniorStep.key === 'review' && !hasPrivacyConsent) {
+      missing.push('review_privacy_consent');
     }
 
     return missing;
   };
 
-  const validateMentorStepFormat = (): string | null => {
-    if (!currentMentorStep) return null;
+  const validateSeniorStepFormat = (): string | null => {
+    if (!currentSeniorStep) return null;
 
-    if (currentMentorStep.key === 'basic') {
+    if (currentSeniorStep.key === 'basic') {
       if (formData.admission_year.trim() && !/^\d{2}$/.test(formData.admission_year.trim())) {
         return '학번은 2자리 숫자로 입력해 주세요. (예: 21)';
       }
-      if (graduationYear.trim() && !YEAR_REGEX.test(graduationYear.trim())) {
+      if (isGraduationYearRequired && graduationYear.trim() && !YEAR_REGEX.test(graduationYear.trim())) {
         return '졸업년도는 YYYY 형식으로 입력해 주세요. (예: 2024)';
+      }
+      if (
+        isGraduationYearRequired &&
+        graduationYear.trim() &&
+        admissionYearFull &&
+        Number(graduationYear.trim()) < admissionYearFull
+      ) {
+        return `졸업년도는 학번(입학년도 ${admissionYearFull}년)보다 빠를 수 없습니다.`;
       }
     }
 
-    if (currentMentorStep.key === 'contact') {
+    if (currentSeniorStep.key === 'contact') {
       // email은 currentUser에서 자동으로 가져옴
     }
 
-    if (currentMentorStep.key === 'works') {
+    if (currentSeniorStep.key === 'works') {
       // company, position만 검증 (시작/종료 날짜 없음)
     }
 
@@ -497,53 +710,69 @@ export default function OnboardingModal({
     }
   };
 
-  const goToMentorStep = (nextIndex: number) => {
-    if (nextIndex < 0 || nextIndex >= MENTOR_STEPS.length) return;
-    setSlideDirection(nextIndex > mentorStepIndex ? 1 : -1);
+  const goToSeniorStep = (nextIndex: number) => {
+    if (nextIndex < 0 || nextIndex >= SENIOR_STEPS.length) return;
+    setSlideDirection(nextIndex > seniorStepIndex ? 1 : -1);
     setInvalidFields(new Set());
-    if (nextIndex === MENTOR_QNA_STEP_INDEX && mentorStepIndex < MENTOR_QNA_STEP_INDEX) {
-      setMentorQnaSubStep(1);
+    if (nextIndex === SENIOR_QNA_STEP_INDEX && seniorStepIndex < SENIOR_QNA_STEP_INDEX) {
+      setSeniorQnaSubStep(1);
     }
-    setMentorStepIndex(nextIndex);
+    setSeniorStepIndex(nextIndex);
+  };
+  const moveToSeniorStepByKey = (stepKey: SeniorStepKey) => {
+    const nextIndex = SENIOR_STEPS.findIndex((step) => step.key === stepKey);
+    if (nextIndex === -1) return;
+    goToSeniorStep(nextIndex);
+  };
+  const enterReviewEditStep = (stepKey: ReviewEditableStepKey) => {
+    setReviewEditStepKey(stepKey);
+    if (stepKey === 'senior-qna') {
+      setSeniorQnaSubStep(1);
+    }
+    moveToSeniorStepByKey(stepKey);
+  };
+  const returnToReviewFromEdit = () => {
+    setReviewEditStepKey(null);
+    moveToSeniorStepByKey('review');
   };
 
-  const handleMentorNext = () => {
-    const missingFields = getMentorMissingFields();
+  const handleSeniorNext = () => {
+    const missingFields = getSeniorMissingFields();
     if (missingFields.length > 0) {
       setInvalidFields(new Set(missingFields));
       onShowToast?.('아직 미입력된 정보가 있습니다.', 'error');
       return;
     }
 
-    const validationMessage = validateMentorStepFormat();
+    const validationMessage = validateSeniorStepFormat();
     if (validationMessage) {
       onShowToast?.(validationMessage, 'error');
       return;
     }
 
     setInvalidFields(new Set());
-    if (currentMentorStep?.key === 'mentor-qna' && mentorQnaSubStep === 1) {
+    if (currentSeniorStep?.key === 'senior-qna' && seniorQnaSubStep === 1) {
       setSlideDirection(1);
-      setMentorQnaSubStep(2);
+      setSeniorQnaSubStep(2);
       return;
     }
 
-    if (mentorStepIndex < MENTOR_STEPS.length - 1) {
-      goToMentorStep(mentorStepIndex + 1);
+    if (seniorStepIndex < SENIOR_STEPS.length - 1) {
+      goToSeniorStep(seniorStepIndex + 1);
     }
   };
 
-  const handleMentorPrev = () => {
-    if (currentMentorStep?.key === 'mentor-qna' && mentorQnaSubStep === 2) {
+  const handleSeniorPrev = () => {
+    if (currentSeniorStep?.key === 'senior-qna' && seniorQnaSubStep === 2) {
       setSlideDirection(-1);
       setInvalidFields(new Set());
-      setMentorQnaSubStep(1);
+      setSeniorQnaSubStep(1);
       return;
     }
-    if (mentorStepIndex === MENTOR_QNA_STEP_INDEX + 1) {
-      setMentorQnaSubStep(2);
+    if (seniorStepIndex === SENIOR_QNA_STEP_INDEX + 1) {
+      setSeniorQnaSubStep(2);
     }
-    goToMentorStep(mentorStepIndex - 1);
+    goToSeniorStep(seniorStepIndex - 1);
   };
 
   const normalizeWorks: Omit<WorkExperience, 'id'>[] = works
@@ -558,14 +787,14 @@ export default function OnboardingModal({
     }));
 
   const normalizeEducations: Omit<Education, 'id'>[] =
-    formData.dept_code.trim() && formData.admission_year.trim() && educationDegree && educationStatus
+    formData.school.trim() && formData.dept_name.trim() && formData.admission_year.trim() && educationDegree && educationStatus
       ? [
           {
             start_date: `20${formData.admission_year.trim()}`,
             end_date: graduationYear.trim() || null,
             is_current: false,
-            school: (formData.school === '전북대' ? '전북대학교' : formData.school).trim(),
-            major: (formData.dept_name || formData.dept_code).trim(),
+            school: formData.school.trim(),
+            major: formData.dept_name.trim(),
             degree: educationDegree,
             status: educationStatus,
             region: '',
@@ -582,36 +811,36 @@ export default function OnboardingModal({
   const normalizedSkills: CareerSkillsUpdate = { skill_tags: skillTags };
   const normalizedWorksUpdate: CareerWorksUpdate = { works: normalizeWorks };
   const normalizedEducationsUpdate: CareerEducationsUpdate = { educations: normalizeEducations };
-  const normalizedMentorQna: CareerMentorQnAUpdate = {
+  const normalizedSeniorQna: CareerMentorQnAUpdate = {
     mentor_qna: {
-      targeted_capital: mentorQna.targeted_capital,
-      reason_for_local: toNullable(mentorQna.reason_for_local || ''),
-      helpful_organizations: toNullable(mentorQna.helpful_organizations || ''),
-      local_advantages: toNullable(mentorQna.local_advantages || ''),
-      local_disadvantages: toNullable(mentorQna.local_disadvantages || ''),
-      advice_for_juniors: toNullable(mentorQna.advice_for_juniors || ''),
+      targeted_capital: seniorQna.targeted_capital,
+      reason_for_local: toNullable(seniorQna.reason_for_local || ''),
+      helpful_organizations: toNullable(seniorQna.helpful_organizations || ''),
+      local_advantages: toNullable(seniorQna.local_advantages || ''),
+      local_disadvantages: toNullable(seniorQna.local_disadvantages || ''),
+      advice_for_juniors: toNullable(seniorQna.advice_for_juniors || ''),
     },
   };
 
-  const handleMentorComplete = async () => {
-    if (userType !== 'mentor') return;
-    const missingFields = getMentorMissingFields();
+  const handleSeniorComplete = async () => {
+    if (userType !== 'senior') return;
+    const missingFields = getSeniorMissingFields();
     if (missingFields.length > 0) {
       setInvalidFields(new Set(missingFields));
       onShowToast?.('아직 미입력된 정보가 있습니다.', 'error');
       return;
     }
 
-    const validationMessage = validateMentorStepFormat();
+    const validationMessage = validateSeniorStepFormat();
     if (validationMessage) {
       onShowToast?.(validationMessage, 'error');
       return;
     }
 
     const onboardingPayload: OnboardingRequest = {
-      user_type: userType,
-      school: formData.school || '전북대',
-      dept_code: formData.dept_code || undefined,
+      user_type: toApiUserType(userType),
+      school: formData.school.trim(),
+      dept_code: formData.dept_name.trim() || undefined,
       admission_year: formData.admission_year ? parseInt(formData.admission_year, 10) : undefined,
       board_codes: [...GUEST_DEFAULT_BOARDS],
     };
@@ -619,13 +848,14 @@ export default function OnboardingModal({
     if (!isLoggedIn) {
       requestLoginForPendingSave({
         onboarding: onboardingPayload,
-        mentorCareer: {
+        seniorCareer: {
           contact: normalizedContact,
           skills: normalizedSkills,
           works: normalizedWorksUpdate,
           educations: normalizedEducationsUpdate,
-          mentor_qna: normalizedMentorQna,
+          mentor_qna: normalizedSeniorQna,
         },
+        seniorPrivacyConsent: hasPrivacyConsent,
       });
       return;
     }
@@ -638,52 +868,29 @@ export default function OnboardingModal({
       await saveCareerSkills(normalizedSkills);
       await saveCareerWorks(normalizedWorksUpdate);
       await saveCareerEducations(normalizedEducationsUpdate);
-      await saveCareerMentorQnA(normalizedMentorQna);
+      await saveCareerMentorQnA(normalizedSeniorQna);
 
       queryClient.setQueryData(['user', 'profile'], onboardingResult.user);
       setUser(onboardingResult.user);
       localStorage.setItem('my_subscribed_categories', JSON.stringify(onboardingResult.subscribed_boards));
-      onMentorCompleted?.();
-      setMentorCompleted(onboardingResult.subscribed_boards);
+      clearOnboardingDraft();
+      onSeniorCompleted?.();
+      setSeniorCompleted(onboardingResult.subscribed_boards);
     } catch (error) {
-      console.error('멘토 온보딩 처리 실패:', error);
+      console.error('선배님 온보딩 처리 실패:', error);
       alert('저장 중 문제가 발생했습니다. 다시 시도해 주세요.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const renderMentorStepContent = () => {
-    if (!currentMentorStep) return null;
+  const renderSeniorStepContent = () => {
+    if (!currentSeniorStep) return null;
 
-    switch (currentMentorStep.key) {
+    switch (currentSeniorStep.key) {
       case 'basic':
         return (
           <div className="space-y-4">
-            <UserInfoForm
-              formData={formData}
-              onChange={(data) => {
-                setFormData((prev: UserInfoFormData) => ({ ...prev, ...data }));
-                if (Object.prototype.hasOwnProperty.call(data, 'school')) clearInvalidField('basic_school');
-                if (Object.prototype.hasOwnProperty.call(data, 'dept_code')) clearInvalidField('basic_dept');
-                if (Object.prototype.hasOwnProperty.call(data, 'admission_year')) {
-                  clearInvalidField('basic_admission_year');
-                  const nextAdmissionRaw = String(data.admission_year || '').trim();
-                  const nextAdmissionFull = /^\d{2}$/.test(nextAdmissionRaw) ? Number(`20${nextAdmissionRaw}`) : null;
-                  if (nextAdmissionFull && graduationYear && Number(graduationYear) < nextAdmissionFull) {
-                    setGraduationYear('');
-                    clearInvalidField('basic_graduation_year');
-                  }
-                }
-              }}
-              showNickname={false}
-              isReadonlySchool={false}
-              invalidFields={{
-                school: hasInvalidField('basic_school'),
-                dept_code: hasInvalidField('basic_dept'),
-                admission_year: hasInvalidField('basic_admission_year'),
-              }}
-            />
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">학위</label>
@@ -736,31 +943,102 @@ export default function OnboardingModal({
               </div>
             </div>
             <div className="space-y-1">
-              <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
-                <FiCalendar className="text-gray-400" size={14} />
-                졸업년도 (졸업/수료 선택 시 필수)
-              </label>
-              <select
-                value={graduationYear}
+              <label className="block text-sm font-medium text-gray-700">학교</label>
+              <input
+                type="text"
+                value={formData.school}
                 onChange={(e) => {
-                  setGraduationYear(e.target.value);
-                  clearInvalidField('basic_graduation_year');
+                  setFormData((prev: UserInfoFormData) => ({ ...prev, school: e.target.value }));
+                  clearInvalidField('basic_school');
                 }}
-                disabled={!isGraduationYearRequired}
+                placeholder="예: 전북대학교"
                 className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
-                  hasInvalidField('basic_graduation_year')
+                  hasInvalidField('basic_school')
                     ? 'border-red-300 bg-red-50 focus:border-red-500'
                     : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
-                } disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400`}
-              >
-                <option value="">-- 졸업년도를 선택하세요 --</option>
-                {availableGraduationYearOptions.map((year) => (
-                  <option key={year} value={year}>
-                    {year}년
-                  </option>
-                ))}
-              </select>
+                }`}
+              />
             </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">학과</label>
+              <input
+                type="text"
+                value={formData.dept_name}
+                onChange={(e) => {
+                  const nextMajor = e.target.value;
+                  setFormData((prev: UserInfoFormData) => ({ ...prev, dept_name: nextMajor, dept_code: nextMajor }));
+                  clearInvalidField('basic_major');
+                }}
+                placeholder="예: 컴퓨터인공지능학부, 경영학부"
+                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
+                  hasInvalidField('basic_major')
+                    ? 'border-red-300 bg-red-50 focus:border-red-500'
+                    : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                }`}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-gray-700">학번</label>
+              <div className="relative">
+                <select
+                  value={formData.admission_year}
+                  onChange={(e) => {
+                    const nextAdmissionRaw = e.target.value.trim();
+                    setFormData((prev: UserInfoFormData) => ({ ...prev, admission_year: nextAdmissionRaw }));
+                    clearInvalidField('basic_admission_year');
+                    const nextAdmissionFull = /^\d{2}$/.test(nextAdmissionRaw) ? Number(`20${nextAdmissionRaw}`) : null;
+                    if (nextAdmissionFull && graduationYear && Number(graduationYear) < nextAdmissionFull) {
+                      setGraduationYear('');
+                      clearInvalidField('basic_graduation_year');
+                    }
+                  }}
+                  className={`w-full appearance-none rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
+                    hasInvalidField('basic_admission_year')
+                      ? 'border-red-300 bg-red-50 focus:border-red-500'
+                      : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                  }`}
+                >
+                  <option value="">-- 학번을 선택하세요 --</option>
+                  {ADMISSION_YEAR_OPTIONS.map((year) => (
+                    <option key={year} value={year}>
+                      {year}학번
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-4 flex items-center text-gray-400 pointer-events-none">
+                  <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            {isGraduationYearRequired && (
+              <div className="space-y-1">
+                <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+                  <FiCalendar className="text-gray-400" size={14} />
+                  졸업년도
+                </label>
+                <select
+                  value={graduationYear}
+                  onChange={(e) => {
+                    setGraduationYear(e.target.value);
+                    clearInvalidField('basic_graduation_year');
+                  }}
+                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
+                    hasInvalidField('basic_graduation_year')
+                      ? 'border-red-300 bg-red-50 focus:border-red-500'
+                      : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                  }`}
+                >
+                  <option value="">-- 졸업년도를 선택하세요 --</option>
+                  {availableGraduationYearOptionsByAdmission.map((year) => (
+                    <option key={year} value={year}>
+                      {year}년
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         );
 
@@ -822,7 +1100,7 @@ export default function OnboardingModal({
                 value={skillInput}
                 onChange={(e) => setSkillInput(e.target.value)}
                 onKeyDown={handleSkillKeyDown}
-                placeholder="예: 마케팅, 백엔드, 데이터 분석"
+                placeholder="예: 백엔드 개발, UX/UI 디자인, 회계·재무"
                 className={`flex-1 rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
                   hasInvalidField('skills_tags')
                     ? 'border-red-300 bg-red-50 focus:border-red-500'
@@ -838,23 +1116,31 @@ export default function OnboardingModal({
               </button>
             </div>
             <div
-              className={`flex min-h-16 flex-wrap gap-2 rounded-xl border p-3 ${
+              className={`flex min-h-16 items-center rounded-xl border px-3 py-2 ${
                 hasInvalidField('skills_tags') ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'
               }`}
             >
               {skillTags.length === 0 ? (
                 <p className="text-sm text-gray-400">아직 추가된 키워드가 없습니다.</p>
               ) : (
-                skillTags.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => setSkillTags((prev) => prev.filter((item) => item !== tag))}
-                    className="px-3 py-1 text-xs font-medium text-blue-700 transition-all rounded-full bg-blue-50 hover:bg-blue-100"
-                  >
-                    #{tag} ✕
-                  </button>
-                ))
+                <div className="flex min-h-8 w-full flex-wrap content-center items-center gap-2">
+                  {skillTags.map((tag) => (
+                    <div
+                      key={tag}
+                      className={`inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border px-3 text-xs font-semibold leading-none transition-all hover:brightness-95 ${SKILL_TAG_CLASS}`}
+                    >
+                      <span className="inline-flex h-full max-w-[11rem] items-center truncate leading-none">{tag}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSkillTags((prev) => prev.filter((item) => item !== tag))}
+                        className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/70 text-current opacity-70 transition-opacity hover:opacity-100"
+                        aria-label={`${tag} 키워드 삭제`}
+                      >
+                        <FiX size={11} className="translate-y-px" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
@@ -976,28 +1262,26 @@ export default function OnboardingModal({
           </div>
         );
 
-      case 'mentor-qna':
+      case 'senior-qna':
         return (
           <div className="space-y-4">
-            {mentorQnaSubStep === 1 && (
+            {(seniorQnaSubStep === 1 || isReviewEditMode) && (
               <>
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-gray-700">Q1. 수도권 취업/창업을 시도해 본 적이 있나요?</p>
-                  <div
-                    className={`flex gap-2 rounded-lg border p-2 ${
-                      hasInvalidField('mentor_qna_targeted_capital') ? 'border-red-300 bg-red-50' : 'border-transparent'
-                    }`}
-                  >
+                  <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => {
-                        setMentorQna((prev) => ({ ...prev, targeted_capital: true }));
-                        clearInvalidField('mentor_qna_targeted_capital');
+                        setSeniorQna((prev) => ({ ...prev, targeted_capital: true }));
+                        clearInvalidField('senior_qna_targeted_capital');
                       }}
-                      className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                        mentorQna.targeted_capital === true
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'bg-gray-100 text-gray-600'
+                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
+                        seniorQna.targeted_capital === true
+                          ? 'border-blue-200 bg-blue-50 text-blue-700'
+                          : hasInvalidField('senior_qna_targeted_capital')
+                            ? 'border-red-300 bg-red-50 text-red-600'
+                            : 'border-transparent bg-gray-100 text-gray-600'
                       }`}
                     >
                       예
@@ -1005,13 +1289,15 @@ export default function OnboardingModal({
                     <button
                       type="button"
                       onClick={() => {
-                        setMentorQna((prev) => ({ ...prev, targeted_capital: false }));
-                        clearInvalidField('mentor_qna_targeted_capital');
+                        setSeniorQna((prev) => ({ ...prev, targeted_capital: false }));
+                        clearInvalidField('senior_qna_targeted_capital');
                       }}
-                      className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                        mentorQna.targeted_capital === false
-                          ? 'bg-blue-50 text-blue-700'
-                          : 'bg-gray-100 text-gray-600'
+                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
+                        seniorQna.targeted_capital === false
+                          ? 'border-blue-200 bg-blue-50 text-blue-700'
+                          : hasInvalidField('senior_qna_targeted_capital')
+                            ? 'border-red-300 bg-red-50 text-red-600'
+                            : 'border-transparent bg-gray-100 text-gray-600'
                       }`}
                     >
                       아니오
@@ -1024,13 +1310,13 @@ export default function OnboardingModal({
                   </label>
                   <textarea
                     rows={3}
-                    value={mentorQna.reason_for_local || ''}
+                    value={seniorQna.reason_for_local || ''}
                     onChange={(e) => {
-                      setMentorQna((prev) => ({ ...prev, reason_for_local: e.target.value || null }));
-                      clearInvalidField('mentor_qna_reason_for_local');
+                      setSeniorQna((prev) => ({ ...prev, reason_for_local: e.target.value || null }));
+                      clearInvalidField('senior_qna_reason_for_local');
                     }}
                     className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${
-                      hasInvalidField('mentor_qna_reason_for_local')
+                      hasInvalidField('senior_qna_reason_for_local')
                         ? 'border-red-300 bg-red-50 focus:border-red-500'
                         : 'border-gray-200 bg-gray-50 focus:border-gray-900'
                     }`}
@@ -1040,15 +1326,16 @@ export default function OnboardingModal({
                   <label className="mb-1 block text-sm font-medium text-gray-700">
                     Q3. 지역 취·창업 시 도움받은 기관/멘토가 있나요?
                   </label>
+                  <p className="mb-1 text-xs text-gray-400">예: 선배나 지인, 취업동아리, 대학일자리센터 등</p>
                   <textarea
                     rows={3}
-                    value={mentorQna.helpful_organizations || ''}
+                    value={seniorQna.helpful_organizations || ''}
                     onChange={(e) => {
-                      setMentorQna((prev) => ({ ...prev, helpful_organizations: e.target.value || null }));
-                      clearInvalidField('mentor_qna_helpful_organizations');
+                      setSeniorQna((prev) => ({ ...prev, helpful_organizations: e.target.value || null }));
+                      clearInvalidField('senior_qna_helpful_organizations');
                     }}
                     className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${
-                      hasInvalidField('mentor_qna_helpful_organizations')
+                      hasInvalidField('senior_qna_helpful_organizations')
                         ? 'border-red-300 bg-red-50 focus:border-red-500'
                         : 'border-gray-200 bg-gray-50 focus:border-gray-900'
                     }`}
@@ -1056,7 +1343,7 @@ export default function OnboardingModal({
                 </div>
               </>
             )}
-            {mentorQnaSubStep === 2 && (
+            {(seniorQnaSubStep === 2 || isReviewEditMode) && (
               <>
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700">
@@ -1064,13 +1351,13 @@ export default function OnboardingModal({
                   </label>
                   <textarea
                     rows={3}
-                    value={mentorQna.local_advantages || ''}
+                    value={seniorQna.local_advantages || ''}
                     onChange={(e) => {
-                      setMentorQna((prev) => ({ ...prev, local_advantages: e.target.value || null }));
-                      clearInvalidField('mentor_qna_local_advantages');
+                      setSeniorQna((prev) => ({ ...prev, local_advantages: e.target.value || null }));
+                      clearInvalidField('senior_qna_local_advantages');
                     }}
                     className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${
-                      hasInvalidField('mentor_qna_local_advantages')
+                      hasInvalidField('senior_qna_local_advantages')
                         ? 'border-red-300 bg-red-50 focus:border-red-500'
                         : 'border-gray-200 bg-gray-50 focus:border-gray-900'
                     }`}
@@ -1082,28 +1369,27 @@ export default function OnboardingModal({
                   </label>
                   <textarea
                     rows={3}
-                    value={mentorQna.local_disadvantages || ''}
+                    value={seniorQna.local_disadvantages || ''}
                     onChange={(e) => {
-                      setMentorQna((prev) => ({ ...prev, local_disadvantages: e.target.value || null }));
-                      clearInvalidField('mentor_qna_local_disadvantages');
+                      setSeniorQna((prev) => ({ ...prev, local_disadvantages: e.target.value || null }));
+                      clearInvalidField('senior_qna_local_disadvantages');
                     }}
                     className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${
-                      hasInvalidField('mentor_qna_local_disadvantages')
+                      hasInvalidField('senior_qna_local_disadvantages')
                         ? 'border-red-300 bg-red-50 focus:border-red-500'
                         : 'border-gray-200 bg-gray-50 focus:border-gray-900'
                     }`}
                   />
                 </div>
                 <div>
-                  <label className="mb-1 flex items-center gap-2 text-sm font-medium text-gray-700">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
                     Q6. 후배들에게 전하고 싶은 조언을 적어주세요.
-                    <RequirementBadge />
                   </label>
                   <textarea
                     rows={4}
-                    value={mentorQna.advice_for_juniors || ''}
+                    value={seniorQna.advice_for_juniors || ''}
                     onChange={(e) =>
-                      setMentorQna((prev) => ({ ...prev, advice_for_juniors: e.target.value || null }))
+                      setSeniorQna((prev) => ({ ...prev, advice_for_juniors: e.target.value || null }))
                     }
                     className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm outline-none focus:border-gray-900"
                   />
@@ -1115,22 +1401,28 @@ export default function OnboardingModal({
 
       case 'review':
         return (
-          <div className="p-4 space-y-3 border border-gray-200 rounded-xl bg-gray-50">
-            <p className="text-sm font-semibold text-gray-800">입력 요약</p>
-            <div className="space-y-2 text-sm text-gray-600">
-              <p>학교: {formData.school || '미입력'}</p>
-              <p>학과: {formData.dept_name || '미입력'}</p>
-              <p>학번: {formData.admission_year ? `${formData.admission_year}학번` : '미입력'}</p>
-              <p>학위: {educationDegree ? EDUCATION_DEGREE_LABELS[educationDegree] : '미입력'}</p>
-              <p>상태: {educationStatus ? EDUCATION_STATUS_LABELS[educationStatus] : '미입력'}</p>
-              <p>직무 키워드: {skillTags.length}개</p>
-              <p>경력: {normalizeWorks.length}개</p>
-              <p>학력: {normalizeEducations.length}개</p>
-            </div>
-            <p className="text-xs text-gray-400">
-              완료를 누르면 온보딩과 이력 정보가 저장됩니다. 추후 프로필 &gt; 이력관리에서 수정할 수 있습니다.
-            </p>
-          </div>
+          <ReviewSummary
+            formData={formData}
+            educationDegree={educationDegree}
+            educationStatus={educationStatus}
+            graduationYear={graduationYear}
+            graduationRequiredStatuses={GRADUATION_REQUIRED_STATUSES}
+            educationDegreeLabels={EDUCATION_DEGREE_LABELS}
+            educationStatusLabels={EDUCATION_STATUS_LABELS}
+            contactData={contactData}
+            skillTags={skillTags}
+            works={normalizeWorks}
+            seniorQna={seniorQna}
+            hasInvalidField={hasInvalidField}
+            hasPrivacyConsent={hasPrivacyConsent}
+            onPrivacyConsentChange={setHasPrivacyConsent}
+            clearInvalidField={clearInvalidField}
+            onEditBasic={() => enterReviewEditStep('basic')}
+            onEditContact={() => enterReviewEditStep('contact')}
+            onEditSkills={() => enterReviewEditStep('skills')}
+            onEditWorks={() => enterReviewEditStep('works')}
+            onEditQna={() => enterReviewEditStep('senior-qna')}
+          />
         );
 
       default:
@@ -1138,25 +1430,25 @@ export default function OnboardingModal({
     }
   };
 
-  if (mentorCompleted) {
+  if (seniorCompleted) {
     return (
-      <FullPageModal isOpen={isOpen} onClose={() => {}} title="" showBackButton={false}>
+      <FullPageModal isOpen={isOpen} onClose={() => {}} title="" mode="overlay" showBackButton={false}>
         <div className="flex min-h-full flex-col items-center justify-center px-5 py-12">
           <div className="mb-6 text-7xl">🎉</div>
           <h2 className="mb-3 text-2xl font-bold text-gray-900">환영합니다, 선배님!</h2>
           <p className="mb-2 text-center text-sm leading-relaxed text-gray-500">
-            멘토 정보가 성공적으로 등록되었습니다.
+            지금은 선배님 정보 수집만 진행하고 있습니다.
             <br />
-            후배들에게 큰 도움이 될 거예요!
+            현재 이력은 공개되지 않으며, 정식 런칭 후 공유 기능이 추가될 예정입니다.
           </p>
           <p className="mb-10 text-center text-xs text-gray-400">
             프로필 &gt; 이력관리에서 언제든지 수정할 수 있습니다.
           </p>
           <button
-            onClick={() => onComplete(mentorCompleted)}
+            onClick={() => onComplete(seniorCompleted, { redirectTo: '/profile/?tab=career' })}
             className="w-full max-w-xs rounded-xl bg-gray-900 py-4 font-bold text-white transition-all hover:bg-gray-800"
           >
-            제로타임 둘러보기
+            이력관리로 이동
           </button>
         </div>
       </FullPageModal>
@@ -1164,7 +1456,7 @@ export default function OnboardingModal({
   }
 
   return (
-    <FullPageModal isOpen={isOpen} onClose={() => {}} title="환영합니다" showBackButton={false}>
+    <FullPageModal isOpen={isOpen} onClose={() => {}} title="환영합니다" mode="overlay" showBackButton={false}>
       {step === 1 && (
         <div className="flex flex-col min-h-full px-5 py-8">
           <div className="mb-8 text-center">
@@ -1197,21 +1489,21 @@ export default function OnboardingModal({
             </button>
 
             <button
-              onClick={() => handleUserTypeSelect('mentor')}
+              onClick={() => handleUserTypeSelect('senior')}
               className={`relative flex flex-col items-center rounded-2xl border-2 p-5 transition-all ${
-                userType === 'mentor'
+                userType === 'senior'
                   ? 'border-blue-500 bg-blue-50 shadow-sm'
                   : 'border-gray-200 bg-white hover:border-gray-300'
               }`}
             >
-              {userType === 'mentor' && (
+              {userType === 'senior' && (
                 <div className="absolute flex items-center justify-center w-5 h-5 text-white bg-blue-500 rounded-full right-2 top-2">
                   <FiCheck size={12} strokeWidth={3} />
                 </div>
               )}
               <div className="mb-3 text-4xl">💼</div>
-              <p className="text-base font-bold text-gray-800">멘토님</p>
-              <p className="mt-1 text-xs text-gray-400">재직자/멘토</p>
+              <p className="text-base font-bold text-gray-800">선배님</p>
+              <p className="mt-1 text-xs text-gray-400">현직자/졸업생</p>
             </button>
           </div>
 
@@ -1241,13 +1533,10 @@ export default function OnboardingModal({
               </>
             </p>
             <button
-              onClick={() => {
-                setStep(1);
-                setUserType(null);
-              }}
+              onClick={handleResetOnboardingSelection}
               className="mt-3 text-xs font-medium text-gray-400 transition-all hover:text-gray-600"
             >
-              학생/멘토님 다시 선택하기
+              학생/선배님 다시 선택하기
             </button>
           </div>
 
@@ -1268,6 +1557,11 @@ export default function OnboardingModal({
             >
               {isSubmitting ? '준비 중...' : isLoggedIn ? '시작하기' : '로그인 후 저장하기'}
             </button>
+            {!isLoggedIn && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
+                로그인하지 않으면 입력한 정보가 저장되지 않습니다. 꼭 로그인 후 완료해 주세요.
+              </div>
+            )}
             <button
               onClick={handleSkip}
               disabled={isSubmitting}
@@ -1279,20 +1573,20 @@ export default function OnboardingModal({
         </div>
       )}
 
-      {step === 2 && userType === 'mentor' && (
-        <div className="flex flex-col h-full min-h-full px-5 py-6">
+      {step === 2 && userType === 'senior' && (
+        <div className="flex h-full min-h-0 flex-col px-5 py-6">
           <div className="mb-5">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold text-gray-500">{mentorStepTitle}</p>
+              <p className="text-xs font-semibold text-gray-500">{seniorStepTitle}</p>
               <p className="text-xs font-semibold text-gray-500">
-                {currentMentorScreen} / {totalMentorScreens}
+                {currentSeniorScreen} / {totalSeniorScreens}
               </p>
             </div>
             <div className="h-2 overflow-hidden bg-gray-200 rounded-full">
               <div
                 className="h-full bg-blue-500 rounded-full"
                 style={{
-                  width: `${mentorProgress}%`,
+                  width: `${seniorProgress}%`,
                   transition: 'width 280ms cubic-bezier(0.22, 1, 0.36, 1)',
                 }}
               />
@@ -1300,80 +1594,95 @@ export default function OnboardingModal({
           </div>
 
           <div
-            key={`mentor-step-${mentorStepIndex}-${currentMentorStep?.key === 'mentor-qna' ? mentorQnaSubStep : 0}`}
-            className="mentor-step-animated flex-1 overflow-y-auto"
+            key={`senior-step-${seniorStepIndex}-${currentSeniorStep?.key === 'senior-qna' ? seniorQnaSubStep : 0}`}
+            className="senior-step-animated min-h-0 flex-1 overflow-y-auto overscroll-y-contain pr-0.5"
             style={{
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-y',
               animation:
                 slideDirection === 1
-                  ? 'mentorStepInFromRight 300ms cubic-bezier(0.22, 1, 0.36, 1)'
-                  : 'mentorStepInFromLeft 300ms cubic-bezier(0.22, 1, 0.36, 1)',
+                  ? 'seniorStepInFromRight 300ms cubic-bezier(0.22, 1, 0.36, 1)'
+                  : 'seniorStepInFromLeft 300ms cubic-bezier(0.22, 1, 0.36, 1)',
             }}
           >
-            <div className="mb-4 text-center">
-              <h2 className="mb-2 text-xl font-bold text-gray-900">{mentorStepTitle}</h2>
-              <p className="text-sm text-gray-500">{mentorStepDescription}</p>
+            <div className="mb-3 text-center">
+              <h2 className="mb-2 text-xl font-bold text-gray-900">{seniorStepTitle}</h2>
+              <p className="text-sm text-gray-500">{seniorStepDescriptionText}</p>
               <button
-                onClick={() => {
-                  setStep(1);
-                  setUserType(null);
-                  setMentorStepIndex(0);
-                  setMentorQnaSubStep(1);
-                }}
-                className="mt-3 text-xs font-medium text-gray-400 transition-all hover:text-gray-600"
+                onClick={handleResetOnboardingSelection}
+                className="mt-2 text-xs font-medium text-gray-400 transition-all hover:text-gray-600"
               >
-                학생/멘토님 다시 선택하기
+                학생/선배님 다시 선택하기
               </button>
             </div>
-            {renderMentorStepContent()}
+            {renderSeniorStepContent()}
           </div>
 
           <div className="mt-5 space-y-2 pb-safe">
-            <div className="flex items-center gap-2">
+            {isReviewEditMode ? (
               <button
                 type="button"
-                onClick={handleMentorPrev}
-                disabled={(mentorStepIndex === 0 && !(currentMentorStep?.key === 'mentor-qna' && mentorQnaSubStep === 2)) || isSubmitting}
-                className="w-1/3 rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-600 transition-all hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                이전
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (mentorStepIndex === MENTOR_STEPS.length - 1) {
-                    handleMentorComplete();
-                    return;
-                  }
-                  handleMentorNext();
-                }}
+                onClick={returnToReviewFromEdit}
                 disabled={isSubmitting}
-                className="w-2/3 py-3 text-sm font-bold text-white transition-all bg-gray-900 rounded-xl hover:bg-gray-800 disabled:bg-gray-300"
+                className="w-full rounded-xl bg-gray-900 py-3 text-sm font-bold text-white transition-all hover:bg-gray-800 disabled:bg-gray-300"
               >
-                {mentorStepIndex === MENTOR_STEPS.length - 1
-                  ? isSubmitting
-                    ? '저장 중...'
-                    : isLoggedIn
-                      ? '완료하기'
-                      : '로그인 후 저장하기'
-                  : '다음'}
+                수정완료
               </button>
-            </div>
-            {currentMentorStep.optional && mentorStepIndex < MENTOR_STEPS.length - 1 && (
-              <button
-                type="button"
-                onClick={() => goToMentorStep(mentorStepIndex + 1)}
-                disabled={isSubmitting}
-                className="w-full py-2 text-sm font-medium text-gray-400 transition-all hover:text-gray-600"
-              >
-                이번 단계 건너뛰기
-              </button>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSeniorPrev}
+                    disabled={(seniorStepIndex === 0 && !(currentSeniorStep?.key === 'senior-qna' && seniorQnaSubStep === 2)) || isSubmitting}
+                    className="w-1/3 rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-600 transition-all hover:border-gray-400 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    이전
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (seniorStepIndex === SENIOR_STEPS.length - 1) {
+                        handleSeniorComplete();
+                        return;
+                      }
+                      handleSeniorNext();
+                    }}
+                    disabled={isSubmitting}
+                    className="w-2/3 rounded-xl bg-gray-900 py-3 text-sm font-bold text-white transition-all hover:bg-gray-800 disabled:bg-gray-300"
+                  >
+                    {seniorStepIndex === SENIOR_STEPS.length - 1
+                      ? isSubmitting
+                        ? '저장 중...'
+                        : isLoggedIn
+                          ? '완료하기'
+                          : '로그인 후 저장하기'
+                      : '다음'}
+                  </button>
+                </div>
+                {!isLoggedIn && seniorStepIndex === SENIOR_STEPS.length - 1 && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
+                    로그인하지 않으면 입력한 정보가 저장되지 않습니다. 꼭 로그인 후 완료해 주세요.
+                  </div>
+                )}
+                {currentSeniorStep.optional && seniorStepIndex < SENIOR_STEPS.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={() => goToSeniorStep(seniorStepIndex + 1)}
+                    disabled={isSubmitting}
+                    className="w-full py-2 text-sm font-medium text-gray-400 transition-all hover:text-gray-600"
+                  >
+                    이번 단계 건너뛰기
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
       )}
 
       <style jsx>{`
-        @keyframes mentorStepInFromRight {
+        @keyframes seniorStepInFromRight {
           from {
             opacity: 0;
             transform: translate3d(28px, 0, 0) scale(0.98);
@@ -1384,7 +1693,7 @@ export default function OnboardingModal({
           }
         }
 
-        @keyframes mentorStepInFromLeft {
+        @keyframes seniorStepInFromLeft {
           from {
             opacity: 0;
             transform: translate3d(-28px, 0, 0) scale(0.98);
@@ -1396,7 +1705,7 @@ export default function OnboardingModal({
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .mentor-step-animated {
+          .senior-step-animated {
             animation: none !important;
           }
         }
