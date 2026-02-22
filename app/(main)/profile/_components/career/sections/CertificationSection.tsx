@@ -1,9 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
 import { FiEdit3, FiPlus, FiTrash2 } from 'react-icons/fi';
+
 import { useSaveCareerCertifications } from '@/_lib/hooks/useCareer';
 import type { CareerProfile, Certification } from '@/_types/career';
+
+type EditableCertification = Omit<Certification, 'id'>;
+
+const toEditableCertification = (certification: Certification): EditableCertification => {
+  const editable = { ...certification };
+  delete editable.id;
+  return editable;
+};
 
 interface CertificationSectionProps {
   profile: CareerProfile | null;
@@ -23,11 +33,11 @@ export default function CertificationSection({
   isEmpty,
 }: CertificationSectionProps) {
   const saveMutation = useSaveCareerCertifications();
-  const [certifications, setCertifications] = useState<Omit<Certification, 'id'>[]>([]);
+  const [certifications, setCertifications] = useState<EditableCertification[]>([]);
 
   useEffect(() => {
     if (profile && profile.certifications.length > 0) {
-      setCertifications(profile.certifications.map(({ id, ...rest }) => rest));
+      setCertifications(profile.certifications.map(toEditableCertification));
     } else {
       setCertifications([]);
     }
@@ -47,7 +57,11 @@ export default function CertificationSection({
     setCertifications(certifications.filter((_, i) => i !== index));
   };
 
-  const handleChange = (index: number, field: keyof Omit<Certification, 'id'>, value: any) => {
+  const handleChange = <K extends keyof EditableCertification>(
+    index: number,
+    field: K,
+    value: EditableCertification[K],
+  ) => {
     const updated = [...certifications];
     updated[index] = { ...updated[index], [field]: value };
     setCertifications(updated);
@@ -65,7 +79,7 @@ export default function CertificationSection({
 
   const handleCancel = () => {
     if (profile && profile.certifications.length > 0) {
-      setCertifications(profile.certifications.map(({ id, ...rest }) => rest));
+      setCertifications(profile.certifications.map(toEditableCertification));
     } else {
       setCertifications([]);
     }
@@ -132,8 +146,8 @@ export default function CertificationSection({
   const isSectionEmpty = isEmpty || !profile || profile.certifications.length === 0;
   const displayCerts = isSectionEmpty
     ? [
-        { name: 'TOEIC 900점', date: '2023.06' },
-        { name: '정보처리기사', date: '2023.09' },
+        { name: 'TOEIC 900점', date: '2025.06' },
+        { name: '정보처리기사', date: '2026.01' },
       ]
     : profile?.certifications || [];
 
