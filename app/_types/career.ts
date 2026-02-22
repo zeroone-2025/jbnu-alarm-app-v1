@@ -22,7 +22,7 @@ export interface Education {
   is_current: boolean;
   school: string;
   major: string;
-  degree: 'bachelor' | 'master' | 'doctor' | 'associate';
+  degree: 'middle_school' | 'high_school' | 'associate' | 'bachelor' | 'master' | 'doctor';
   status: 'enrolled' | 'leave' | 'graduated' | 'completed';
   region: string;
 }
@@ -92,6 +92,8 @@ export interface CareerMentorQnAUpdate {
 }
 
 export const DEGREE_LABELS: Record<Education['degree'], string> = {
+  middle_school: '중졸',
+  high_school: '고졸',
   associate: '전문학사',
   bachelor: '학사',
   master: '석사',
