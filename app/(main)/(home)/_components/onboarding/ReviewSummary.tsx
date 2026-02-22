@@ -258,7 +258,7 @@ export default function ReviewSummary({
       </section>
 
       <p className="px-1 text-[11px] text-gray-400">
-        완료를 누르면 온보딩과 이력 정보가 저장됩니다. (프로필 &gt; 이력 관리에서 수정할 수 있습니다.)
+        완료를 누르면 온보딩과 이력 정보가 저장됩니다. (프로필 &gt; 이력관리에서 수정할 수 있습니다.)
       </p>
     </div>
   );

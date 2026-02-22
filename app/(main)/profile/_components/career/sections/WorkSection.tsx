@@ -1,10 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
 import { FiEdit3, FiPlus, FiTrash2 } from 'react-icons/fi';
+
 import { useSaveCareerWorks } from '@/_lib/hooks/useCareer';
-import type { CareerProfile, WorkExperience } from '@/_types/career';
 import { EMPLOYMENT_TYPE_LABELS } from '@/_types/career';
+import type { CareerProfile, WorkExperience } from '@/_types/career';
+
+type EditableWork = Omit<WorkExperience, 'id'>;
+
+const toEditableWork = (work: WorkExperience): EditableWork => {
+  const editable = { ...work };
+  delete editable.id;
+  return editable;
+};
 
 interface WorkSectionProps {
   profile: CareerProfile | null;
@@ -24,11 +34,11 @@ export default function WorkSection({
   isEmpty,
 }: WorkSectionProps) {
   const saveMutation = useSaveCareerWorks();
-  const [works, setWorks] = useState<Omit<WorkExperience, 'id'>[]>([]);
+  const [works, setWorks] = useState<EditableWork[]>([]);
 
   useEffect(() => {
     if (profile && profile.works.length > 0) {
-      setWorks(profile.works.map(({ id, ...rest }) => rest));
+      setWorks(profile.works.map(toEditableWork));
     } else {
       setWorks([]);
     }
@@ -53,7 +63,11 @@ export default function WorkSection({
     setWorks(works.filter((_, i) => i !== index));
   };
 
-  const handleChange = (index: number, field: keyof Omit<WorkExperience, 'id'>, value: any) => {
+  const handleChange = <K extends keyof EditableWork>(
+    index: number,
+    field: K,
+    value: EditableWork[K],
+  ) => {
     const updated = [...works];
     updated[index] = { ...updated[index], [field]: value };
     setWorks(updated);
@@ -71,7 +85,7 @@ export default function WorkSection({
 
   const handleCancel = () => {
     if (profile && profile.works.length > 0) {
-      setWorks(profile.works.map(({ id, ...rest }) => rest));
+      setWorks(profile.works.map(toEditableWork));
     } else {
       setWorks([]);
     }
@@ -152,7 +166,9 @@ export default function WorkSection({
                 <label className="mb-1 block text-xs font-medium text-gray-600">고용형태</label>
                 <select
                   value={work.employment_type}
-                  onChange={(e) => handleChange(idx, 'employment_type', e.target.value)}
+                  onChange={(e) =>
+                    handleChange(idx, 'employment_type', e.target.value as EditableWork['employment_type'])
+                  }
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-900"
                 >
                   {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([value, label]) => (
@@ -208,7 +224,7 @@ export default function WorkSection({
   const displayWorks = isSectionEmpty
     ? [
         {
-          start_date: '2024.03',
+          start_date: '2025.03',
           end_date: null,
           is_current: true,
           company: '(주)예시기업',
