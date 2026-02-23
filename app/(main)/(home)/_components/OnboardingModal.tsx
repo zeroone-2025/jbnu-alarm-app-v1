@@ -37,7 +37,7 @@ import ReviewSummary from './onboarding/ReviewSummary';
 
 interface OnboardingModalProps {
   isOpen: boolean;
-  onComplete: (categories: string[], options?: { redirectTo?: string }) => void;
+  onComplete: (categories: string[], options?: { redirectTo?: string }) => void | Promise<void>;
   onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
   isLoggedIn?: boolean;
   onRequireLogin?: (pendingData: PendingOnboardingSubmission) => void;
@@ -513,11 +513,10 @@ export default function OnboardingModal({
       localStorage.setItem('my_subscribed_categories', JSON.stringify(result.subscribed_boards));
       clearOnboardingDraft();
       onShowToast?.('제로타임에 오신 것을 환영합니다! 🎉', 'success');
-      onComplete(result.subscribed_boards);
+      await onComplete(result.subscribed_boards);
     } catch (error) {
       console.error('온보딩 처리 실패:', error);
       alert('정보 저장에 실패했습니다. 다시 시도해주세요.');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -552,10 +551,10 @@ export default function OnboardingModal({
       localStorage.setItem('my_subscribed_categories', JSON.stringify(defaultBoards));
       clearOnboardingDraft();
       onShowToast?.('제로타임에 오신 것을 환영합니다! 🎉', 'success');
-      onComplete(defaultBoards);
+      await onComplete(defaultBoards);
     } catch (error) {
       console.error('건너뛰기 실패:', error);
-    } finally {
+      onShowToast?.('저장에 실패했습니다. 다시 시도해주세요.', 'error');
       setIsSubmitting(false);
     }
   };
@@ -789,17 +788,17 @@ export default function OnboardingModal({
   const normalizeEducations: Omit<Education, 'id'>[] =
     formData.school.trim() && formData.dept_name.trim() && formData.admission_year.trim() && educationDegree && educationStatus
       ? [
-          {
-            start_date: `20${formData.admission_year.trim()}`,
-            end_date: graduationYear.trim() || null,
-            is_current: false,
-            school: formData.school.trim(),
-            major: formData.dept_name.trim(),
-            degree: educationDegree,
-            status: educationStatus,
-            region: '',
-          },
-        ]
+        {
+          start_date: `20${formData.admission_year.trim()}`,
+          end_date: graduationYear.trim() || null,
+          is_current: false,
+          school: formData.school.trim(),
+          major: formData.dept_name.trim(),
+          degree: educationDegree,
+          status: educationStatus,
+          region: '',
+        },
+      ]
       : [];
 
   const normalizedContact: CareerContactUpdate = {
@@ -900,11 +899,10 @@ export default function OnboardingModal({
                     setEducationDegree(e.target.value as EducationDegreeType | '');
                     clearInvalidField('basic_degree');
                   }}
-                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
-                    hasInvalidField('basic_degree')
-                      ? 'border-red-300 bg-red-50 focus:border-red-500'
-                      : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
-                  }`}
+                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${hasInvalidField('basic_degree')
+                    ? 'border-red-300 bg-red-50 focus:border-red-500'
+                    : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                    }`}
                 >
                   <option value="">선택</option>
                   {EDUCATION_DEGREE_OPTIONS.map((degree) => (
@@ -927,11 +925,10 @@ export default function OnboardingModal({
                       clearInvalidField('basic_graduation_year');
                     }
                   }}
-                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
-                    hasInvalidField('basic_status')
-                      ? 'border-red-300 bg-red-50 focus:border-red-500'
-                      : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
-                  }`}
+                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${hasInvalidField('basic_status')
+                    ? 'border-red-300 bg-red-50 focus:border-red-500'
+                    : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                    }`}
                 >
                   <option value="">선택</option>
                   {EDUCATION_STATUS_OPTIONS.map((status) => (
@@ -952,11 +949,10 @@ export default function OnboardingModal({
                   clearInvalidField('basic_school');
                 }}
                 placeholder="예: 전북대학교"
-                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
-                  hasInvalidField('basic_school')
-                    ? 'border-red-300 bg-red-50 focus:border-red-500'
-                    : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
-                }`}
+                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${hasInvalidField('basic_school')
+                  ? 'border-red-300 bg-red-50 focus:border-red-500'
+                  : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                  }`}
               />
             </div>
             <div className="space-y-1">
@@ -970,11 +966,10 @@ export default function OnboardingModal({
                   clearInvalidField('basic_major');
                 }}
                 placeholder="예: 컴퓨터인공지능학부, 경영학부"
-                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
-                  hasInvalidField('basic_major')
-                    ? 'border-red-300 bg-red-50 focus:border-red-500'
-                    : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
-                }`}
+                className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${hasInvalidField('basic_major')
+                  ? 'border-red-300 bg-red-50 focus:border-red-500'
+                  : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                  }`}
               />
             </div>
             <div className="space-y-1">
@@ -992,11 +987,10 @@ export default function OnboardingModal({
                       clearInvalidField('basic_graduation_year');
                     }
                   }}
-                  className={`w-full appearance-none rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
-                    hasInvalidField('basic_admission_year')
-                      ? 'border-red-300 bg-red-50 focus:border-red-500'
-                      : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
-                  }`}
+                  className={`w-full appearance-none rounded-xl border px-4 py-3 text-sm outline-none transition-all ${hasInvalidField('basic_admission_year')
+                    ? 'border-red-300 bg-red-50 focus:border-red-500'
+                    : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                    }`}
                 >
                   <option value="">-- 학번을 선택하세요 --</option>
                   {ADMISSION_YEAR_OPTIONS.map((year) => (
@@ -1024,11 +1018,10 @@ export default function OnboardingModal({
                     setGraduationYear(e.target.value);
                     clearInvalidField('basic_graduation_year');
                   }}
-                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
-                    hasInvalidField('basic_graduation_year')
-                      ? 'border-red-300 bg-red-50 focus:border-red-500'
-                      : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
-                  }`}
+                  className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${hasInvalidField('basic_graduation_year')
+                    ? 'border-red-300 bg-red-50 focus:border-red-500'
+                    : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                    }`}
                 >
                   <option value="">-- 졸업년도를 선택하세요 --</option>
                   {availableGraduationYearOptionsByAdmission.map((year) => (
@@ -1101,11 +1094,10 @@ export default function OnboardingModal({
                 onChange={(e) => setSkillInput(e.target.value)}
                 onKeyDown={handleSkillKeyDown}
                 placeholder="예: 백엔드 개발, UX/UI 디자인, 회계·재무"
-                className={`flex-1 rounded-xl border px-4 py-3 text-sm outline-none transition-all ${
-                  hasInvalidField('skills_tags')
-                    ? 'border-red-300 bg-red-50 focus:border-red-500'
-                    : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
-                }`}
+                className={`flex-1 rounded-xl border px-4 py-3 text-sm outline-none transition-all ${hasInvalidField('skills_tags')
+                  ? 'border-red-300 bg-red-50 focus:border-red-500'
+                  : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                  }`}
               />
               <button
                 onClick={handleAddSkillTag}
@@ -1116,9 +1108,8 @@ export default function OnboardingModal({
               </button>
             </div>
             <div
-              className={`flex min-h-16 items-center rounded-xl border px-3 py-2 ${
-                hasInvalidField('skills_tags') ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'
-              }`}
+              className={`flex min-h-16 items-center rounded-xl border px-3 py-2 ${hasInvalidField('skills_tags') ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'
+                }`}
             >
               {skillTags.length === 0 ? (
                 <p className="text-sm text-gray-400">아직 추가된 키워드가 없습니다.</p>
@@ -1168,88 +1159,86 @@ export default function OnboardingModal({
                       </button>
                     )}
                   </div>
-                <label className="flex items-center gap-2 text-xs text-gray-500">
-                  <input
-                    type="checkbox"
-                    checked={work.is_current}
-                    onChange={(e) => {
-                      setWorks((prev) =>
-                        prev.map((item, i) =>
-                          i === index
-                            ? {
+                  <label className="flex items-center gap-2 text-xs text-gray-500">
+                    <input
+                      type="checkbox"
+                      checked={work.is_current}
+                      onChange={(e) => {
+                        setWorks((prev) =>
+                          prev.map((item, i) =>
+                            i === index
+                              ? {
                                 ...item,
                                 is_current: e.target.checked,
                               }
+                              : item,
+                          ),
+                        );
+                      }}
+                    />
+                    현재 재직 중
+                  </label>
+                  <input
+                    type="text"
+                    value={work.company}
+                    onChange={(e) => {
+                      setWorks((prev) =>
+                        prev.map((item, i) => (i === index ? { ...item, company: e.target.value } : item)),
+                      );
+                      clearInvalidField(`works_${index}_company`);
+                    }}
+                    placeholder="회사명"
+                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${hasInvalidField(`works_${index}_company`)
+                      ? 'border-red-300 bg-red-50 focus:border-red-500'
+                      : 'border-gray-200 bg-gray-50 focus:border-gray-900'
+                      }`}
+                  />
+                  <input
+                    type="text"
+                    value={work.position}
+                    onChange={(e) => {
+                      setWorks((prev) =>
+                        prev.map((item, i) => (i === index ? { ...item, position: e.target.value } : item)),
+                      );
+                      clearInvalidField(`works_${index}_position`);
+                    }}
+                    placeholder="직무/포지션"
+                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${hasInvalidField(`works_${index}_position`)
+                      ? 'border-red-300 bg-red-50 focus:border-red-500'
+                      : 'border-gray-200 bg-gray-50 focus:border-gray-900'
+                      }`}
+                  />
+                  <select
+                    value={work.employment_type}
+                    onChange={(e) =>
+                      setWorks((prev) =>
+                        prev.map((item, i) =>
+                          i === index
+                            ? { ...item, employment_type: e.target.value as WorkExperience['employment_type'] }
                             : item,
                         ),
-                      );
-                    }}
+                      )
+                    }
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none bg-gray-50 focus:border-gray-900"
+                  >
+                    {EMPLOYMENT_OPTIONS.map((employmentType) => (
+                      <option key={employmentType} value={employmentType}>
+                        {EMPLOYMENT_LABELS[employmentType]}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={work.region || ''}
+                    onChange={(e) =>
+                      setWorks((prev) =>
+                        prev.map((item, i) => (i === index ? { ...item, region: e.target.value } : item)),
+                      )
+                    }
+                    placeholder="근무 지역 (선택)"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none bg-gray-50 focus:border-gray-900"
                   />
-                  현재 재직 중
-                </label>
-                <input
-                  type="text"
-                  value={work.company}
-                  onChange={(e) => {
-                    setWorks((prev) =>
-                      prev.map((item, i) => (i === index ? { ...item, company: e.target.value } : item)),
-                    );
-                    clearInvalidField(`works_${index}_company`);
-                  }}
-                  placeholder="회사명"
-                  className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${
-                    hasInvalidField(`works_${index}_company`)
-                      ? 'border-red-300 bg-red-50 focus:border-red-500'
-                      : 'border-gray-200 bg-gray-50 focus:border-gray-900'
-                  }`}
-                />
-                <input
-                  type="text"
-                  value={work.position}
-                  onChange={(e) => {
-                    setWorks((prev) =>
-                      prev.map((item, i) => (i === index ? { ...item, position: e.target.value } : item)),
-                    );
-                    clearInvalidField(`works_${index}_position`);
-                  }}
-                  placeholder="직무/포지션"
-                  className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${
-                    hasInvalidField(`works_${index}_position`)
-                      ? 'border-red-300 bg-red-50 focus:border-red-500'
-                      : 'border-gray-200 bg-gray-50 focus:border-gray-900'
-                  }`}
-                />
-                <select
-                  value={work.employment_type}
-                  onChange={(e) =>
-                    setWorks((prev) =>
-                      prev.map((item, i) =>
-                        i === index
-                          ? { ...item, employment_type: e.target.value as WorkExperience['employment_type'] }
-                          : item,
-                      ),
-                    )
-                  }
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none bg-gray-50 focus:border-gray-900"
-                >
-                  {EMPLOYMENT_OPTIONS.map((employmentType) => (
-                    <option key={employmentType} value={employmentType}>
-                      {EMPLOYMENT_LABELS[employmentType]}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="text"
-                  value={work.region || ''}
-                  onChange={(e) =>
-                    setWorks((prev) =>
-                      prev.map((item, i) => (i === index ? { ...item, region: e.target.value } : item)),
-                    )
-                  }
-                  placeholder="근무 지역 (선택)"
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none bg-gray-50 focus:border-gray-900"
-                />
-              </div>
+                </div>
               );
             })}
             <button
@@ -1276,13 +1265,12 @@ export default function OnboardingModal({
                         setSeniorQna((prev) => ({ ...prev, targeted_capital: true }));
                         clearInvalidField('senior_qna_targeted_capital');
                       }}
-                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
-                        seniorQna.targeted_capital === true
-                          ? 'border-blue-200 bg-blue-50 text-blue-700'
-                          : hasInvalidField('senior_qna_targeted_capital')
-                            ? 'border-red-300 bg-red-50 text-red-600'
-                            : 'border-transparent bg-gray-100 text-gray-600'
-                      }`}
+                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${seniorQna.targeted_capital === true
+                        ? 'border-blue-200 bg-blue-50 text-blue-700'
+                        : hasInvalidField('senior_qna_targeted_capital')
+                          ? 'border-red-300 bg-red-50 text-red-600'
+                          : 'border-transparent bg-gray-100 text-gray-600'
+                        }`}
                     >
                       예
                     </button>
@@ -1292,13 +1280,12 @@ export default function OnboardingModal({
                         setSeniorQna((prev) => ({ ...prev, targeted_capital: false }));
                         clearInvalidField('senior_qna_targeted_capital');
                       }}
-                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
-                        seniorQna.targeted_capital === false
-                          ? 'border-blue-200 bg-blue-50 text-blue-700'
-                          : hasInvalidField('senior_qna_targeted_capital')
-                            ? 'border-red-300 bg-red-50 text-red-600'
-                            : 'border-transparent bg-gray-100 text-gray-600'
-                      }`}
+                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition-all ${seniorQna.targeted_capital === false
+                        ? 'border-blue-200 bg-blue-50 text-blue-700'
+                        : hasInvalidField('senior_qna_targeted_capital')
+                          ? 'border-red-300 bg-red-50 text-red-600'
+                          : 'border-transparent bg-gray-100 text-gray-600'
+                        }`}
                     >
                       아니오
                     </button>
@@ -1315,11 +1302,10 @@ export default function OnboardingModal({
                       setSeniorQna((prev) => ({ ...prev, reason_for_local: e.target.value || null }));
                       clearInvalidField('senior_qna_reason_for_local');
                     }}
-                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${
-                      hasInvalidField('senior_qna_reason_for_local')
-                        ? 'border-red-300 bg-red-50 focus:border-red-500'
-                        : 'border-gray-200 bg-gray-50 focus:border-gray-900'
-                    }`}
+                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${hasInvalidField('senior_qna_reason_for_local')
+                      ? 'border-red-300 bg-red-50 focus:border-red-500'
+                      : 'border-gray-200 bg-gray-50 focus:border-gray-900'
+                      }`}
                   />
                 </div>
                 <div>
@@ -1334,11 +1320,10 @@ export default function OnboardingModal({
                       setSeniorQna((prev) => ({ ...prev, helpful_organizations: e.target.value || null }));
                       clearInvalidField('senior_qna_helpful_organizations');
                     }}
-                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${
-                      hasInvalidField('senior_qna_helpful_organizations')
-                        ? 'border-red-300 bg-red-50 focus:border-red-500'
-                        : 'border-gray-200 bg-gray-50 focus:border-gray-900'
-                    }`}
+                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${hasInvalidField('senior_qna_helpful_organizations')
+                      ? 'border-red-300 bg-red-50 focus:border-red-500'
+                      : 'border-gray-200 bg-gray-50 focus:border-gray-900'
+                      }`}
                   />
                 </div>
               </>
@@ -1356,11 +1341,10 @@ export default function OnboardingModal({
                       setSeniorQna((prev) => ({ ...prev, local_advantages: e.target.value || null }));
                       clearInvalidField('senior_qna_local_advantages');
                     }}
-                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${
-                      hasInvalidField('senior_qna_local_advantages')
-                        ? 'border-red-300 bg-red-50 focus:border-red-500'
-                        : 'border-gray-200 bg-gray-50 focus:border-gray-900'
-                    }`}
+                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${hasInvalidField('senior_qna_local_advantages')
+                      ? 'border-red-300 bg-red-50 focus:border-red-500'
+                      : 'border-gray-200 bg-gray-50 focus:border-gray-900'
+                      }`}
                   />
                 </div>
                 <div>
@@ -1374,11 +1358,10 @@ export default function OnboardingModal({
                       setSeniorQna((prev) => ({ ...prev, local_disadvantages: e.target.value || null }));
                       clearInvalidField('senior_qna_local_disadvantages');
                     }}
-                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${
-                      hasInvalidField('senior_qna_local_disadvantages')
-                        ? 'border-red-300 bg-red-50 focus:border-red-500'
-                        : 'border-gray-200 bg-gray-50 focus:border-gray-900'
-                    }`}
+                    className={`w-full rounded-lg border px-3 py-2 text-sm outline-none ${hasInvalidField('senior_qna_local_disadvantages')
+                      ? 'border-red-300 bg-red-50 focus:border-red-500'
+                      : 'border-gray-200 bg-gray-50 focus:border-gray-900'
+                      }`}
                   />
                 </div>
                 <div>
@@ -1432,7 +1415,7 @@ export default function OnboardingModal({
 
   if (seniorCompleted) {
     return (
-      <FullPageModal isOpen={isOpen} onClose={() => {}} title="" mode="overlay" showBackButton={false}>
+      <FullPageModal isOpen={isOpen} onClose={() => { }} title="" mode="overlay" showBackButton={false}>
         <div className="flex min-h-full flex-col items-center justify-center px-5 py-12">
           <div className="mb-6 text-7xl">🎉</div>
           <h2 className="mb-3 text-2xl font-bold text-gray-900">환영합니다, 선배님!</h2>
@@ -1456,7 +1439,7 @@ export default function OnboardingModal({
   }
 
   return (
-    <FullPageModal isOpen={isOpen} onClose={() => {}} title="환영합니다" mode="overlay" showBackButton={false}>
+    <FullPageModal isOpen={isOpen} onClose={() => { }} title="환영합니다" mode="overlay" showBackButton={false}>
       {step === 1 && (
         <div className="flex flex-col min-h-full px-5 py-8">
           <div className="mb-8 text-center">
@@ -1472,11 +1455,10 @@ export default function OnboardingModal({
           <div className="grid grid-cols-2 gap-3 px-2">
             <button
               onClick={() => handleUserTypeSelect('student')}
-              className={`relative flex flex-col items-center rounded-2xl border-2 p-5 transition-all ${
-                userType === 'student'
-                  ? 'border-blue-500 bg-blue-50 shadow-sm'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
+              className={`relative flex flex-col items-center rounded-2xl border-2 p-5 transition-all ${userType === 'student'
+                ? 'border-blue-500 bg-blue-50 shadow-sm'
+                : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
             >
               {userType === 'student' && (
                 <div className="absolute flex items-center justify-center w-5 h-5 text-white bg-blue-500 rounded-full right-2 top-2">
@@ -1490,11 +1472,10 @@ export default function OnboardingModal({
 
             <button
               onClick={() => handleUserTypeSelect('senior')}
-              className={`relative flex flex-col items-center rounded-2xl border-2 p-5 transition-all ${
-                userType === 'senior'
-                  ? 'border-blue-500 bg-blue-50 shadow-sm'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
+              className={`relative flex flex-col items-center rounded-2xl border-2 p-5 transition-all ${userType === 'senior'
+                ? 'border-blue-500 bg-blue-50 shadow-sm'
+                : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
             >
               {userType === 'senior' && (
                 <div className="absolute flex items-center justify-center w-5 h-5 text-white bg-blue-500 rounded-full right-2 top-2">
@@ -1618,7 +1599,7 @@ export default function OnboardingModal({
             {renderSeniorStepContent()}
           </div>
 
-          <div className="mt-5 space-y-2 pb-safe">
+          <div className="mt-5 space-y-2 pb-safe sticky bottom-0 bg-white pt-3">
             {isReviewEditMode ? (
               <button
                 type="button"
@@ -1678,8 +1659,9 @@ export default function OnboardingModal({
               </>
             )}
           </div>
-        </div>
-      )}
+        </div >
+      )
+      }
 
       <style jsx>{`
         @keyframes seniorStepInFromRight {
@@ -1710,6 +1692,6 @@ export default function OnboardingModal({
           }
         }
       `}</style>
-    </FullPageModal>
+    </FullPageModal >
   );
 }

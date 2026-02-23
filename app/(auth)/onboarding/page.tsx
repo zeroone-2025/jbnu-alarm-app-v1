@@ -78,16 +78,16 @@ function OnboardingPageContent() {
       try {
         const payloadToSubmit = pendingData.seniorCareer
           ? {
-              ...pendingData,
-              seniorCareer: {
-                ...pendingData.seniorCareer,
-                contact: {
-                  ...pendingData.seniorCareer.contact,
-                  name: pendingData.seniorCareer.contact.name || user?.nickname || null,
-                  email: pendingData.seniorCareer.contact.email || user?.email || null,
-                },
+            ...pendingData,
+            seniorCareer: {
+              ...pendingData.seniorCareer,
+              contact: {
+                ...pendingData.seniorCareer.contact,
+                name: pendingData.seniorCareer.contact.name || user?.nickname || null,
+                email: pendingData.seniorCareer.contact.email || user?.email || null,
               },
-            }
+            },
+          }
           : pendingData;
 
         const result = await submitPendingOnboarding(payloadToSubmit);
@@ -113,11 +113,11 @@ function OnboardingPageContent() {
     })();
   }, [isAuthLoaded, isLoggedIn, queryClient, router, searchParams, setUser, showToast, user?.email, user?.nickname]);
 
-  const handleOnboardingComplete = (categories: string[], options?: OnboardingCompleteOptions) => {
+  const handleOnboardingComplete = async (categories: string[], options?: OnboardingCompleteOptions) => {
     localStorage.setItem('my_subscribed_categories', JSON.stringify(categories));
     clearPendingOnboarding();
     localStorage.removeItem(ONBOARDING_DRAFT_STORAGE_KEY);
-    router.replace(options?.redirectTo || '/');
+    await router.replace(options?.redirectTo || '/');
   };
 
   const handleRequireLogin = () => {
