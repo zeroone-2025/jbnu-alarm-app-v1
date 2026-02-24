@@ -213,41 +213,43 @@ export default function ClassDetailSheet({
                 {dayLabel}요일 {cls.start_time} ~ {cls.end_time}
               </InfoRow>
 
-              {displayedProfessor && (
-                <InfoRow icon={<FiUser size={14} />} label="담당교수">
-                  {displayedProfessor}
-                </InfoRow>
-              )}
+              <InfoRow icon={<FiMapPin size={14} />} label="강의실">
+                {displayedLocation || '정보 없음'}
+              </InfoRow>
 
-              {displayedLocation && (
-                <InfoRow icon={<FiMapPin size={14} />} label="강의실">
-                  {displayedLocation}
-                </InfoRow>
-              )}
+              {!isReviewRequired && (
+                <>
+                  {displayedProfessor && (
+                    <InfoRow icon={<FiUser size={14} />} label="담당교수">
+                      {displayedProfessor}
+                    </InfoRow>
+                  )}
 
-              {detail?.credits != null && (
-                <InfoRow icon={<FiAward size={14} />} label="학점">
-                  {detail.credits}학점
-                </InfoRow>
-              )}
+                  {detail?.credits != null && (
+                    <InfoRow icon={<FiAward size={14} />} label="학점">
+                      {detail.credits}학점
+                    </InfoRow>
+                  )}
 
-              {detail?.grade_type && (
-                <InfoRow icon={<FiActivity size={14} />} label="평가방식">
-                  {formatGradeType(detail.grade_type)}
-                </InfoRow>
-              )}
+                  {detail?.grade_type && (
+                    <InfoRow icon={<FiActivity size={14} />} label="평가방식">
+                      {formatGradeType(detail.grade_type)}
+                    </InfoRow>
+                  )}
 
-              {(detail?.field_area || detail?.field_detail) && (
-                <InfoRow icon={<FiBook size={14} />} label="교양분야">
-                  {[detail.field_area, detail.field_detail].filter(Boolean).join(' · ')}
-                </InfoRow>
-              )}
+                  {(detail?.field_area || detail?.field_detail) && (
+                    <InfoRow icon={<FiBook size={14} />} label="교양분야">
+                      {[detail.field_area, detail.field_detail].filter(Boolean).join(' · ')}
+                    </InfoRow>
+                  )}
 
-              {error && (
-                <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-400">
-                  <FiAlertCircle size={12} />
-                  수강편람 정보를 불러올 수 없습니다
-                </div>
+                  {error && (
+                    <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-400">
+                      <FiAlertCircle size={12} />
+                      수강편람 정보를 불러올 수 없습니다
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
