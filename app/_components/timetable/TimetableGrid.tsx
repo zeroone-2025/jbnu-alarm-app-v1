@@ -22,6 +22,7 @@ const BLOCK_COLORS = [
 interface TimetableGridProps {
   classes: TimetableClass[];
   needsReviewIds?: number[];
+  reviewReasonById?: Record<number, string>;
   cellHeight: number;
   showWeekends?: boolean;
   disabled?: boolean;
@@ -29,6 +30,7 @@ interface TimetableGridProps {
   onAdd: (data: { name: string; location?: string; day: number; start_time: string; end_time: string }) => void;
   onEdit: (cls: TimetableClass) => void;
   onDelete: (classId: number) => void;
+  onDeleteByName?: (name: string) => void;
   semester?: string;
 }
 
@@ -48,6 +50,7 @@ const TIME_COL_WIDTH = 28; // px
 export default function TimetableGrid({
   classes,
   needsReviewIds = [],
+  reviewReasonById = {},
   cellHeight,
   showWeekends = false,
   disabled = false,
@@ -55,6 +58,7 @@ export default function TimetableGrid({
   onAdd,
   onEdit,
   onDelete,
+  onDeleteByName,
   semester,
 }: TimetableGridProps) {
   const dayLabels = showWeekends ? DAY_LABELS_ALL : DAY_LABELS_WEEKDAY;
@@ -76,6 +80,7 @@ export default function TimetableGrid({
   } | null>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<TimetableClass | null>(null);
+  const [reviewActionTarget, setReviewActionTarget] = useState<TimetableClass | null>(null);
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -230,6 +235,8 @@ export default function TimetableGrid({
 
   const gridTemplateColumns = `${TIME_COL_WIDTH}px repeat(${dayCount}, 1fr)`;
 
+  const reviewReason = reviewActionTarget ? reviewReasonById[reviewActionTarget.id] : '';
+
   return (
     <>
       <div
@@ -287,7 +294,7 @@ export default function TimetableGrid({
             return (
               <div
                 key={cls.id}
-                className={`absolute z-10 cursor-pointer overflow-hidden rounded-md border p-1 ${color.bg} ${color.border} active:opacity-70`}
+                className={`absolute z-10 cursor-pointer overflow-visible rounded-md border p-1 ${color.bg} ${color.border} active:opacity-70`}
                 style={{
                   top: top + 1,
                   height: height - 2,
@@ -299,13 +306,24 @@ export default function TimetableGrid({
                 onTouchStart={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (needsReview) {
+                    setReviewActionTarget(cls);
+                    return;
+                  }
                   handleClassTap(cls);
                 }}
               >
-                {needsReview && height > 24 && (
-                  <div className="mb-0.5 inline-flex rounded bg-amber-500 px-1 py-0.5 text-[8px] leading-none font-bold text-white">
-                    수정
-                  </div>
+                {needsReview && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setReviewActionTarget(cls);
+                    }}
+                    className="absolute -top-2 -right-1.5 z-20 inline-flex items-center rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] leading-none font-bold text-white shadow-sm ring-1 ring-white whitespace-nowrap"
+                  >
+                    확인필요
+                  </button>
                 )}
                 <div className={`text-[10px] font-bold leading-tight ${color.text} break-words`}>
                   {cls.name}
@@ -344,6 +362,58 @@ export default function TimetableGrid({
         onEdit={onEdit}
         onDelete={(id) => { onDelete(id); }}
       />
+
+      {reviewActionTarget && (
+        <div
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/30"
+          onClick={() => setReviewActionTarget(null)}
+        >
+          <div
+            className="w-[calc(100%-1rem)] max-w-sm rounded-t-2xl bg-white p-4 pb-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-xs font-bold text-amber-600">확인 필요</p>
+            <p className="mt-1 truncate text-sm font-semibold text-gray-900">{reviewActionTarget.name}</p>
+            <p className="mt-1 text-xs text-gray-500">
+              {reviewReason || '해당 시간에 맞는 수업을 찾지 못했습니다. 수정 부탁드립니다.'}
+            </p>
+
+            <div className="mt-4 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onEdit(reviewActionTarget);
+                  setReviewActionTarget(null);
+                }}
+                className="w-full rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white transition-all hover:bg-gray-800"
+              >
+                수정하기
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onDeleteByName) {
+                    onDeleteByName(reviewActionTarget.name);
+                  } else {
+                    onDelete(reviewActionTarget.id);
+                  }
+                  setReviewActionTarget(null);
+                }}
+                className="w-full rounded-xl border border-red-200 py-3 text-sm font-semibold text-red-500 transition-all hover:bg-red-50"
+              >
+                삭제하기
+              </button>
+              <button
+                type="button"
+                onClick={() => setReviewActionTarget(null)}
+                className="w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

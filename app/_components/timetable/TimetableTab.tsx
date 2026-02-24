@@ -29,6 +29,7 @@ const SEMESTER_LABELS: Record<string, string> = {
   '2': '2학기',
   'winter': '겨울학기',
 };
+const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
 
 function getSemesterOptions(): { value: string; label: string }[] {
   const now = new Date();
@@ -68,6 +69,7 @@ export default function TimetableTab() {
   const [unmatchedQueue, setUnmatchedQueue] = useState<UnmatchedClass[]>([]);
   const [editingClass, setEditingClass] = useState<TimetableClass | null>(null);
   const [needsReviewIds, setNeedsReviewIds] = useState<number[]>([]);
+  const [reviewReasonById, setReviewReasonById] = useState<Record<number, string>>({});
 
   const semesterOptions = useMemo(() => getSemesterOptions(), []);
 
@@ -80,7 +82,7 @@ export default function TimetableTab() {
     enabled: isLoggedIn,  // ← 로그인 상태일 때만 API 호출
   });
 
-  const classes = timetable?.classes ?? [];
+  const classes = useMemo(() => timetable?.classes ?? [], [timetable]);
   const showWeekends = true;
 
   // Dynamic height calculation
@@ -141,6 +143,7 @@ export default function TimetableTab() {
 
       const autoAddedClasses: TimetableClass[] = [];
       const autoAddFailed: UnmatchedClass[] = [];
+      const autoAddedReasons: Record<number, string> = {};
 
       for (const item of autoAddCandidates) {
         try {
@@ -156,6 +159,9 @@ export default function TimetableTab() {
             selectedSemester
           );
           autoAddedClasses.push(addedClass);
+          const dayLabel = DAY_LABELS[item.day as number] ?? '요일';
+          const timeLabel = `${item.start_time as string}~${item.end_time as string}`;
+          autoAddedReasons[addedClass.id] = `${dayLabel}요일 ${timeLabel} - 해당 시간에 맞는 수업을 찾지 못했습니다. 수정 부탁드립니다.`;
         } catch {
           autoAddFailed.push(item);
         }
@@ -168,7 +174,11 @@ export default function TimetableTab() {
         });
       }
 
-      setNeedsReviewIds(autoAddedClasses.map((cls) => cls.id));
+      if (autoAddedClasses.length > 0) {
+        const autoAddedIds = autoAddedClasses.map((cls) => cls.id);
+        setNeedsReviewIds((prev) => Array.from(new Set([...prev, ...autoAddedIds])));
+        setReviewReasonById((prev) => ({ ...prev, ...autoAddedReasons }));
+      }
 
       const remainingQueue = [...manualCandidates, ...autoAddFailed];
       setUnmatchedQueue(remainingQueue);
@@ -215,6 +225,7 @@ export default function TimetableTab() {
       await deleteTimetable(selectedSemester);
       queryClient.setQueryData(['timetable', selectedSemester], null);
       setNeedsReviewIds([]);
+      setReviewReasonById({});
     } catch (err: any) {
       setError(err.response?.data?.detail || '삭제 중 오류가 발생했습니다.');
     }
@@ -254,11 +265,64 @@ export default function TimetableTab() {
           return { ...old, classes: old.classes.filter((c) => !deletedIds.has(c.id)) };
         });
         setNeedsReviewIds((prev) => prev.filter((id) => !deletedIds.has(id)));
+        setReviewReasonById((prev) => {
+          const next = { ...prev };
+          deletedIds.forEach((id) => {
+            delete next[id];
+          });
+          return next;
+        });
       } catch (err: any) {
         setError(err.response?.data?.detail || '삭제 중 오류가 발생했습니다.');
       }
     },
     [selectedSemester, queryClient]
+  );
+
+  const handleDeleteClassesByName = useCallback(
+    async (name: string) => {
+      const targetIds = Array.from(
+        new Set(classes.filter((cls) => cls.name === name).map((cls) => cls.id))
+      );
+      if (targetIds.length === 0) return;
+
+      const deletedIds = new Set<number>();
+
+      for (const classId of targetIds) {
+        if (deletedIds.has(classId)) continue;
+        try {
+          const result = await deleteTimetableClass(classId);
+          const ids =
+            result.deleted_class_ids && result.deleted_class_ids.length > 0
+              ? result.deleted_class_ids
+              : [classId];
+          ids.forEach((id) => deletedIds.add(id));
+        } catch (err: any) {
+          if (err?.response?.status === 404) {
+            deletedIds.add(classId);
+            continue;
+          }
+          setError(err.response?.data?.detail || '삭제 중 오류가 발생했습니다.');
+          break;
+        }
+      }
+
+      if (deletedIds.size === 0) return;
+
+      queryClient.setQueryData(['timetable', selectedSemester], (old: TimetableData | null | undefined) => {
+        if (!old) return old;
+        return { ...old, classes: old.classes.filter((c) => !deletedIds.has(c.id)) };
+      });
+      setNeedsReviewIds((prev) => prev.filter((id) => !deletedIds.has(id)));
+      setReviewReasonById((prev) => {
+        const next = { ...prev };
+        deletedIds.forEach((id) => {
+          delete next[id];
+        });
+        return next;
+      });
+    },
+    [classes, selectedSemester, queryClient]
   );
 
   const handleEditClass = useCallback((cls: TimetableClass) => {
@@ -275,6 +339,11 @@ export default function TimetableTab() {
           return { ...old, classes: old.classes.map((c) => c.id === updated.id ? updated : c) };
         });
         setNeedsReviewIds((prev) => prev.filter((id) => id !== updated.id));
+        setReviewReasonById((prev) => {
+          const next = { ...prev };
+          delete next[updated.id];
+          return next;
+        });
         setEditingClass(null);
       } catch (err: any) {
         setError(err.response?.data?.detail || '수정 중 오류가 발생했습니다.');
@@ -365,6 +434,7 @@ export default function TimetableTab() {
         <TimetableGrid
           classes={classes}
           needsReviewIds={needsReviewIds}
+          reviewReasonById={reviewReasonById}
           cellHeight={cellHeight}
           showWeekends={showWeekends}
           disabled={!isLoggedIn}
@@ -372,6 +442,7 @@ export default function TimetableTab() {
           onAdd={handleAddClass}
           onEdit={handleEditClass}
           onDelete={handleDeleteClass}
+          onDeleteByName={handleDeleteClassesByName}
           semester={selectedSemester}
         />
 
