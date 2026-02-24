@@ -1,13 +1,14 @@
 'use client';
 
 import type { CareerProfile } from '@/_types/career';
+
+import ActivitySection from './sections/ActivitySection';
+import CertificationSection from './sections/CertificationSection';
 import ContactSection from './sections/ContactSection';
 import EducationSection from './sections/EducationSection';
-import WorkSection from './sections/WorkSection';
-import SkillTagsSection from './sections/SkillTagsSection';
-import CertificationSection from './sections/CertificationSection';
-import ActivitySection from './sections/ActivitySection';
 import MentorQnASection from './sections/MentorQnASection';
+import SkillTagsSection from './sections/SkillTagsSection';
+import WorkSection from './sections/WorkSection';
 
 type EditingSection =
   | 'contact'
@@ -35,6 +36,9 @@ export default function ResumePreview({
   onSaveSuccess,
 }: ResumePreviewProps) {
   const isEmpty = !profile || profile.id === 0;
+  const isSectionBlocked = (section: Exclude<EditingSection, null>) =>
+    Boolean(editingSection && editingSection !== section);
+  const showMentorSection = Boolean(profile?.is_mentor);
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -51,7 +55,7 @@ export default function ResumePreview({
 
           <div className="border-t border-gray-100" />
 
-          <div className={`${editingSection && editingSection !== 'educations' ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={isSectionBlocked('educations') ? 'pointer-events-none opacity-50' : ''}>
             <EducationSection
               profile={profile}
               isEditing={editingSection === 'educations'}
@@ -64,7 +68,7 @@ export default function ResumePreview({
 
           <div className="border-t border-gray-100" />
 
-          <div className={`${editingSection && editingSection !== 'works' ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={isSectionBlocked('works') ? 'pointer-events-none opacity-50' : ''}>
             <WorkSection
               profile={profile}
               isEditing={editingSection === 'works'}
@@ -77,7 +81,7 @@ export default function ResumePreview({
 
           <div className="border-t border-gray-100" />
 
-          <div className={`${editingSection && editingSection !== 'skills' ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={isSectionBlocked('skills') ? 'pointer-events-none opacity-50' : ''}>
             <SkillTagsSection
               profile={profile}
               isEditing={editingSection === 'skills'}
@@ -88,9 +92,25 @@ export default function ResumePreview({
             />
           </div>
 
+          {showMentorSection && (
+            <>
+              <div className="border-t border-gray-100" />
+              <div className={isSectionBlocked('mentor-qna') ? 'pointer-events-none opacity-50' : ''}>
+                <MentorQnASection
+                  profile={profile}
+                  isEditing={editingSection === 'mentor-qna'}
+                  onEdit={() => onEditSection('mentor-qna')}
+                  onCancel={onCancelEdit}
+                  onSaveSuccess={() => onSaveSuccess('선배님 Q&A')}
+                  isEmpty={isEmpty}
+                />
+              </div>
+            </>
+          )}
+
           <div className="border-t border-gray-100" />
 
-          <div className={`${editingSection && editingSection !== 'certifications' ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={isSectionBlocked('certifications') ? 'pointer-events-none opacity-50' : ''}>
             <CertificationSection
               profile={profile}
               isEditing={editingSection === 'certifications'}
@@ -103,7 +123,7 @@ export default function ResumePreview({
 
           <div className="border-t border-gray-100" />
 
-          <div className={`${editingSection && editingSection !== 'activities' ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={isSectionBlocked('activities') ? 'pointer-events-none opacity-50' : ''}>
             <ActivitySection
               profile={profile}
               isEditing={editingSection === 'activities'}
@@ -114,29 +134,13 @@ export default function ResumePreview({
             />
           </div>
 
-          {profile?.is_mentor && (
-            <>
-              <div className="border-t border-gray-100" />
-              <div className={`${editingSection && editingSection !== 'mentor-qna' ? 'opacity-50 pointer-events-none' : ''}`}>
-                <MentorQnASection
-                  profile={profile}
-                  isEditing={editingSection === 'mentor-qna'}
-                  onEdit={() => onEditSection('mentor-qna')}
-                  onCancel={onCancelEdit}
-                  onSaveSuccess={() => onSaveSuccess('멘토 Q&A')}
-                  isEmpty={isEmpty}
-                />
-              </div>
-            </>
+          {isEmpty && (
+            <div className="mt-8 rounded-lg bg-blue-50 px-4 py-3 text-center">
+              <p className="text-sm font-medium text-blue-900">아직 작성된 이력이 없어요</p>
+              <p className="mt-1 text-xs text-blue-600">각 섹션 옆 ✎ 아이콘을 눌러 이력을 추가해보세요!</p>
+            </div>
           )}
         </div>
-
-        {isEmpty && (
-          <div className="mt-8 rounded-lg bg-blue-50 px-4 py-3 text-center">
-            <p className="text-sm font-medium text-blue-900">아직 작성된 이력이 없어요</p>
-            <p className="mt-1 text-xs text-blue-600">각 섹션 옆 ✎ 아이콘을 눌러 이력을 추가해보세요!</p>
-          </div>
-        )}
       </div>
     </div>
   );

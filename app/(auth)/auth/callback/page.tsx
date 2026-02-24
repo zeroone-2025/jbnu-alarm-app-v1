@@ -1,15 +1,12 @@
 'use client';
 
 import { Suspense, useEffect, useRef, useState } from 'react';
+
 import { useRouter, useSearchParams } from 'next/navigation';
+
 import { getUserProfile } from '@/_lib/api';
-import { useUserStore } from '@/_lib/store/useUserStore';
 import { setAccessToken } from '@/_lib/auth/tokenStore';
-import {
-  clearPendingOnboarding,
-  loadPendingOnboarding,
-  submitPendingOnboarding,
-} from '@/_lib/onboarding/pendingSubmission';
+import { useUserStore } from '@/_lib/store/useUserStore';
 
 function AuthCallbackContent() {
   const router = useRouter();
@@ -68,41 +65,11 @@ function AuthCallbackContent() {
           // 3. Zustand Store 업데이트 (리다이렉트 전 즉시 반영)
           setUser(userProfile);
 
-          // 온보딩 재개 저장 플로우: 콜백에서 바로 저장 후 홈으로 이동
+          // 로그인 후 온보딩 재개 플로우: 항상 온보딩 페이지로 복귀
           if (shouldResumeOnboarding) {
-            setStatus('온보딩 정보를 저장하는 중...');
-            const pendingData = loadPendingOnboarding();
-
-            if (pendingData) {
-              const payloadToSubmit = pendingData.mentorCareer
-                ? {
-                    ...pendingData,
-                    mentorCareer: {
-                      ...pendingData.mentorCareer,
-                      contact: {
-                        ...pendingData.mentorCareer.contact,
-                        name: pendingData.mentorCareer.contact.name || userProfile.nickname || null,
-                        email: pendingData.mentorCareer.contact.email || userProfile.email || null,
-                      },
-                    },
-                  }
-                : pendingData;
-
-              const saveResult = await submitPendingOnboarding(payloadToSubmit);
-              setUser(saveResult.user);
-              localStorage.setItem('my_subscribed_categories', JSON.stringify(saveResult.subscribedBoards));
-              clearPendingOnboarding();
-
-              if (pendingData.mentorCareer) {
-                setTimeout(() => {
-                  router.replace('/onboarding?mentor_completed=true');
-                }, 300);
-                return;
-              }
-            }
-
+            setStatus('온보딩으로 이동하는 중...');
             setTimeout(() => {
-              router.replace('/?login=success');
+              router.replace('/onboarding?resume_onboarding=true');
             }, 300);
             return;
           }
@@ -110,7 +77,7 @@ function AuthCallbackContent() {
           // 4. dept_code 확인
           if (!userProfile.dept_code) {
             // 신규 사용자: 항상 온보딩 페이지로 이동 (safeRedirect 무시)
-            setStatus('환영합니다! 학과 정보를 입력해주세요.');
+            setStatus('환영합니다! 온보딩 정보를 입력해주세요.');
             setTimeout(() => {
               router.replace('/onboarding?login=success');
             }, 500);
@@ -149,7 +116,7 @@ function AuthCallbackContent() {
         {/* 로딩 스피너 */}
         <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900"></div>
         {/* 로딩 문구 */}
-        <p className="text-sm text-gray-600">로그인 중입니다...</p>
+        <p className="text-sm text-gray-600">{status}</p>
       </div>
     </div>
   );
