@@ -44,7 +44,7 @@ function RollingDigit({ digit, delay }: { digit: string; delay: number }) {
     return (
         <span
             className="inline-block overflow-hidden relative"
-            style={{ width: '0.6em', lineHeight: '1' }}
+            style={{ width: '1ch', height: '1em', lineHeight: '1', textAlign: 'center' }}
         >
             {/* 이전 숫자 (위로 올라가며 사라짐) */}
             <span
@@ -117,7 +117,7 @@ function AnimatedCount({ value }: { value: number }) {
     const chars = formatted.split('');
 
     return (
-        <span className="inline-flex items-baseline font-bold text-blue-600" aria-label={`${displayValue}명`}>
+        <span className="inline-flex items-baseline font-bold text-blue-600" style={{ fontVariantNumeric: 'tabular-nums' }} aria-label={`${displayValue}명`}>
             {chars.map((char, i) => (
                 <RollingDigit
                     key={`${chars.length}-${i}`}
