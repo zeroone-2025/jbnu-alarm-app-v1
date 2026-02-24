@@ -30,6 +30,50 @@ const SEMESTER_LABELS: Record<string, string> = {
   'winter': '겨울학기',
 };
 const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
+const DEFAULT_START_TIME = '09:00';
+const DEFAULT_END_TIME = '10:00';
+
+function isValidTimeString(value: string | null | undefined): value is string {
+  return typeof value === 'string' && /^\d{2}:\d{2}$/.test(value);
+}
+
+function toMinutes(value: string): number {
+  const [hour, minute] = value.split(':').map(Number);
+  return hour * 60 + minute;
+}
+
+function toTimeString(minutes: number): string {
+  const normalized = Math.max(0, Math.min(minutes, 23 * 60 + 59));
+  const hour = Math.floor(normalized / 60);
+  const minute = normalized % 60;
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+function normalizeUnmatchedClass(item: UnmatchedClass) {
+  const day = item.day ?? 0;
+  const validStart = isValidTimeString(item.start_time);
+  const validEnd = isValidTimeString(item.end_time);
+
+  let startTime = validStart ? item.start_time : null;
+  let endTime = validEnd ? item.end_time : null;
+
+  if (!startTime && endTime) startTime = toTimeString(toMinutes(endTime) - 60);
+  if (startTime && !endTime) endTime = toTimeString(toMinutes(startTime) + 60);
+  if (!startTime) startTime = DEFAULT_START_TIME;
+  if (!endTime) endTime = DEFAULT_END_TIME;
+
+  const missingParts: string[] = [];
+  if (item.day === null) missingParts.push('요일');
+  if (!validStart || !validEnd) missingParts.push('시간');
+
+  const dayLabel = DAY_LABELS[day] ?? '요일';
+  const baseReason = `${dayLabel}요일 ${startTime}~${endTime}`;
+  const reason = missingParts.length > 0
+    ? `${baseReason} - ${missingParts.join('/')} 정보가 없어 임시값으로 저장했어요. 확인 후 수정해 주세요.`
+    : `${baseReason} - 해당 시간에 맞는 수업을 찾지 못했습니다. 수정 부탁드립니다.`;
+
+  return { day, startTime, endTime, reason };
+}
 
 function getSemesterOptions(): { value: string; label: string }[] {
   const now = new Date();
@@ -134,34 +178,26 @@ export default function TimetableTab() {
       queryClient.setQueryData(['timetable', selectedSemester], result.timetable);
 
       const unmatched = result.unmatched_classes ?? [];
-      const autoAddCandidates = unmatched.filter(
-        (item) => item.day !== null && item.start_time !== null && item.end_time !== null
-      );
-      const manualCandidates = unmatched.filter(
-        (item) => item.day === null || item.start_time === null || item.end_time === null
-      );
-
       const autoAddedClasses: TimetableClass[] = [];
       const autoAddFailed: UnmatchedClass[] = [];
       const autoAddedReasons: Record<number, string> = {};
 
-      for (const item of autoAddCandidates) {
+      for (const item of unmatched) {
+        const normalized = normalizeUnmatchedClass(item);
         try {
           const addedClass = await addTimetableClass(
             {
               name: item.name,
               professor: item.professor ?? undefined,
               location: item.location ?? undefined,
-              day: item.day as number,
-              start_time: item.start_time as string,
-              end_time: item.end_time as string,
+              day: normalized.day,
+              start_time: normalized.startTime,
+              end_time: normalized.endTime,
             },
             selectedSemester
           );
           autoAddedClasses.push(addedClass);
-          const dayLabel = DAY_LABELS[item.day as number] ?? '요일';
-          const timeLabel = `${item.start_time as string}~${item.end_time as string}`;
-          autoAddedReasons[addedClass.id] = `${dayLabel}요일 ${timeLabel} - 해당 시간에 맞는 수업을 찾지 못했습니다. 수정 부탁드립니다.`;
+          autoAddedReasons[addedClass.id] = normalized.reason;
         } catch {
           autoAddFailed.push(item);
         }
@@ -180,14 +216,12 @@ export default function TimetableTab() {
         setReviewReasonById((prev) => ({ ...prev, ...autoAddedReasons }));
       }
 
-      const remainingQueue = [...manualCandidates, ...autoAddFailed];
-      setUnmatchedQueue(remainingQueue);
+      setUnmatchedQueue([]);
 
-      if (autoAddedClasses.length > 0 || remainingQueue.length > 0) {
-        showToast(
-          `자동 반영 ${autoAddedClasses.length}개 · 직접 입력 필요 ${remainingQueue.length}개`,
-          remainingQueue.length > 0 ? 'error' : 'info'
-        );
+      if (autoAddFailed.length > 0) {
+        showToast(`자동 반영 ${autoAddedClasses.length}개 · 저장 실패 ${autoAddFailed.length}개`, 'error');
+      } else if (autoAddedClasses.length > 0) {
+        showToast(`자동 반영 ${autoAddedClasses.length}개`, 'info');
       } else {
         showToast('인식 완료', 'success');
       }

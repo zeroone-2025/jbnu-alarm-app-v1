@@ -294,7 +294,7 @@ export default function TimetableGrid({
             return (
               <div
                 key={cls.id}
-                className={`absolute z-10 cursor-pointer overflow-visible rounded-md border p-1 ${color.bg} ${color.border} active:opacity-70`}
+                className={`absolute cursor-pointer overflow-visible rounded-md border p-1 ${needsReview ? 'z-30' : 'z-10'} ${color.bg} ${color.border} active:opacity-70`}
                 style={{
                   top: top + 1,
                   height: height - 2,
@@ -320,7 +320,7 @@ export default function TimetableGrid({
                       e.stopPropagation();
                       setReviewActionTarget(cls);
                     }}
-                    className="absolute -top-2 -right-1.5 z-20 inline-flex items-center rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] leading-none font-bold text-white shadow-sm ring-1 ring-white whitespace-nowrap"
+                    className="absolute -top-2 -right-1.5 z-[60] inline-flex items-center rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] leading-none font-bold text-white shadow-sm ring-1 ring-white whitespace-nowrap"
                   >
                     확인필요
                   </button>
