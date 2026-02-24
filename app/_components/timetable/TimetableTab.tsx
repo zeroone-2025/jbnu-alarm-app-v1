@@ -67,6 +67,7 @@ export default function TimetableTab() {
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [unmatchedQueue, setUnmatchedQueue] = useState<UnmatchedClass[]>([]);
   const [editingClass, setEditingClass] = useState<TimetableClass | null>(null);
+  const [needsReviewIds, setNeedsReviewIds] = useState<number[]>([]);
 
   const semesterOptions = useMemo(() => getSemesterOptions(), []);
 
@@ -131,16 +132,55 @@ export default function TimetableTab() {
       queryClient.setQueryData(['timetable', selectedSemester], result.timetable);
 
       const unmatched = result.unmatched_classes ?? [];
-      const hasUnmatched = unmatched.length > 0;
+      const autoAddCandidates = unmatched.filter(
+        (item) => item.day !== null && item.start_time !== null && item.end_time !== null
+      );
+      const manualCandidates = unmatched.filter(
+        (item) => item.day === null || item.start_time === null || item.end_time === null
+      );
 
-      if (hasUnmatched) {
-        showToast('아직 인식이 안된 부분이 있으니 수정해주세요.', 'error');
+      const autoAddedClasses: TimetableClass[] = [];
+      const autoAddFailed: UnmatchedClass[] = [];
+
+      for (const item of autoAddCandidates) {
+        try {
+          const addedClass = await addTimetableClass(
+            {
+              name: item.name,
+              professor: item.professor ?? undefined,
+              location: item.location ?? undefined,
+              day: item.day as number,
+              start_time: item.start_time as string,
+              end_time: item.end_time as string,
+            },
+            selectedSemester
+          );
+          autoAddedClasses.push(addedClass);
+        } catch {
+          autoAddFailed.push(item);
+        }
+      }
+
+      if (autoAddedClasses.length > 0) {
+        queryClient.setQueryData(['timetable', selectedSemester], (old: TimetableData | null | undefined) => {
+          if (!old) return old;
+          return { ...old, classes: [...old.classes, ...autoAddedClasses] };
+        });
+      }
+
+      setNeedsReviewIds(autoAddedClasses.map((cls) => cls.id));
+
+      const remainingQueue = [...manualCandidates, ...autoAddFailed];
+      setUnmatchedQueue(remainingQueue);
+
+      if (autoAddedClasses.length > 0 || remainingQueue.length > 0) {
+        showToast(
+          `자동 반영 ${autoAddedClasses.length}개 · 직접 입력 필요 ${remainingQueue.length}개`,
+          remainingQueue.length > 0 ? 'error' : 'info'
+        );
       } else {
         showToast('인식 완료', 'success');
       }
-
-      // 미매칭 수업 큐에 추가
-      setUnmatchedQueue(unmatched);
 
       // 시스템 경고만 에러 배너로 표시
       if (result.warnings.length > 0) {
@@ -174,6 +214,7 @@ export default function TimetableTab() {
     try {
       await deleteTimetable(selectedSemester);
       queryClient.setQueryData(['timetable', selectedSemester], null);
+      setNeedsReviewIds([]);
     } catch (err: any) {
       setError(err.response?.data?.detail || '삭제 중 오류가 발생했습니다.');
     }
@@ -212,6 +253,7 @@ export default function TimetableTab() {
           if (!old) return old;
           return { ...old, classes: old.classes.filter((c) => !deletedIds.has(c.id)) };
         });
+        setNeedsReviewIds((prev) => prev.filter((id) => !deletedIds.has(id)));
       } catch (err: any) {
         setError(err.response?.data?.detail || '삭제 중 오류가 발생했습니다.');
       }
@@ -232,6 +274,7 @@ export default function TimetableTab() {
           if (!old) return old;
           return { ...old, classes: old.classes.map((c) => c.id === updated.id ? updated : c) };
         });
+        setNeedsReviewIds((prev) => prev.filter((id) => id !== updated.id));
         setEditingClass(null);
       } catch (err: any) {
         setError(err.response?.data?.detail || '수정 중 오류가 발생했습니다.');
@@ -321,6 +364,7 @@ export default function TimetableTab() {
       <div ref={containerRef} className="relative flex-1 min-h-0 mx-2 mb-2 rounded-xl border border-gray-200 bg-white overflow-hidden">
         <TimetableGrid
           classes={classes}
+          needsReviewIds={needsReviewIds}
           cellHeight={cellHeight}
           showWeekends={showWeekends}
           disabled={!isLoggedIn}

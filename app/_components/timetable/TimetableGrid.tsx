@@ -21,6 +21,7 @@ const BLOCK_COLORS = [
 
 interface TimetableGridProps {
   classes: TimetableClass[];
+  needsReviewIds?: number[];
   cellHeight: number;
   showWeekends?: boolean;
   disabled?: boolean;
@@ -44,7 +45,18 @@ function minutesToTime(minutes: number): string {
 
 const TIME_COL_WIDTH = 28; // px
 
-export default function TimetableGrid({ classes, cellHeight, showWeekends = false, disabled = false, onDisabledInteraction, onAdd, onEdit, onDelete, semester }: TimetableGridProps) {
+export default function TimetableGrid({
+  classes,
+  needsReviewIds = [],
+  cellHeight,
+  showWeekends = false,
+  disabled = false,
+  onDisabledInteraction,
+  onAdd,
+  onEdit,
+  onDelete,
+  semester,
+}: TimetableGridProps) {
   const dayLabels = showWeekends ? DAY_LABELS_ALL : DAY_LABELS_WEEKDAY;
   const dayCount = dayLabels.length;
   const halfHour = cellHeight / 2;
@@ -270,6 +282,7 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
             const colorIdx = colorMap.get(cls.name) ?? 0;
             const color = BLOCK_COLORS[colorIdx];
             const left = `calc(${TIME_COL_WIDTH}px + ${cls.day} * (100% - ${TIME_COL_WIDTH}px) / ${dayCount})`;
+            const needsReview = needsReviewIds.includes(cls.id);
 
             return (
               <div
@@ -289,6 +302,11 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
                   handleClassTap(cls);
                 }}
               >
+                {needsReview && height > 24 && (
+                  <div className="mb-0.5 inline-flex rounded bg-amber-500 px-1 py-0.5 text-[8px] leading-none font-bold text-white">
+                    수정
+                  </div>
+                )}
                 <div className={`text-[10px] font-bold leading-tight ${color.text} break-words`}>
                   {cls.name}
                 </div>
