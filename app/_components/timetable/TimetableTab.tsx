@@ -32,6 +32,7 @@ const SEMESTER_LABELS: Record<string, string> = {
 const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
 const DEFAULT_START_TIME = '09:00';
 const DEFAULT_END_TIME = '10:00';
+const TIMETABLE_REVIEW_STORAGE_PREFIX = 'timetable_review_reason_by_id:';
 
 function isValidTimeString(value: string | null | undefined): value is string {
   return typeof value === 'string' && /^\d{2}:\d{2}$/.test(value);
@@ -100,6 +101,7 @@ export default function TimetableTab() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const reviewHydratedRef = useRef(false);
   const { isLoggedIn } = useUser();
   const { showToast } = useToast();
 
@@ -116,6 +118,10 @@ export default function TimetableTab() {
   const [reviewReasonById, setReviewReasonById] = useState<Record<number, string>>({});
 
   const semesterOptions = useMemo(() => getSemesterOptions(), []);
+  const reviewStorageKey = useMemo(
+    () => `${TIMETABLE_REVIEW_STORAGE_PREFIX}${selectedSemester}`,
+    [selectedSemester]
+  );
 
   // Fetch timetable for selected semester
   const { data: timetable, isLoading } = useQuery<TimetableData | null>({
@@ -128,6 +134,60 @@ export default function TimetableTab() {
 
   const classes = useMemo(() => timetable?.classes ?? [], [timetable]);
   const showWeekends = true;
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    if (isLoading) return;
+    reviewHydratedRef.current = false;
+
+    const raw = localStorage.getItem(reviewStorageKey);
+    if (!raw) {
+      setNeedsReviewIds([]);
+      setReviewReasonById({});
+      reviewHydratedRef.current = true;
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as Record<string, string>;
+      const filteredReasonById: Record<number, string> = {};
+
+      Object.entries(parsed).forEach(([key, value]) => {
+        const id = Number(key);
+        if (Number.isInteger(id) && typeof value === 'string' && value.trim()) {
+          filteredReasonById[id] = value;
+        }
+      });
+
+      const filteredIds = Object.keys(filteredReasonById).map((key) => Number(key));
+      setNeedsReviewIds(filteredIds);
+      setReviewReasonById(filteredReasonById);
+
+      if (filteredIds.length === 0) {
+        localStorage.removeItem(reviewStorageKey);
+      } else {
+        localStorage.setItem(reviewStorageKey, JSON.stringify(filteredReasonById));
+      }
+    } catch {
+      localStorage.removeItem(reviewStorageKey);
+      setNeedsReviewIds([]);
+      setReviewReasonById({});
+    } finally {
+      reviewHydratedRef.current = true;
+    }
+  }, [isLoggedIn, isLoading, reviewStorageKey]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    if (!reviewHydratedRef.current) return;
+
+    if (Object.keys(reviewReasonById).length === 0) {
+      localStorage.removeItem(reviewStorageKey);
+      return;
+    }
+
+    localStorage.setItem(reviewStorageKey, JSON.stringify(reviewReasonById));
+  }, [isLoggedIn, reviewStorageKey, reviewReasonById]);
 
   // Dynamic height calculation
   useEffect(() => {
@@ -468,7 +528,6 @@ export default function TimetableTab() {
         <TimetableGrid
           classes={classes}
           needsReviewIds={needsReviewIds}
-          reviewReasonById={reviewReasonById}
           cellHeight={cellHeight}
           showWeekends={showWeekends}
           disabled={!isLoggedIn}

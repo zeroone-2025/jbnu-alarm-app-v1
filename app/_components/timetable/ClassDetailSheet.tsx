@@ -14,8 +14,10 @@ interface ClassDetailSheetProps {
   cls: TimetableClass | null;
   semester?: string;
   onClose: () => void;
+  isReviewRequired?: boolean;
   onEdit: (cls: TimetableClass) => void;
   onDelete: (classId: number) => void;
+  onDeleteByName?: (name: string) => void;
 }
 
 function formatGradeType(gradeType: string): string {
@@ -26,7 +28,15 @@ function formatGradeType(gradeType: string): string {
   return raw;
 }
 
-export default function ClassDetailSheet({ cls, semester, onClose, onEdit, onDelete }: ClassDetailSheetProps) {
+export default function ClassDetailSheet({
+  cls,
+  semester,
+  onClose,
+  isReviewRequired = false,
+  onEdit,
+  onDelete,
+  onDeleteByName,
+}: ClassDetailSheetProps) {
   const [detail, setDetail] = useState<ClassDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -71,9 +81,13 @@ export default function ClassDetailSheet({ cls, semester, onClose, onEdit, onDel
 
   const handleDelete = useCallback(() => {
     if (!cls) return;
-    onDelete(cls.id);
+    if (isReviewRequired && onDeleteByName) {
+      onDeleteByName(cls.name);
+    } else {
+      onDelete(cls.id);
+    }
     onClose();
-  }, [cls, onDelete, onClose]);
+  }, [cls, isReviewRequired, onDeleteByName, onDelete, onClose]);
 
   const handleDragStart = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -258,6 +272,14 @@ export default function ClassDetailSheet({ cls, semester, onClose, onEdit, onDel
             </div>
           ) : (
             <>
+              {isReviewRequired && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                  <p className="text-[10px] font-semibold tracking-wide text-amber-700 uppercase">확인 필요</p>
+                  <p className="mt-1 text-xs leading-relaxed text-amber-800">
+                    해당 정보에 맞는 수업을 찾지 못했습니다. 수정 부탁드립니다.
+                  </p>
+                </div>
+              )}
               <button
                 onClick={() => {
                   if (cls) onEdit(cls);

@@ -22,7 +22,6 @@ const BLOCK_COLORS = [
 interface TimetableGridProps {
   classes: TimetableClass[];
   needsReviewIds?: number[];
-  reviewReasonById?: Record<number, string>;
   cellHeight: number;
   showWeekends?: boolean;
   disabled?: boolean;
@@ -50,7 +49,6 @@ const TIME_COL_WIDTH = 28; // px
 export default function TimetableGrid({
   classes,
   needsReviewIds = [],
-  reviewReasonById = {},
   cellHeight,
   showWeekends = false,
   disabled = false,
@@ -80,7 +78,6 @@ export default function TimetableGrid({
   } | null>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<TimetableClass | null>(null);
-  const [reviewActionTarget, setReviewActionTarget] = useState<TimetableClass | null>(null);
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -235,7 +232,7 @@ export default function TimetableGrid({
 
   const gridTemplateColumns = `${TIME_COL_WIDTH}px repeat(${dayCount}, 1fr)`;
 
-  const reviewReason = reviewActionTarget ? reviewReasonById[reviewActionTarget.id] : '';
+  const isDeleteTargetReview = deleteTarget ? needsReviewIds.includes(deleteTarget.id) : false;
 
   return (
     <>
@@ -307,7 +304,7 @@ export default function TimetableGrid({
                 onClick={(e) => {
                   e.stopPropagation();
                   if (needsReview) {
-                    setReviewActionTarget(cls);
+                    handleClassTap(cls);
                     return;
                   }
                   handleClassTap(cls);
@@ -318,7 +315,7 @@ export default function TimetableGrid({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setReviewActionTarget(cls);
+                      handleClassTap(cls);
                     }}
                     className="absolute -top-2 -right-1.5 z-[60] inline-flex items-center rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] leading-none font-bold text-white shadow-sm ring-1 ring-white whitespace-nowrap"
                   >
@@ -359,61 +356,11 @@ export default function TimetableGrid({
         cls={deleteTarget}
         semester={semester}
         onClose={() => setDeleteTarget(null)}
+        isReviewRequired={isDeleteTargetReview}
         onEdit={onEdit}
+        onDeleteByName={onDeleteByName}
         onDelete={(id) => { onDelete(id); }}
       />
-
-      {reviewActionTarget && (
-        <div
-          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/30"
-          onClick={() => setReviewActionTarget(null)}
-        >
-          <div
-            className="w-[calc(100%-1rem)] max-w-sm rounded-t-2xl bg-white p-4 pb-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="text-xs font-bold text-amber-600">확인 필요</p>
-            <p className="mt-1 truncate text-sm font-semibold text-gray-900">{reviewActionTarget.name}</p>
-            <p className="mt-1 text-xs text-gray-500">
-              {reviewReason || '해당 시간에 맞는 수업을 찾지 못했습니다. 수정 부탁드립니다.'}
-            </p>
-
-            <div className="mt-4 space-y-2">
-              <button
-                type="button"
-                onClick={() => {
-                  onEdit(reviewActionTarget);
-                  setReviewActionTarget(null);
-                }}
-                className="w-full rounded-xl bg-gray-900 py-3 text-sm font-semibold text-white transition-all hover:bg-gray-800"
-              >
-                수정하기
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (onDeleteByName) {
-                    onDeleteByName(reviewActionTarget.name);
-                  } else {
-                    onDelete(reviewActionTarget.id);
-                  }
-                  setReviewActionTarget(null);
-                }}
-                className="w-full rounded-xl border border-red-200 py-3 text-sm font-semibold text-red-500 transition-all hover:bg-red-50"
-              >
-                삭제하기
-              </button>
-              <button
-                type="button"
-                onClick={() => setReviewActionTarget(null)}
-                className="w-full rounded-xl border border-gray-200 py-3 text-sm font-medium text-gray-600 transition-all hover:bg-gray-50"
-              >
-                취소
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
