@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --breakpoint-md: 52rem; /* 832px — iPad Pro 11" 세로부터 데스크톱 레이아웃 */
+}
+
 :root {
   --safe-area-top: env(safe-area-inset-top);
   --safe-area-bottom: env(safe-area-inset-bottom);

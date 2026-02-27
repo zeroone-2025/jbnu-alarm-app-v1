@@ -15,10 +15,10 @@ interface ChinbaHeatmapGridProps {
 
 function getHeatColor(unavailCount: number, total: number): string {
   if (total === 0) return 'bg-gray-50';
-  if (unavailCount === 0) return 'bg-emerald-100';
+  if (unavailCount === 0) return 'bg-emerald-300';
   const ratio = unavailCount / total;
-  if (ratio <= 0.25) return 'bg-orange-100';
-  if (ratio <= 0.5) return 'bg-orange-200';
+  if (ratio <= 0.25) return 'bg-emerald-200';
+  if (ratio <= 0.5) return 'bg-emerald-100';
   if (ratio <= 0.75) return 'bg-red-300';
   if (ratio < 1) return 'bg-red-500';
   return 'bg-red-800';
@@ -26,7 +26,7 @@ function getHeatColor(unavailCount: number, total: number): string {
 
 function getTextColor(unavailCount: number, total: number): string {
   if (total === 0) return 'text-gray-300';
-  if (unavailCount === 0) return 'text-emerald-600';
+  if (unavailCount === 0) return 'text-emerald-700';
   const ratio = unavailCount / total;
   if (ratio <= 0.5) return 'text-gray-700';
   return 'text-white';
@@ -139,9 +139,12 @@ export default function ChinbaHeatmapGrid({
                     }
                   }}
                 >
-                  {totalParticipants > 0 && unavailCount > 0 && (
-                    <span className={`text-[9px] font-bold ${txtColor}`}>{unavailCount}</span>
-                  )}
+                  {totalParticipants > 0 && (() => {
+                    const availCount = totalParticipants - unavailCount;
+                    return availCount > 0 ? (
+                      <span className={`text-[9px] font-bold ${txtColor}`}>{availCount}</span>
+                    ) : null;
+                  })()}
                 </div>
               );
             })}
@@ -168,9 +171,9 @@ export default function ChinbaHeatmapGrid({
       {/* Legend */}
       <div className="flex items-center justify-center gap-2 mt-3 px-2">
         <span className="text-[10px] text-gray-400">가능</span>
+        <div className="w-4 h-3 rounded-sm bg-emerald-300" />
+        <div className="w-4 h-3 rounded-sm bg-emerald-200" />
         <div className="w-4 h-3 rounded-sm bg-emerald-100" />
-        <div className="w-4 h-3 rounded-sm bg-orange-100" />
-        <div className="w-4 h-3 rounded-sm bg-orange-200" />
         <div className="w-4 h-3 rounded-sm bg-red-300" />
         <div className="w-4 h-3 rounded-sm bg-red-500" />
         <div className="w-4 h-3 rounded-sm bg-red-800" />
