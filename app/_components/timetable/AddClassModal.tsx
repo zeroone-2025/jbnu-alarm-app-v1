@@ -190,7 +190,7 @@ export default function AddClassModal({ isOpen, day, startTime, endTime, editing
             size="md"
             className="mt-2"
           >
-            {isEditMode ? '수정' : '추가'}
+            {isEditMode ? '저장' : '추가'}
           </Button>
         </form>
       </div>

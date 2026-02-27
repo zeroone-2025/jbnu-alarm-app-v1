@@ -1,9 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
 import { FiEdit3, FiPlus, FiTrash2 } from 'react-icons/fi';
+
 import { useSaveCareerActivities } from '@/_lib/hooks/useCareer';
 import type { CareerProfile, Activity } from '@/_types/career';
+
+type EditableActivity = Omit<Activity, 'id'>;
+
+const toEditableActivity = (activity: Activity): EditableActivity => {
+  const editable = { ...activity };
+  delete editable.id;
+  return editable;
+};
 
 interface ActivitySectionProps {
   profile: CareerProfile | null;
@@ -23,11 +33,11 @@ export default function ActivitySection({
   isEmpty,
 }: ActivitySectionProps) {
   const saveMutation = useSaveCareerActivities();
-  const [activities, setActivities] = useState<Omit<Activity, 'id'>[]>([]);
+  const [activities, setActivities] = useState<EditableActivity[]>([]);
 
   useEffect(() => {
     if (profile && profile.activities.length > 0) {
-      setActivities(profile.activities.map(({ id, ...rest }) => rest));
+      setActivities(profile.activities.map(toEditableActivity));
     } else {
       setActivities([]);
     }
@@ -48,7 +58,11 @@ export default function ActivitySection({
     setActivities(activities.filter((_, i) => i !== index));
   };
 
-  const handleChange = (index: number, field: keyof Omit<Activity, 'id'>, value: any) => {
+  const handleChange = <K extends keyof EditableActivity>(
+    index: number,
+    field: K,
+    value: EditableActivity[K],
+  ) => {
     const updated = [...activities];
     updated[index] = { ...updated[index], [field]: value };
     setActivities(updated);
@@ -66,7 +80,7 @@ export default function ActivitySection({
 
   const handleCancel = () => {
     if (profile && profile.activities.length > 0) {
-      setActivities(profile.activities.map(({ id, ...rest }) => rest));
+      setActivities(profile.activities.map(toEditableActivity));
     } else {
       setActivities([]);
     }
@@ -103,7 +117,7 @@ export default function ActivitySection({
                     type="text"
                     value={activity.period || ''}
                     onChange={(e) => handleChange(idx, 'period', e.target.value || null)}
-                    placeholder="2023.03-12"
+                    placeholder="2025.03-2026.02"
                     className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-900"
                   />
                 </div>
@@ -155,7 +169,7 @@ export default function ActivitySection({
     ? [
         {
           name: '창업 경진대회',
-          period: '2023.03-06',
+          period: '2025.03-2026.02',
           description: '팀 프로젝트로 참여하여 우수상 수상',
         },
       ]

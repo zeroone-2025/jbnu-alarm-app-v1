@@ -7,8 +7,6 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { getSocialLoginUrl, fetchSocialLoginUrl, OAuthProvider } from '@/_lib/api';
 import { setAccessToken } from '@/_lib/auth/tokenStore';
-import { useInAppBrowser } from '@/_context/InAppBrowserContext';
-import { isInAppBrowser } from '@/_lib/utils/external-browser';
 import { useRouter } from 'next/navigation';
 
 interface ProviderConfig {
@@ -56,7 +54,6 @@ export default function SocialLoginButton({
   onLoginStart,
   redirectTo,
 }: SocialLoginButtonProps) {
-  const { openModal } = useInAppBrowser();
   const router = useRouter();
   const config = PROVIDER_CONFIGS[provider];
 
@@ -125,11 +122,6 @@ export default function SocialLoginButton({
   }, [router]);
 
   const handleLogin = async () => {
-    if (isInAppBrowser()) {
-      openModal();
-      return;
-    }
-
     onLoginStart?.();
     localStorage.setItem('last_login_provider', provider);
 

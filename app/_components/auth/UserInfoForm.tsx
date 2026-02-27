@@ -1,6 +1,7 @@
 'use client';
 
 import { FiUser, FiHome, FiBook, FiHash, FiMail } from 'react-icons/fi';
+
 import DepartmentSearch from '@/_components/ui/DepartmentSearch';
 import type { Department } from '@/_types/department';
 
@@ -125,6 +126,7 @@ export default function UserInfoForm({
                             : 'bg-gray-50 focus:border-gray-900 focus:bg-white'
                             }`}
                     >
+                        <option value="">{isReadonly ? '미설정' : '-- 학교를 선택하세요 --'}</option>
                         <option value="전북대">전북대학교</option>
                         <option value="기타">기타</option>
                     </select>

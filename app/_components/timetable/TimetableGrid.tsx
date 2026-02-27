@@ -21,6 +21,7 @@ const BLOCK_COLORS = [
 
 interface TimetableGridProps {
   classes: TimetableClass[];
+  needsReviewIds?: number[];
   cellHeight: number;
   showWeekends?: boolean;
   disabled?: boolean;
@@ -28,6 +29,7 @@ interface TimetableGridProps {
   onAdd: (data: { name: string; location?: string; day: number; start_time: string; end_time: string }) => void;
   onEdit: (cls: TimetableClass) => void;
   onDelete: (classId: number) => void;
+  onDeleteByName?: (name: string) => void;
   semester?: string;
 }
 
@@ -44,7 +46,19 @@ function minutesToTime(minutes: number): string {
 
 const TIME_COL_WIDTH = 28; // px
 
-export default function TimetableGrid({ classes, cellHeight, showWeekends = false, disabled = false, onDisabledInteraction, onAdd, onEdit, onDelete, semester }: TimetableGridProps) {
+export default function TimetableGrid({
+  classes,
+  needsReviewIds = [],
+  cellHeight,
+  showWeekends = false,
+  disabled = false,
+  onDisabledInteraction,
+  onAdd,
+  onEdit,
+  onDelete,
+  onDeleteByName,
+  semester,
+}: TimetableGridProps) {
   const dayLabels = showWeekends ? DAY_LABELS_ALL : DAY_LABELS_WEEKDAY;
   const dayCount = dayLabels.length;
   const halfHour = cellHeight / 2;
@@ -218,6 +232,8 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
 
   const gridTemplateColumns = `${TIME_COL_WIDTH}px repeat(${dayCount}, 1fr)`;
 
+  const isDeleteTargetReview = deleteTarget ? needsReviewIds.includes(deleteTarget.id) : false;
+
   return (
     <>
       <div
@@ -270,11 +286,12 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
             const colorIdx = colorMap.get(cls.name) ?? 0;
             const color = BLOCK_COLORS[colorIdx];
             const left = `calc(${TIME_COL_WIDTH}px + ${cls.day} * (100% - ${TIME_COL_WIDTH}px) / ${dayCount})`;
+            const needsReview = needsReviewIds.includes(cls.id);
 
             return (
               <div
                 key={cls.id}
-                className={`absolute z-10 cursor-pointer overflow-hidden rounded-md border p-1 ${color.bg} ${color.border} active:opacity-70`}
+                className={`absolute cursor-pointer overflow-visible rounded-md border p-1 ${needsReview ? 'z-30' : 'z-10'} ${color.bg} ${color.border} active:opacity-70`}
                 style={{
                   top: top + 1,
                   height: height - 2,
@@ -286,9 +303,25 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
                 onTouchStart={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (needsReview) {
+                    handleClassTap(cls);
+                    return;
+                  }
                   handleClassTap(cls);
                 }}
               >
+                {needsReview && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleClassTap(cls);
+                    }}
+                    className="absolute -top-2 -right-1.5 z-[60] inline-flex items-center rounded-full bg-amber-500 px-1.5 py-0.5 text-[8px] leading-none font-bold text-white shadow-sm ring-1 ring-white whitespace-nowrap"
+                  >
+                    확인필요
+                  </button>
+                )}
                 <div className={`text-[10px] font-bold leading-tight ${color.text} break-words`}>
                   {cls.name}
                 </div>
@@ -323,7 +356,9 @@ export default function TimetableGrid({ classes, cellHeight, showWeekends = fals
         cls={deleteTarget}
         semester={semester}
         onClose={() => setDeleteTarget(null)}
+        isReviewRequired={isDeleteTargetReview}
         onEdit={onEdit}
+        onDeleteByName={onDeleteByName}
         onDelete={(id) => { onDelete(id); }}
       />
     </>

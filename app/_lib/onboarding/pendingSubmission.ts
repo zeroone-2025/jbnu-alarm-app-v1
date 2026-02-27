@@ -17,7 +17,7 @@ import type { OnboardingRequest, UserProfile } from '@/_types/user';
 
 export const PENDING_ONBOARDING_STORAGE_KEY = 'pending_onboarding_submission_v1';
 
-export interface PendingMentorCareerData {
+export interface PendingSeniorCareerData {
   contact: CareerContactUpdate;
   skills: CareerSkillsUpdate;
   works: CareerWorksUpdate;
@@ -27,7 +27,11 @@ export interface PendingMentorCareerData {
 
 export interface PendingOnboardingSubmission {
   onboarding: OnboardingRequest;
-  mentorCareer?: PendingMentorCareerData;
+  seniorCareer?: PendingSeniorCareerData;
+  seniorPrivacyConsent?: boolean;
+  // Legacy keys (backward compatibility)
+  mentorCareer?: PendingSeniorCareerData;
+  mentorPrivacyConsent?: boolean;
 }
 
 export interface OnboardingSubmissionResult {
@@ -35,9 +39,22 @@ export interface OnboardingSubmissionResult {
   subscribedBoards: string[];
 }
 
+function normalizePendingSubmission(payload: PendingOnboardingSubmission): PendingOnboardingSubmission {
+  const seniorCareer = payload.seniorCareer ?? payload.mentorCareer;
+  const seniorPrivacyConsent =
+    typeof payload.seniorPrivacyConsent === 'boolean' ? payload.seniorPrivacyConsent : payload.mentorPrivacyConsent;
+
+  return {
+    onboarding: payload.onboarding,
+    ...(seniorCareer ? { seniorCareer } : {}),
+    ...(typeof seniorPrivacyConsent === 'boolean' ? { seniorPrivacyConsent } : {}),
+  };
+}
+
 export function savePendingOnboarding(payload: PendingOnboardingSubmission): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(PENDING_ONBOARDING_STORAGE_KEY, JSON.stringify(payload));
+  const normalized = normalizePendingSubmission(payload);
+  localStorage.setItem(PENDING_ONBOARDING_STORAGE_KEY, JSON.stringify(normalized));
 }
 
 export function loadPendingOnboarding(): PendingOnboardingSubmission | null {
@@ -46,7 +63,7 @@ export function loadPendingOnboarding(): PendingOnboardingSubmission | null {
   if (!raw) return null;
 
   try {
-    return JSON.parse(raw) as PendingOnboardingSubmission;
+    return normalizePendingSubmission(JSON.parse(raw) as PendingOnboardingSubmission);
   } catch {
     return null;
   }
@@ -60,14 +77,15 @@ export function clearPendingOnboarding(): void {
 export async function submitPendingOnboarding(
   payload: PendingOnboardingSubmission,
 ): Promise<OnboardingSubmissionResult> {
-  const onboardingResult = await completeOnboarding(payload.onboarding);
+  const normalized = normalizePendingSubmission(payload);
+  const onboardingResult = await completeOnboarding(normalized.onboarding);
 
-  if (payload.onboarding.user_type === 'mentor' && payload.mentorCareer) {
-    await saveCareerContact(payload.mentorCareer.contact);
-    await saveCareerSkills(payload.mentorCareer.skills);
-    await saveCareerWorks(payload.mentorCareer.works);
-    await saveCareerEducations(payload.mentorCareer.educations);
-    await saveCareerMentorQnA(payload.mentorCareer.mentor_qna);
+  if (normalized.onboarding.user_type === 'mentor' && normalized.seniorCareer) {
+    await saveCareerContact(normalized.seniorCareer.contact);
+    await saveCareerSkills(normalized.seniorCareer.skills);
+    await saveCareerWorks(normalized.seniorCareer.works);
+    await saveCareerEducations(normalized.seniorCareer.educations);
+    await saveCareerMentorQnA(normalized.seniorCareer.mentor_qna);
   }
 
   return {

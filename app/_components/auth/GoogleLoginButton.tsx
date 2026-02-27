@@ -1,15 +1,15 @@
 'use client';
 
 import { useEffect } from 'react';
-import { FiLogIn } from 'react-icons/fi';
-import { Browser } from '@capacitor/browser';
+
 import { App } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
+import { useRouter } from 'next/navigation';
+import { FiLogIn } from 'react-icons/fi';
+
 import { getGoogleLoginUrl, fetchGoogleLoginUrl } from '@/_lib/api';
 import { setAccessToken } from '@/_lib/auth/tokenStore';
-import { useInAppBrowser } from '@/_context/InAppBrowserContext';
-import { isInAppBrowser } from '@/_lib/utils/external-browser';
-import { useRouter } from 'next/navigation';
 
 interface GoogleLoginButtonProps {
   onLoginStart?: () => void;
@@ -20,7 +20,6 @@ export default function GoogleLoginButton({
   onLoginStart,
   fullWidth = false
 }: GoogleLoginButtonProps) {
-  const { openModal } = useInAppBrowser();
   const router = useRouter();
 
   const getRedirectTo = () => {
@@ -33,7 +32,7 @@ export default function GoogleLoginButton({
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    let listenerHandle: any;
+    let listenerHandle: { remove: () => void } | null = null;
     let isProcessing = false; // 중복 처리 방지 플래그
 
     const handleDeepLink = async (urlString: string) => {
@@ -58,7 +57,7 @@ export default function GoogleLoginButton({
 
           try {
             await Browser.close();
-          } catch (e) {
+          } catch {
             // 브라우저가 이미 닫혀있을 수 있음
           }
 
@@ -94,11 +93,6 @@ export default function GoogleLoginButton({
   }, [router]);
 
   const handleLogin = async () => {
-    if (isInAppBrowser()) {
-      openModal();
-      return;
-    }
-
     onLoginStart?.();
     localStorage.setItem('last_login_provider', 'google');
 
