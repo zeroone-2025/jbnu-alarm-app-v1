@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { FiUser, FiSettings, FiBell, FiUsers, FiLogOut, FiHome, FiInstagram, FiMail, FiExternalLink } from 'react-icons/fi';
+import { FiUser, FiSettings, FiBell, FiUsers, FiLogOut, FiHome, FiInstagram, FiMail, FiExternalLink, FiChevronsLeft } from 'react-icons/fi';
 import { SiNaver } from 'react-icons/si';
 
 import { IconType } from 'react-icons';
@@ -17,6 +17,7 @@ import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 interface SidebarContentProps {
   onNavigate: (path: string) => void;
   onShowToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  onCollapse?: () => void;
 }
 
 interface ServiceItem {
@@ -40,7 +41,7 @@ function formatAdmissionYear(year: number | null | undefined): string | null {
   return `${String(year).slice(-2)}학번`;
 }
 
-export default function SidebarContent({ onNavigate, onShowToast }: SidebarContentProps) {
+export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: SidebarContentProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoggedIn, isAuthLoaded, isLoading } = useUser();
@@ -116,6 +117,19 @@ export default function SidebarContent({ onNavigate, onShowToast }: SidebarConte
 
   return (
     <div className="flex flex-col h-full w-full">
+      {/* Collapse button (desktop only) */}
+      {onCollapse && (
+        <div className="hidden md:flex justify-end px-3 pt-3">
+          <button
+            onClick={onCollapse}
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            title="사이드바 접기"
+          >
+            <FiChevronsLeft size={18} />
+          </button>
+        </div>
+      )}
+
       {/* Profile Card */}
       <div className="pt-safe px-5 pb-4 md:pt-0">
         <div className="pt-8">

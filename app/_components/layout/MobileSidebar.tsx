@@ -17,13 +17,13 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     <div className="md:hidden">
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-40 bg-black/50 transition-all duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}
+        className={`absolute inset-0 z-40 bg-black/50 transition-all duration-300 ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}
         onClick={onClose}
       />
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-[340px] transform bg-white shadow-xl transition-all duration-300 ease-in-out ${isOpen ? 'translate-x-0 visible' : '-translate-x-full invisible'}`}
+        className={`absolute inset-y-0 left-0 z-50 w-[280px] transform bg-white shadow-xl transition-all duration-300 ease-in-out ${isOpen ? 'translate-x-0 visible' : '-translate-x-full invisible'}`}
       >
         <SidebarContent
           onNavigate={(path) => {
