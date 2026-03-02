@@ -7,6 +7,7 @@ import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 import ConfirmModal from '@/_components/ui/ConfirmModal';
 import Toast from '@/_components/ui/Toast';
 import FullPageModal from '@/_components/layout/FullPageModal';
+import { useSmartBack } from '@/_lib/hooks/useSmartBack';
 import { useUser } from '@/_lib/hooks/useUser';
 import { useChinbaEventDetail, useDeleteChinbaEvent, useCompleteChinbaEvent } from '@/_lib/hooks/useChinba';
 import TeamScheduleTab from './TeamScheduleTab';
@@ -25,6 +26,7 @@ function formatDateRange(dates: string[]): string {
 export default function ChinbaDetailClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const smartBack = useSmartBack();
   const eventId = searchParams.get('id') || '';
   const lastTabKey = `chinba:event:${eventId}:last-tab`;
 
@@ -165,7 +167,7 @@ export default function ChinbaDetailClient() {
   // Loading state
   if (!isAuthLoaded || isLoading) {
     return (
-      <FullPageModal isOpen={true} onClose={() => router.back()} title="친바">
+      <FullPageModal isOpen={true} onClose={smartBack} title="친바">
         <div className="flex h-full items-center justify-center">
           <LoadingSpinner size="lg" />
         </div>
@@ -176,7 +178,7 @@ export default function ChinbaDetailClient() {
   // Error state
   if (error || !event) {
     return (
-      <FullPageModal isOpen={true} onClose={() => router.back()} title="친바">
+      <FullPageModal isOpen={true} onClose={smartBack} title="친바">
         <div className="flex h-full flex-col items-center justify-center">
           <p className="text-sm text-gray-500">이벤트를 찾을 수 없습니다</p>
           <button
@@ -192,7 +194,7 @@ export default function ChinbaDetailClient() {
 
   return (
     <>
-      <FullPageModal isOpen={true} onClose={() => router.back()} title={event.title || '친바'}>
+      <FullPageModal isOpen={true} onClose={smartBack} title={event.title || '친바'}>
         {/* Event Detail Header */}
         <div className="shrink-0 px-4 pb-2 border-b border-gray-100">
           <div className="flex items-center justify-between">
