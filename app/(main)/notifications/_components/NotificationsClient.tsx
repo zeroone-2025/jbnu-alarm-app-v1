@@ -16,12 +16,14 @@ import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
 import FullPageModal from '@/_components/layout/FullPageModal';
 import KeywordSettingsBar from '@/_components/ui/KeywordSettingsBar';
 import PullToRefreshIndicator from '@/_components/ui/PullToRefreshIndicator';
+import { useSmartBack } from '@/_lib/hooks/useSmartBack';
 import { useUser } from '@/_lib/hooks/useUser';
 
 type LoadMode = 'initial' | 'refresh' | 'retry';
 
 export default function NotificationsClient() {
   const router = useRouter();
+  const smartBack = useSmartBack();
   const { isLoggedIn } = useUser();
   const [keywordCount, setKeywordCount] = useState<number | null>(null);
   const [keywordNotices, setKeywordNotices] = useState<Notice[]>([]);
@@ -205,7 +207,7 @@ export default function NotificationsClient() {
 
   return (
     <>
-      <FullPageModal isOpen={true} onClose={() => router.back()} title="알림">
+      <FullPageModal isOpen={true} onClose={smartBack} title="알림">
         <KeywordSettingsBar
           keywordCount={keywordCountLabel}
           onSettingsClick={() => {
