@@ -2,15 +2,17 @@
 
 import { useRouter } from 'next/navigation';
 import { useSelectedCategories } from '@/_lib/hooks/useSelectedCategories';
+import { useSmartBack } from '@/_lib/hooks/useSmartBack';
 import FullPageModal from '@/_components/layout/FullPageModal';
 import BoardFilterContent from './_components/BoardFilterContent';
 
 export default function FilterPage() {
     const router = useRouter();
+    const smartBack = useSmartBack();
     const { selectedCategories, updateSelectedCategories } = useSelectedCategories();
 
     const handleClose = () => {
-        router.back();
+        smartBack();
     };
 
     const handleApply = async (boards: string[]) => {
@@ -22,7 +24,7 @@ export default function FilterPage() {
         } catch (error) {
             console.error('Failed to apply filters:', error);
             // 에러 시에도 일단 뒤로가기 시도하거나 알림 표시 가능
-            router.back();
+            smartBack();
         }
     };
 

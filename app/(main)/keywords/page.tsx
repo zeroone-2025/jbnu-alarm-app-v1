@@ -6,6 +6,7 @@ import KeywordsModalContent from './_components/KeywordsModalContent';
 import Button from '@/_components/ui/Button';
 import { useRouter } from 'next/navigation'; // Added missing import for useRouter
 import { useEffect } from 'react'; // Added missing import for useEffect
+import { useSmartBack } from '@/_lib/hooks/useSmartBack';
 
 /**
  * 키워드 관리 페이지
@@ -14,6 +15,7 @@ import { useEffect } from 'react'; // Added missing import for useEffect
  */
 export default function KeywordsPage() {
   const router = useRouter();
+  const smartBack = useSmartBack();
   const { isLoggedIn, isAuthLoaded } = useUser();
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export default function KeywordsPage() {
   }, [isAuthLoaded, isLoggedIn, router]);
 
   const handleClose = () => {
-    router.back();
+    smartBack();
   };
 
   const handleUpdate = () => {

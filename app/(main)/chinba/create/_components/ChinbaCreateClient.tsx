@@ -8,11 +8,13 @@ import Toast from '@/_components/ui/Toast';
 import FullPageModal from '@/_components/layout/FullPageModal';
 import { getLoginUrl } from '@/_lib/utils/requireLogin';
 import { useCreateChinbaEvent } from '@/_lib/hooks/useChinba';
+import { useSmartBack } from '@/_lib/hooks/useSmartBack';
 import { useUser } from '@/_lib/hooks/useUser';
 import DateSelector from './DateSelector';
 
 export default function ChinbaCreateClient() {
   const router = useRouter();
+  const smartBack = useSmartBack();
   const createEvent = useCreateChinbaEvent();
   const { isLoggedIn } = useUser();
 
@@ -75,7 +77,7 @@ export default function ChinbaCreateClient() {
 
   return (
     <>
-      <FullPageModal isOpen={true} onClose={() => router.back()} title="새 일정 만들기">
+      <FullPageModal isOpen={true} onClose={smartBack} title="새 일정 만들기">
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-4">
           {error && (
