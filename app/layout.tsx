@@ -5,6 +5,7 @@ import Script from 'next/script';
 import './globals.css';
 import DevHostMetaTag from './_components/system/DevHostMetaTag';
 import ServiceWorkerRegistration from './_components/system/ServiceWorkerRegistration';
+import NavigationTracker from './_lib/navigation/NavigationTracker';
 import Providers from './providers';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -58,6 +59,7 @@ gtag('config', 'G-SMF31V39T9');`}
       <body className={`${inter.className} flex h-screen flex-col bg-gray-50 text-gray-900`}>
         <ServiceWorkerRegistration />
         <Providers>
+          <NavigationTracker />
           <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
         </Providers>
       </body>
