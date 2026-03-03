@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  getKeywordNotices,
+  getAllKeywordNotices,
   getMyKeywords,
   markNoticeAsRead,
   toggleNoticeFavorite,
@@ -79,7 +79,7 @@ export default function NotificationsClient() {
         return;
       }
 
-      const notices = await getKeywordNotices(0, 200, true);
+      const notices = await getAllKeywordNotices(true);
       setKeywordNotices(notices);
       setLoadError(null);
     } catch (error) {

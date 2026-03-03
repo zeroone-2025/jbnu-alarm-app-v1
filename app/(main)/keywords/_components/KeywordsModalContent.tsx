@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { addKeyword, deleteKeyword, getMyKeywords, Keyword } from '@/_lib/api';
 import { useUser } from '@/_lib/hooks/useUser';
@@ -20,6 +20,7 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [showToast, setShowToast] = useState(false);
   const [toastKey, setToastKey] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const showToastMessage = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToastMessage(message);
@@ -57,11 +58,16 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
       showToastMessage('로그인 후 사용할 수 있습니다.', 'info');
       return;
     }
+    if (keywords.length >= 20) {
+      showToastMessage('키워드는 최대 20개까지 등록할 수 있어요.', 'info');
+      return;
+    }
 
     try {
       const created = await addKeyword(trimmed);
       setKeywords((prev) => [created, ...prev]);
       setKeywordInput('');
+      inputRef.current?.focus();
       showToastMessage('키워드가 추가되었습니다.', 'success');
       onUpdate?.();
     } catch (error) {
@@ -114,11 +120,12 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
               <label className="text-sm font-semibold text-gray-700">키워드 추가</label>
               <div className="mt-3 flex gap-2">
                 <input
+                  ref={inputRef}
                   value={keywordInput}
                   onChange={(e) => setKeywordInput(e.target.value)}
                   placeholder="키워드 입력 (예: 공모전, 장학금)"
                   className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
-                  onKeyPress={(e) => {
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter') handleAddKeyword();
                   }}
                 />

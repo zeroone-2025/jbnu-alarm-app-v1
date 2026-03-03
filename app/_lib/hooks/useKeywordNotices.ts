@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Notice, getKeywordNotices, getMyKeywords } from '@/_lib/api';
 import { getLatestKeywordNoticeAt } from '@/_lib/utils/notice';
+
+const KEYWORD_SEEN_EVENT = 'keyword-notices-seen';
 
 /**
  * 키워드 공지 알림 카운트만 관리하는 경량 훅 (SharedHeader용)
@@ -43,7 +45,7 @@ export function useKeywordNotices(isLoggedIn: boolean) {
     }
   };
 
-  const updateKeywordBadge = (items: Notice[]) => {
+  const updateKeywordBadge = useCallback((items: Notice[]) => {
     if (typeof window === 'undefined') return;
     if (items.length === 0) {
       setHasNewKeywordNotices(false);
@@ -58,26 +60,29 @@ export function useKeywordNotices(isLoggedIn: boolean) {
     }
     const seenAt = localStorage.getItem('keyword_notice_seen_at');
     if (!seenAt) {
-      if (items.length > 0) {
-        localStorage.setItem('keyword_notice_seen_at', new Date(latest).toISOString());
+      const unreadCount = items.filter(n => !n.is_read).length;
+      if (unreadCount > 0) {
+        setHasNewKeywordNotices(true);
+        setNewKeywordCount(unreadCount);
       } else {
         localStorage.setItem('keyword_notice_seen_at', new Date().toISOString());
+        setHasNewKeywordNotices(false);
+        setNewKeywordCount(0);
       }
-      setHasNewKeywordNotices(false);
-      setNewKeywordCount(0);
       return;
     }
 
     const seenTime = new Date(seenAt).getTime();
-    setHasNewKeywordNotices(latest > seenTime);
 
     const newCount = items.filter(notice => {
+      if (notice.is_read) return false;
       const noticeTime = new Date(notice.created_at ?? notice.date).getTime();
       return noticeTime > seenTime;
     }).length;
 
+    setHasNewKeywordNotices(newCount > 0);
     setNewKeywordCount(newCount);
-  };
+  }, []);
 
   const markKeywordNoticesSeen = (items: Notice[]) => {
     if (typeof window === 'undefined') return;
@@ -86,6 +91,8 @@ export function useKeywordNotices(isLoggedIn: boolean) {
     localStorage.setItem('keyword_notice_seen_at', new Date(latest).toISOString());
     setHasNewKeywordNotices(false);
     setNewKeywordCount(0);
+    // 다른 훅 인스턴스에 알림
+    window.dispatchEvent(new Event(KEYWORD_SEEN_EVENT));
   };
 
   // 초기화: 로그인 시 키워드 공지 로드
@@ -110,7 +117,14 @@ export function useKeywordNotices(isLoggedIn: boolean) {
       return;
     }
     updateKeywordBadge(keywordNotices);
-  }, [keywordNotices, isLoggedIn]);
+  }, [keywordNotices, isLoggedIn, updateKeywordBadge]);
+
+  // 다른 훅 인스턴스에서 seen 처리 시 배지 재계산
+  useEffect(() => {
+    const handleSeen = () => updateKeywordBadge(keywordNotices);
+    window.addEventListener(KEYWORD_SEEN_EVENT, handleSeen);
+    return () => window.removeEventListener(KEYWORD_SEEN_EVENT, handleSeen);
+  }, [keywordNotices, updateKeywordBadge]);
 
   return {
     keywordNotices,

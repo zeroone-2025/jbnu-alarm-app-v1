@@ -35,3 +35,25 @@ export const getKeywordNotices = async (
     });
     return response.data;
 };
+
+// 키워드 공지 전체 조회
+export const getAllKeywordNotices = async (
+    includeRead: boolean = true,
+    pageSize: number = 50,
+): Promise<Notice[]> => {
+    const allNotices: Notice[] = [];
+    let page = 0;
+
+    while (page < 20) {
+        const batch = await getKeywordNotices(page, pageSize, includeRead);
+        allNotices.push(...batch);
+
+        if (batch.length < pageSize) {
+            break;
+        }
+
+        page += 1;
+    }
+
+    return allNotices;
+};
