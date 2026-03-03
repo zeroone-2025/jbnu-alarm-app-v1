@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Notice, getKeywordNotices, getMyKeywords } from '@/_lib/api';
+import { useState, useEffect, useCallback } from 'react';
+import { Notice, getAllKeywordNotices, getMyKeywords } from '@/_lib/api';
 import { getLatestKeywordNoticeAt } from '@/_lib/utils/notice';
 import { FilterType } from '@/_types/filter';
+
+const KEYWORD_SEEN_EVENT = 'keyword-notices-seen';
 
 /**
  * 키워드 공지사항 관련 로직을 관리하는 Hook
@@ -18,7 +20,7 @@ export function useKeywordNotices(isLoggedIn: boolean, filter: FilterType) {
   // 키워드 공지 로딩
   const loadKeywordNotices = async () => {
     try {
-      const data = await getKeywordNotices(0, 200, true);
+      const data = await getAllKeywordNotices(true);
       setKeywordNotices(data);
     } catch (error) {
       console.error('Failed to load keyword notices', error);
@@ -28,7 +30,7 @@ export function useKeywordNotices(isLoggedIn: boolean, filter: FilterType) {
   // 키워드 공지 로딩 (백그라운드, 에러 무시)
   const loadKeywordNoticesSilent = async () => {
     try {
-      const data = await getKeywordNotices(0, 200, true);
+      const data = await getAllKeywordNotices(true);
       setKeywordNotices(data);
     } catch (error) {
       console.error('Failed to load keyword notices', error);
@@ -50,7 +52,7 @@ export function useKeywordNotices(isLoggedIn: boolean, filter: FilterType) {
   };
 
   // 새 키워드 공지 배지 업데이트
-  const updateKeywordBadge = (items: Notice[]) => {
+  const updateKeywordBadge = useCallback((items: Notice[]) => {
     if (typeof window === 'undefined') return;
     if (items.length === 0) {
       setHasNewKeywordNotices(false);
@@ -65,32 +67,33 @@ export function useKeywordNotices(isLoggedIn: boolean, filter: FilterType) {
     }
     const seenAt = localStorage.getItem('keyword_notice_seen_at');
     if (!seenAt) {
-      // 처음 접속하거나 이력이 없을 때는 현재 목록을 모두 '이미 본 것'으로 간주하거나 현재 시간으로 초기화
-      // 사용자 요청: 크롤러 추가 시점(00:00) 이후의 것만 알림으로 받고 싶어함.
-      // 백엔드에서 이미 키워드 추가 시점 이후의 공지만 주므로, 
-      // 여기서 seenAt을 설치 시점(현재 최신 공지의 시각 또는 현재 시각)으로 잡으면
-      // 이후에 새로 들어오는 공지만 '새 알림'이 됨.
-      if (items.length > 0) {
-        localStorage.setItem('keyword_notice_seen_at', new Date(latest).toISOString());
+      const unreadCount = items.filter(n => !n.is_read).length;
+      if (unreadCount > 0) {
+        // 읽지 않은 매칭 공지가 있으면 "새 알림 있음"으로 표시
+        setHasNewKeywordNotices(true);
+        setNewKeywordCount(unreadCount);
+        // seenAt은 사용자가 KEYWORD 탭에 실제로 진입했을 때만 설정
+        // (markKeywordNoticesSeen에서 처리)
       } else {
         localStorage.setItem('keyword_notice_seen_at', new Date().toISOString());
+        setHasNewKeywordNotices(false);
+        setNewKeywordCount(0);
       }
-      setHasNewKeywordNotices(false);
-      setNewKeywordCount(0);
       return;
     }
 
     const seenTime = new Date(seenAt).getTime();
-    setHasNewKeywordNotices(latest > seenTime);
 
-    // 새 알림 개수 계산 (seenTime보다 나중에 생성된 공지들)
+    // 새 알림 = seenTime 이후 생성 + 아직 읽지 않은 공지만
     const newCount = items.filter(notice => {
+      if (notice.is_read) return false;
       const noticeTime = new Date(notice.created_at ?? notice.date).getTime();
       return noticeTime > seenTime;
     }).length;
 
+    setHasNewKeywordNotices(newCount > 0);
     setNewKeywordCount(newCount);
-  };
+  }, []);
 
   // 키워드 공지 읽음 처리
   const markKeywordNoticesSeen = (items: Notice[]) => {
@@ -99,6 +102,9 @@ export function useKeywordNotices(isLoggedIn: boolean, filter: FilterType) {
     if (!latest) return;
     localStorage.setItem('keyword_notice_seen_at', new Date(latest).toISOString());
     setHasNewKeywordNotices(false);
+    setNewKeywordCount(0);
+    // 다른 훅 인스턴스에 알림
+    window.dispatchEvent(new Event(KEYWORD_SEEN_EVENT));
   };
 
   // 초기화: 로그인 시 키워드 공지 로드
@@ -137,7 +143,14 @@ export function useKeywordNotices(isLoggedIn: boolean, filter: FilterType) {
       return;
     }
     updateKeywordBadge(keywordNotices);
-  }, [keywordNotices, isLoggedIn]);
+  }, [keywordNotices, isLoggedIn, updateKeywordBadge]);
+
+  // 다른 훅 인스턴스에서 seen 처리 시 배지 재계산
+  useEffect(() => {
+    const handleSeen = () => updateKeywordBadge(keywordNotices);
+    window.addEventListener(KEYWORD_SEEN_EVENT, handleSeen);
+    return () => window.removeEventListener(KEYWORD_SEEN_EVENT, handleSeen);
+  }, [keywordNotices, updateKeywordBadge]);
 
   // 키워드 필터 진입 시 읽음 처리
   useEffect(() => {
