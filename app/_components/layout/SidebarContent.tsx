@@ -2,7 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { FiUser, FiSettings, FiBell, FiUsers, FiLogOut, FiHome, FiInstagram, FiMail, FiExternalLink, FiChevronsLeft } from 'react-icons/fi';
+import {
+  FiUser,
+  FiSettings,
+  FiBell,
+  FiUsers,
+  FiLogOut,
+  FiHome,
+  FiInstagram,
+  FiMail,
+  FiExternalLink,
+  FiChevronsLeft,
+} from 'react-icons/fi';
 import { SiNaver } from 'react-icons/si';
 
 import { IconType } from 'react-icons';
@@ -41,13 +52,21 @@ function formatAdmissionYear(year: number | null | undefined): string | null {
   return `${String(year).slice(-2)}학번`;
 }
 
-export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: SidebarContentProps) {
+export default function SidebarContent({
+  onNavigate,
+  onShowToast,
+  onCollapse,
+}: SidebarContentProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, isLoggedIn, isAuthLoaded, isLoading } = useUser();
   const clearUser = useUserStore((state) => state.clearUser);
   const [chinbaExpanded, setChinbaExpanded] = useState(false);
-  const { data: chinbaEvents, isLoading: isLoadingChinbaEvents, refetch } = useMyChinbaEvents(isLoggedIn);
+  const {
+    data: chinbaEvents,
+    isLoading: isLoadingChinbaEvents,
+    refetch,
+  } = useMyChinbaEvents(isLoggedIn);
 
   useEffect(() => {
     localStorage.setItem('sidebar_chinba_expanded', String(chinbaExpanded));
@@ -97,7 +116,7 @@ export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: 
       onShowToast('로그인이 필요합니다', 'info');
       return;
     }
-    setChinbaExpanded(prev => !prev);
+    setChinbaExpanded((prev) => !prev);
   };
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
@@ -109,20 +128,22 @@ export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: 
       setDeptName(null);
       return;
     }
-    getAllDepartments(true).then((depts) => {
-      const found = depts.find((d) => d.dept_code === user.dept_code);
-      setDeptName(found?.dept_name || null);
-    }).catch(() => setDeptName(null));
+    getAllDepartments(true)
+      .then((depts) => {
+        const found = depts.find((d) => d.dept_code === user.dept_code);
+        setDeptName(found?.dept_name || null);
+      })
+      .catch(() => setDeptName(null));
   }, [user?.dept_code]);
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex h-full w-full flex-col">
       {/* Collapse button (desktop only) */}
       {onCollapse && (
-        <div className="hidden md:flex justify-end px-3 pt-3">
+        <div className="hidden justify-end px-3 pt-3 md:flex">
           <button
             onClick={onCollapse}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
             title="사이드바 접기"
           >
             <FiChevronsLeft size={18} />
@@ -134,19 +155,18 @@ export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: 
       <div className="pt-safe px-5 pb-4 md:pt-0">
         <div className="pt-8">
           {!isAuthLoaded || (isLoading && !user) ? (
-            <div className="flex items-center gap-3 animate-pulse">
-              <div className="w-12 h-12 rounded-full bg-gray-200" />
+            <div className="flex animate-pulse items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-gray-200" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-20" />
-                <div className="h-3 bg-gray-200 rounded w-32" />
+                <div className="h-4 w-20 rounded bg-gray-200" />
+                <div className="h-3 w-32 rounded bg-gray-200" />
               </div>
             </div>
           ) : !isLoggedIn ? (
             <div className="flex flex-col items-start gap-3">
               <p className="px-1 text-sm font-medium text-gray-700">
                 로그인하여 설정을 저장하고
-                <br />
-                더 많은 기능을 이용해보세요.
+                <br />더 많은 기능을 이용해보세요.
               </p>
               <button
                 onClick={() => router.push(getLoginUrl())}
@@ -161,22 +181,18 @@ export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: 
                 <img
                   src={user.profile_image}
                   alt={user.nickname || '사용자'}
-                  className="object-cover w-16 h-16 rounded-full border border-gray-100"
+                  className="h-16 w-16 rounded-full border border-gray-100 object-cover"
                 />
               ) : (
-                <div className="flex items-center justify-center w-16 h-16 text-gray-400 bg-gray-50 rounded-full border border-gray-100">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-gray-100 bg-gray-50 text-gray-400">
                   <FiUser size={28} />
                 </div>
               )}
               <div className="flex flex-col">
-                <p className="text-base font-bold text-gray-800">
-                  {user?.nickname || '사용자'}
-                </p>
-                <p className="text-[11px] text-gray-400 mt-0.5">
-                  {user?.email}
-                </p>
+                <p className="text-base font-bold text-gray-800">{user?.nickname || '사용자'}</p>
+                <p className="mt-0.5 text-[11px] text-gray-400">{user?.email}</p>
                 {(user?.school || deptName || admissionYearText) && (
-                  <p className="text-[11px] text-gray-400 mt-0.5">
+                  <p className="mt-0.5 text-[11px] text-gray-400">
                     {[user?.school, deptName, admissionYearText].filter(Boolean).join(' · ')}
                   </p>
                 )}
@@ -198,24 +214,25 @@ export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: 
             <div key={item.id}>
               <button
                 onClick={() => handleServiceClick(item)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${isItemActive(item)
-                  ? 'bg-blue-50 text-blue-700'
-                  : item.isDisabled
-                    ? 'text-gray-400'
-                    : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
-                  }`}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                  isItemActive(item)
+                    ? 'bg-blue-50 text-blue-700'
+                    : item.isDisabled
+                      ? 'text-gray-400'
+                      : 'text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+                }`}
               >
                 <Icon size={18} />
                 <span className="text-sm font-medium">{item.label}</span>
                 {isItemActive(item) && (
-                  <span className="ml-auto text-[10px] font-medium text-blue-500 bg-blue-100 px-1.5 py-0.5 rounded">
+                  <span className="ml-auto rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-500">
                     현재
                   </span>
                 )}
               </button>
 
               {item.id === 'chinba' && chinbaExpanded && (
-                <div className="mt-2 ml-6 mr-1 mb-3 space-y-2 max-h-[300px] overflow-y-auto rounded-lg">
+                <div className="mt-2 mr-1 mb-3 ml-6 max-h-[300px] space-y-2 overflow-y-auto rounded-lg">
                   <ChinbaEventList
                     events={chinbaEvents}
                     isLoading={isLoadingChinbaEvents}
@@ -235,7 +252,7 @@ export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: 
         {isAdmin && (
           <button
             onClick={handleAdminClick}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors text-purple-600 hover:bg-purple-50 active:bg-purple-100"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-purple-600 transition-colors hover:bg-purple-50 active:bg-purple-100"
           >
             <FiSettings size={18} />
             <span className="text-sm font-medium">관리자 페이지</span>
@@ -248,7 +265,7 @@ export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: 
             href="https://blog.naver.com/zerotime_official/224159496874"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors text-gray-500 hover:bg-gray-50 active:bg-gray-100"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-gray-500 transition-colors hover:bg-gray-50 active:bg-gray-100"
           >
             <SiNaver size={16} />
             <span className="text-sm font-medium">제로타임 앱 사용하기</span>
@@ -281,23 +298,18 @@ export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: 
       )}
 
       {/* Footer */}
-      <div className="p-5 border-t border-gray-100 bg-gray-50/30">
-
+      <div className="border-t border-gray-100 bg-gray-50/30 p-5">
         <div className="flex flex-col gap-4 text-center">
-
-          <p className="text-[11px] leading-relaxed text-gray-400 break-keep">
+          <p className="text-[11px] leading-relaxed break-keep text-gray-400">
             이 프로젝트는 전북대학교
             <br />
             컴퓨터인공지능학부, 경영학과 학생들이 협력하여
             <br />
-            개발 중인 베타 서비스입니다.
+            운영 중인 서비스입니다.
           </p>
 
-
-
-
           <div className="space-y-0.5">
-            <p className="text-[10px] font-semibold text-gray-400 tracking-wide">
+            <p className="text-[10px] font-semibold tracking-wide text-gray-400">
               Powered by <span className="text-[#034286]">JEduTools</span>
             </p>
           </div>
@@ -307,7 +319,7 @@ export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: 
               href="https://home.zerotime.kr"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
               aria-label="Landing Page"
             >
               <FiHome size={18} />
@@ -316,7 +328,7 @@ export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: 
               href="https://www.instagram.com/zerotime_official/"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
               aria-label="Instagram"
             >
               <FiInstagram size={18} />
@@ -325,14 +337,14 @@ export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: 
               href="https://blog.naver.com/zerotime_official/224159496874"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
               aria-label="Blog"
             >
               <SiNaver size={16} />
             </a>
             <a
               href="mailto:zeroone012025@gmail.com"
-              className="flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700"
               aria-label="Email"
             >
               <FiMail size={18} />
