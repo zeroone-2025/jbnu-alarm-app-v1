@@ -290,7 +290,7 @@ export default function SidebarContent({ onNavigate, onShowToast, onCollapse }: 
             <br />
             컴퓨터인공지능학부, 경영학과 학생들이 협력하여
             <br />
-            개발 중인 베타 서비스입니다.
+            개발 중인 서비스입니다.
           </p>
 
 
