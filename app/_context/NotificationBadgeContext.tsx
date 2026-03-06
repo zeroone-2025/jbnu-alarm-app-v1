@@ -50,16 +50,14 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
   };
 
   const refreshKeywordNotices = async () => {
-    try {
-      const keywords = await getMyKeywords();
-      setKeywordCount(keywords.length);
-      if (keywords.length > 0) {
-        const data = await getKeywordNotices(0, 200, true);
-        setKeywordNotices(data);
-      }
-    } catch (error) {
-      console.error('Failed to refresh keyword notices', error);
+    const keywords = await getMyKeywords();
+    setKeywordCount(keywords.length);
+    if (keywords.length === 0) {
+      setKeywordNotices([]);
+      return;
     }
+    const data = await getKeywordNotices(0, 200, true);
+    setKeywordNotices(data);
   };
 
   const updateKeywordBadge = (items: Notice[]) => {
