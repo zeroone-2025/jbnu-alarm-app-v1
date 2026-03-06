@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { FiSliders, FiX } from 'react-icons/fi';
+import { FilterType } from '@/_types/filter';
 
 interface CategoryFilterProps {
   activeFilter: string;
-  onFilterChange: (filter: string) => void;
+  onFilterChange: (filter: FilterType) => void;
   isLoggedIn: boolean; // 로그인 상태
   onSettingsClick: () => void; // 설정 버튼 클릭 콜백
   onShowToast: (message: string, type?: 'success' | 'error' | 'info') => void; // 토스트 메시지 표시
@@ -53,7 +54,7 @@ export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedI
       return;
     }
     // 허용된 필터 또는 로그인 사용자: 필터 변경
-    onFilterChange(filterKey);
+    onFilterChange(filterKey as FilterType);
   };
 
   return (

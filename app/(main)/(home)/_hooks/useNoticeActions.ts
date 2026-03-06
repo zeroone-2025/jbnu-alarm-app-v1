@@ -23,7 +23,7 @@ export function useNoticeActions(isLoggedIn: boolean) {
 
     // React Query 캐시 업데이트 (일반 공지사항)
     queryClient.setQueriesData({ queryKey: ['notices', 'infinite'] }, (oldData: any) => {
-      if (!oldData) return oldData;
+      if (!oldData || !Array.isArray(oldData.pages)) return oldData;
 
       return {
         ...oldData,
