@@ -1,6 +1,15 @@
 import axios from 'axios';
 import { getAccessToken, setAccessToken, clearAccessToken } from '@/_lib/auth/tokenStore';
 
+// Capacitor type declaration for native platform detection
+declare global {
+  interface Window {
+    Capacitor?: {
+      isNativePlatform(): boolean;
+    };
+  }
+}
+
 // 플랫폼별 API 주소 자동 선택
 const getApiBaseUrl = () => {
     // 서버 사이드에서는 기본값 사용
@@ -11,10 +20,8 @@ const getApiBaseUrl = () => {
     // 클라이언트 사이드에서 플랫폼 감지
     try {
         // Capacitor가 로드되었는지 확인
-        if (typeof window !== 'undefined' && (window as any).Capacitor) {
-            const { Capacitor } = (window as any);
-
-            if (Capacitor.isNativePlatform()) {
+        if (typeof window !== 'undefined' && window.Capacitor) {
+            if (window.Capacitor.isNativePlatform()) {
                 // Android/iOS: 원격 개발 서버 사용
                 return process.env.NEXT_PUBLIC_API_BASE_URL_NATIVE || 'https://dev-api.zerotime.kr:18181';
             }

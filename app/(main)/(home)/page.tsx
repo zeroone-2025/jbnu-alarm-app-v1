@@ -82,6 +82,16 @@ function HomeContent() {
   });
 
   const { keywordNotices, keywordCount, refreshKeywordNotices, markKeywordNoticesSeen } = useNotificationBadge();
+  const refreshKeywordNoticesRef = useRef(refreshKeywordNotices);
+  const markKeywordNoticesSeenRef = useRef(markKeywordNoticesSeen);
+
+  useEffect(() => {
+    refreshKeywordNoticesRef.current = refreshKeywordNotices;
+  }, [refreshKeywordNotices]);
+
+  useEffect(() => {
+    markKeywordNoticesSeenRef.current = markKeywordNoticesSeen;
+  }, [markKeywordNoticesSeen]);
 
   // 게시판 목록
   const selectedBoards = selectedCategories;
@@ -151,8 +161,7 @@ function HomeContent() {
     if (!hasNextPage) return;
     if (isFetchingNextPage) return;
     fetchNextPage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter, isLoading, inView, hasNextPage, isFetchingNextPage]);
+  }, [filter, isLoading, inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // 즐겨찾기 탭 진입 시 최신 목록으로 갱신
   useEffect(() => {
@@ -189,13 +198,13 @@ function HomeContent() {
   useEffect(() => {
     if (!isMounted || !isLoggedIn) return;
     if (filter === 'KEYWORD') {
-      refreshKeywordNotices();
+      refreshKeywordNoticesRef.current();
     }
   }, [filter, isMounted, isLoggedIn]);
 
   useEffect(() => {
     if (filter === 'KEYWORD') {
-      markKeywordNoticesSeen(keywordNotices);
+      markKeywordNoticesSeenRef.current(keywordNotices);
     }
   }, [filter, keywordNotices]);
 
@@ -256,7 +265,7 @@ function HomeContent() {
       <div className="shrink-0" style={{ touchAction: 'none' }}>
         <CategoryFilter
           activeFilter={filter}
-          onFilterChange={(f) => setFilter(f as any)}
+          onFilterChange={(f) => setFilter(f)}
           isLoggedIn={isLoggedIn}
           onSettingsClick={() => router.push('/filter')}
           onShowToast={showToast}
@@ -284,9 +293,6 @@ function HomeContent() {
       <div className="relative flex-1 min-h-0 overflow-hidden">
         <div
           ref={(node) => {
-            if (scrollContainerRef && 'current' in scrollContainerRef) {
-              (scrollContainerRef as React.MutableRefObject<HTMLElement | null>).current = node;
-            }
             if (node !== scrollRoot) {
               setScrollRoot(node);
             }

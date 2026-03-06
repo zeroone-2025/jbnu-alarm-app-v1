@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
@@ -56,6 +56,7 @@ export default function SocialLoginButton({
 }: SocialLoginButtonProps) {
   const router = useRouter();
   const config = PROVIDER_CONFIGS[provider];
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const getRedirectTo = () => {
     if (redirectTo?.startsWith('/')) return redirectTo;
@@ -92,11 +93,12 @@ export default function SocialLoginButton({
             // 브라우저가 이미 닫혀있을 수 있음
           }
 
-          const redirectTo = url.searchParams.get('redirect_to');
-          const safeRedirect = redirectTo?.startsWith('/') ? redirectTo : '/';
-          setTimeout(() => {
-            router.replace(safeRedirect);
-          }, 300);
+           const redirectTo = url.searchParams.get('redirect_to');
+           const safeRedirect = redirectTo?.startsWith('/') ? redirectTo : '/';
+           if (timeoutRef.current) clearTimeout(timeoutRef.current);
+           timeoutRef.current = setTimeout(() => {
+             router.replace(safeRedirect);
+           }, 300);
         }
       }
     };
@@ -117,6 +119,9 @@ export default function SocialLoginButton({
     return () => {
       if (listenerHandle) {
         listenerHandle.remove();
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
     };
   }, [router]);

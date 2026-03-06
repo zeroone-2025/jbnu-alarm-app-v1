@@ -37,10 +37,9 @@ export function useFilterState({ isLoggedIn, isAuthLoaded, isMounted, scrollCont
     if (params.get('filter')) return;
 
     const storedFilter = localStorage.getItem(FILTER_STORAGE_KEY) as FilterType | null;
-    if (storedFilter && storedFilter !== filter) {
-      setFilterState(storedFilter);
+    if (storedFilter) {
+      setFilterState((currentFilter) => (currentFilter === storedFilter ? currentFilter : storedFilter));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 초기 필터 검증 및 동기화 (로그인 체크)
