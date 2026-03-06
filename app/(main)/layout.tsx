@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { ToastProvider } from '@/_context/ToastContext';
+import { NotificationBadgeProvider } from '@/_context/NotificationBadgeContext';
 import DesktopSidebar from '@/_components/layout/DesktopSidebar';
 import MobileSidebar from '@/_components/layout/MobileSidebar';
 import SharedHeader from '@/_components/layout/SharedHeader';
@@ -42,7 +43,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <ToastProvider>
-      <div className="h-full w-full overflow-hidden bg-gray-50">
+      <NotificationBadgeProvider>
+        <div className="h-full w-full overflow-hidden bg-gray-50">
         {/* Desktop max-width varies with sidebar state */}
         <style>{`@media(min-width:52rem){[data-sidebar-layout]{max-width:${desktopMaxWidth}px!important}}`}</style>
 
@@ -75,7 +77,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             />
           </div>
         </div>
-      </div>
+        </div>
+      </NotificationBadgeProvider>
     </ToastProvider>
   );
 }
