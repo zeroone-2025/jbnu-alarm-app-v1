@@ -81,11 +81,7 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
     }
     const seenAt = localStorage.getItem('keyword_notice_seen_at');
     if (!seenAt) {
-      if (items.length > 0) {
-        localStorage.setItem('keyword_notice_seen_at', new Date(latest).toISOString());
-      } else {
-        localStorage.setItem('keyword_notice_seen_at', new Date().toISOString());
-      }
+      localStorage.setItem('keyword_notice_seen_at', new Date(latest).toISOString());
       setHasNewKeywordNotices(false);
       setNewKeywordCount(0);
       return;
