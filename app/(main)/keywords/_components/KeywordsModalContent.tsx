@@ -54,6 +54,10 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
       showToastMessage('키워드를 입력해 주세요.', 'info');
       return;
     }
+    if (trimmed.length < 2) {
+      showToastMessage('키워드는 2글자 이상 입력해 주세요.', 'info');
+      return;
+    }
     if (!isLoggedIn) {
       showToastMessage('로그인 후 사용할 수 있습니다.', 'info');
       return;
