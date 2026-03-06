@@ -15,9 +15,7 @@ export default function KeywordSettingsBar({
     <div className="shrink-0 border-b border-gray-100 bg-white px-5 py-3">
       <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
         <span className="text-sm font-medium text-gray-700">
-          {keywordCount > 0
-            ? `알림 받는 키워드 ${keywordCount}개`
-            : '키워드를 추가하면 관련 공지를 모아볼 수 있어요'}
+          알림 받는 키워드 {keywordCount}개
         </span>
         <button
           onClick={onSettingsClick}
