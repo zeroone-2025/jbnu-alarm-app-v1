@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   markNoticeAsRead,
@@ -36,28 +36,28 @@ export default function NotificationsClient() {
   const isInitialLoadingRef = useRef(false);
   const isRefreshingRef = useRef(false);
 
-  const showToastMessage = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  const showToastMessage = useCallback((message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToastMessage(message);
     setToastType(type);
     setToastKey(prev => prev + 1);
     setShowToast(true);
-  };
+  }, []);
 
   useEffect(() => {
     isLoggedInRef.current = isLoggedIn;
   }, [isLoggedIn]);
 
-  const setInitialLoadingState = (value: boolean) => {
+  const setInitialLoadingState = useCallback((value: boolean) => {
     isInitialLoadingRef.current = value;
     setIsInitialLoading(value);
-  };
+  }, []);
 
-  const setRefreshingState = (value: boolean) => {
+  const setRefreshingState = useCallback((value: boolean) => {
     isRefreshingRef.current = value;
     setIsRefreshing(value);
-  };
+  }, []);
 
-  const loadNotifications = async ({ mode }: { mode: LoadMode }) => {
+  const loadNotifications = useCallback(async ({ mode }: { mode: LoadMode }) => {
     if (!isLoggedInRef.current) return;
     if (isRefreshingRef.current || isInitialLoadingRef.current) return;
 
@@ -82,7 +82,7 @@ export default function NotificationsClient() {
         setRefreshingState(false);
       }
     }
-  };
+  }, [refreshKeywordNotices, setInitialLoadingState, setRefreshingState, showToastMessage]);
 
   // Pull to Refresh 훅
   const { scrollContainerRef, isPulling, pullDistance } = usePullToRefresh({
@@ -158,8 +158,7 @@ export default function NotificationsClient() {
     }
 
     loadNotifications({ mode: 'initial' });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn]);
+  }, [isLoggedIn, loadNotifications, setInitialLoadingState, setRefreshingState]);
 
   const isErrorWithoutData = !!loadError && keywordNotices.length === 0;
   const keywordCountLabel = keywordCount ?? 0;

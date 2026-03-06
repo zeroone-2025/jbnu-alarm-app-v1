@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, RefObject } from 'react';
+import { useState, useRef, useEffect, RefObject, useCallback } from 'react';
 
 interface UsePullToRefreshOptions {
   onRefresh: () => Promise<void>;
@@ -31,7 +31,7 @@ export function usePullToRefresh({
     pullDistanceRef.current = pullDistance;
   }, [pullDistance]);
 
-  const handleTouchStart = (e: TouchEvent) => {
+  const handleTouchStart = useCallback((e: TouchEvent) => {
     if (!enabled) return;
     
     const container = scrollContainerRef.current;
@@ -44,9 +44,9 @@ export function usePullToRefresh({
       touchStartY.current = 0;
       lastDistanceRef.current = 0;
     }
-  };
+  }, [enabled]);
 
-  const handleTouchMove = (e: TouchEvent) => {
+  const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!enabled) return;
     
     const container = scrollContainerRef.current;
@@ -77,9 +77,9 @@ export function usePullToRefresh({
       setPullDistance(0);
       lastDistanceRef.current = 0;
     }
-  };
+  }, [enabled, maxDistance]);
 
-  const handleTouchEnd = async () => {
+  const handleTouchEnd = useCallback(async () => {
     if (!enabled) return;
     
     if (isPullingRef.current && pullDistanceRef.current > threshold) {
@@ -99,7 +99,7 @@ export function usePullToRefresh({
     setPullDistance(0);
     touchStartY.current = 0;
     lastDistanceRef.current = 0;
-  };
+  }, [enabled, onRefresh, threshold]);
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -114,8 +114,7 @@ export function usePullToRefresh({
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled]);
+  }, [enabled, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   return {
     scrollContainerRef: scrollContainerRef as RefObject<HTMLDivElement>,
