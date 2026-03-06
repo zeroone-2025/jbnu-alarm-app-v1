@@ -12,8 +12,8 @@ import { useSelectedCategories } from '@/_lib/hooks/useSelectedCategories';
 import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
 import { useUser } from '@/_lib/hooks/useUser';
 import { useToast } from '@/_context/ToastContext';
+import { useNotificationBadge } from '@/_context/NotificationBadgeContext';
 import { useFilterState } from './_hooks/useFilterState';
-import { useKeywordNotices } from './_hooks/useKeywordNotices';
 import { useNoticeActions } from './_hooks/useNoticeActions';
 import { useNoticeFiltering } from './_hooks/useNoticeFiltering';
 import OnboardingModal from './_components/OnboardingModal';
@@ -66,12 +66,7 @@ function HomeContent() {
   const { scrollContainerRef, isPulling, pullDistance, refreshing } = usePullToRefresh({
     onRefresh: async () => {
       if (filter === 'KEYWORD') {
-        const count = await loadKeywordCount();
-        if (count === 0) {
-          setKeywordNotices([]);
-          return;
-        }
-        await loadKeywordNotices();
+        await refreshKeywordNotices();
         return;
       }
       await refetch();
@@ -86,14 +81,7 @@ function HomeContent() {
     scrollContainerRef,
   });
 
-  const {
-    keywordNotices,
-    keywordCount,
-    loadKeywordNotices,
-    loadKeywordNoticesSilent,
-    loadKeywordCount,
-    setKeywordNotices,
-  } = useKeywordNotices(isLoggedIn, filter);
+  const { keywordNotices, keywordCount, refreshKeywordNotices, markKeywordNoticesSeen } = useNotificationBadge();
 
   // 게시판 목록
   const selectedBoards = selectedCategories;
@@ -137,10 +125,7 @@ function HomeContent() {
   }, [noticePages]);
 
   // 공지사항 액션
-  const { handleMarkAsRead, handleToggleFavorite } = useNoticeActions(
-    isLoggedIn,
-    setKeywordNotices
-  );
+  const { handleMarkAsRead, handleToggleFavorite } = useNoticeActions(isLoggedIn);
 
   // 공지사항 필터링
   const { filteredNotices } = useNoticeFiltering(
@@ -192,10 +177,6 @@ function HomeContent() {
         if (filter === 'ALL') {
           refetch();
         }
-        if (isLoggedIn) {
-          loadKeywordCount();
-          loadKeywordNoticesSilent();
-        }
       }
     };
 
@@ -203,7 +184,20 @@ function HomeContent() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [filter, isLoggedIn, refetch, refetchUser, loadKeywordCount, loadKeywordNoticesSilent]);
+  }, [filter, isLoggedIn, refetch, refetchUser]);
+
+  useEffect(() => {
+    if (!isMounted || !isLoggedIn) return;
+    if (filter === 'KEYWORD') {
+      refreshKeywordNotices();
+    }
+  }, [filter, isMounted, isLoggedIn]);
+
+  useEffect(() => {
+    if (filter === 'KEYWORD') {
+      markKeywordNoticesSeen(keywordNotices);
+    }
+  }, [filter, keywordNotices]);
 
   // 온보딩 완료 핸들러
   const handleOnboardingComplete = (categories: string[]) => {
