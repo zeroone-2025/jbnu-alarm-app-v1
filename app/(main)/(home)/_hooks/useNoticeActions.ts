@@ -1,17 +1,15 @@
 import { Notice, markNoticeAsRead, toggleNoticeFavorite } from '@/_lib/api';
 import { useQueryClient } from '@tanstack/react-query';
-import { Dispatch, SetStateAction } from 'react';
+import { useNotificationBadge } from '@/_context/NotificationBadgeContext';
 
 /**
  * 공지사항 액션(읽음, 즐겨찾기)을 관리하는 Hook
  * - Optimistic Update 패턴 사용
  * - 실패 시 자동 롤백
  */
-export function useNoticeActions(
-  isLoggedIn: boolean,
-  setKeywordNotices: Dispatch<SetStateAction<Notice[]>>
-) {
+export function useNoticeActions(isLoggedIn: boolean) {
   const queryClient = useQueryClient();
+  const { setKeywordNotices } = useNotificationBadge();
 
   // 공지사항 상태 업데이트 유틸리티
   const updateNoticeState = (

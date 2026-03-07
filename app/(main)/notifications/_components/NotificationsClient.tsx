@@ -3,12 +3,11 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  getAllKeywordNotices,
-  getMyKeywords,
   markNoticeAsRead,
   toggleNoticeFavorite,
   Notice,
 } from '@/_lib/api';
+import { useNotificationBadge } from '@/_context/NotificationBadgeContext';
 import Toast from '@/_components/ui/Toast';
 import { getLoginUrl } from '@/_lib/utils/requireLogin';
 import NoticeList from '@/(main)/(home)/_components/NoticeList';
@@ -25,8 +24,7 @@ export default function NotificationsClient() {
   const router = useRouter();
   const smartBack = useSmartBack();
   const { isLoggedIn } = useUser();
-  const [keywordCount, setKeywordCount] = useState<number | null>(null);
-  const [keywordNotices, setKeywordNotices] = useState<Notice[]>([]);
+  const { keywordNotices, keywordCount, refreshKeywordNotices, setKeywordNotices } = useNotificationBadge();
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -71,18 +69,7 @@ export default function NotificationsClient() {
     }
 
     try {
-      const keywords = await getMyKeywords();
-      const count = keywords.length;
-      setKeywordCount(count);
-
-      if (count === 0) {
-        setKeywordNotices([]);
-        setLoadError(null);
-        return;
-      }
-
-      const notices = await getAllKeywordNotices(true);
-      setKeywordNotices(notices);
+      await refreshKeywordNotices();
       setLoadError(null);
     } catch (error) {
       console.error('Failed to load notifications', error);
@@ -164,8 +151,6 @@ export default function NotificationsClient() {
 
   useEffect(() => {
     if (!isLoggedIn) {
-      setKeywordCount(null);
-      setKeywordNotices([]);
       setLoadError(null);
       setInitialLoadingState(false);
       setRefreshingState(false);
