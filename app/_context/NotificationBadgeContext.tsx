@@ -49,16 +49,20 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
     }
   };
 
-  const refreshKeywordNotices = async () => {
-    const keywords = await getMyKeywords();
-    setKeywordCount(keywords.length);
-    if (keywords.length === 0) {
-      setKeywordNotices([]);
-      return;
-    }
-    const data = await getKeywordNotices(0, 200, true);
-    setKeywordNotices(data);
-  };
+   const refreshKeywordNotices = async () => {
+     try {
+       const keywords = await getMyKeywords();
+       setKeywordCount(keywords.length);
+       if (keywords.length === 0) {
+         setKeywordNotices([]);
+         return;
+       }
+       const data = await getKeywordNotices(0, 200, true);
+       setKeywordNotices(data);
+     } catch (error) {
+       console.error('Failed to refresh keyword notices', error);
+     }
+   };
 
   const updateKeywordBadge = (items: Notice[]) => {
     if (typeof window === 'undefined') return;
@@ -77,16 +81,15 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
       setNewKeywordCount(0);
       return;
     }
-    const seenAt = localStorage.getItem('keyword_notice_seen_at');
-    if (!seenAt) {
-      localStorage.setItem('keyword_notice_seen_at', new Date(latest).toISOString());
-      setHasNewKeywordNotices(false);
-      setNewKeywordCount(0);
-      return;
-    }
-
-    const seenTime = new Date(seenAt).getTime();
-    setHasNewKeywordNotices(latest > seenTime);
+     const seenAt = localStorage.getItem('keyword_notice_seen_at');
+     const seenTime = seenAt ? new Date(seenAt).getTime() : 0;
+     if (isNaN(seenTime)) {
+       // localStorage 오염 방어: 잘못된 값이면 모든 공지를 새 알림으로 처리
+       setHasNewKeywordNotices(true);
+       setNewKeywordCount(items.length);
+       return;
+     }
+     setHasNewKeywordNotices(latest > seenTime);
 
     const newCount = items.filter(notice => {
       const noticeTime = new Date(notice.created_at ?? notice.date).getTime();
