@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { ToastProvider } from '@/_context/ToastContext';
 import { NotificationBadgeProvider } from '@/_context/NotificationBadgeContext';
@@ -13,18 +13,15 @@ const MAIN_PAGES = new Set(['/', '/profile', '/chinba']);
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('sidebar_collapsed');
-    if (saved !== null) {
-      setDesktopCollapsed(saved === 'true');
-    } else {
-      setDesktopCollapsed(window.innerWidth < 1200);
-    }
-    setMounted(true);
-  }, []);
+  // SSR에서는 window가 없으므로 false(펼침)로 초기화.
+  // 클라이언트 hydration 시 localStorage 값으로 동기 보정됨.
+  const [desktopCollapsed, setDesktopCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false
+    const saved = localStorage.getItem('sidebar_collapsed')
+    if (saved !== null) return saved === 'true'
+    return window.innerWidth < 1200
+  })
 
   const handleDesktopToggle = () => {
     setDesktopCollapsed((prev) => {
@@ -37,7 +34,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const normalizedPath = pathname === '/' ? '/' : pathname.replace(/\/$/, '');
   const showHeader = MAIN_PAGES.has(normalizedPath);
 
-  const collapsed = mounted ? desktopCollapsed : false;
+  const collapsed = desktopCollapsed;
   // sidebar(60 or 260) + content — iPad Pro 12.9" 가로(1366px)까지 꽉 채움
   const desktopMaxWidth = 1366;
 
