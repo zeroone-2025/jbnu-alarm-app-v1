@@ -15,7 +15,7 @@ export const MOCK_USER = {
   role: 'user',
   user_type: 'student' as const,
   created_at: '2024-01-01T00:00:00',
-  keyword_notice_seen_at: null,
+  keyword_notice_seen_at: null as string | null,
 };
 
 // 신규 유저 (온보딩 미완료)
