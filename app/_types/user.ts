@@ -12,6 +12,7 @@ export interface UserProfile {
     role: string; // "user" | "admin" | "super_admin"
     user_type: 'student' | 'mentor';
     created_at: string;
+    keyword_notice_seen_at: string | null;
 }
 
 // 사용자 정보 업데이트 요청
@@ -22,6 +23,7 @@ export interface UserProfileUpdate {
     admission_year?: number;
     fcm_token?: string;
     profile_image?: string;
+    keyword_notice_seen_at?: string;
 }
 
 // 온보딩 완료 요청

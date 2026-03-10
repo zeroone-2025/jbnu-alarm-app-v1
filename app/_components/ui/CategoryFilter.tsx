@@ -7,7 +7,6 @@ interface CategoryFilterProps {
   isLoggedIn: boolean; // 로그인 상태
   onSettingsClick: () => void; // 설정 버튼 클릭 콜백
   onShowToast: (message: string, type?: 'success' | 'error' | 'info') => void; // 토스트 메시지 표시
-  hasNewKeywordNotices?: boolean;
 }
 
 // 전체 필터 목록 (Guest/User 공통)
@@ -21,7 +20,7 @@ const ALL_FILTERS = [
 // 로그인 필요 필터 목록
 const LOGIN_REQUIRED_FILTERS = ['UNREAD', 'KEYWORD', 'FAVORITE'];
 
-export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedIn, onSettingsClick, onShowToast, hasNewKeywordNotices }: CategoryFilterProps) {
+export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedIn, onSettingsClick, onShowToast }: CategoryFilterProps) {
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
@@ -100,12 +99,9 @@ export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedI
                  ? 'bg-gray-900 text-white shadow-md'
                  : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
                  }`}
-             >
-               {filter.label}
-               {filter.key === 'KEYWORD' && hasNewKeywordNotices && !isActive && (
-                 <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-gray-50" />
-               )}
-             </button>
+              >
+                {filter.label}
+              </button>
            );
         })}
       </div>

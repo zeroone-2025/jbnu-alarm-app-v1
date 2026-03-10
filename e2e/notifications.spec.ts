@@ -34,3 +34,47 @@ test.describe('알림 페이지 - 반응형', () => {
     await expect(asGuest.getByText('알림').first()).toBeVisible({ timeout: 10_000 });
   });
 });
+
+test.describe('키워드 배지 서버 동기화', () => {
+  test('벨 클릭 시 PATCH /users/me에 keyword_notice_seen_at 전송', async ({ asLoggedInUser }) => {
+    await asLoggedInUser.goto('/');
+    await asLoggedInUser.locator('[aria-label="알림"]').waitFor({ timeout: 10_000 });
+
+    const patchPromise = asLoggedInUser.waitForRequest(
+      (req) => req.url().includes('/users/me') && req.method() === 'PATCH',
+      { timeout: 15_000 }
+    );
+
+    await asLoggedInUser.locator('[aria-label="알림"]').click();
+    const patchReq = await patchPromise;
+
+    const body = JSON.parse(patchReq.postData() || '{}');
+    expect(body).toHaveProperty('keyword_notice_seen_at');
+    expect(body.keyword_notice_seen_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  test('홈 키워드 탭에 빨간 점 배지가 없음', async ({ asLoggedInUser }) => {
+    await asLoggedInUser.goto('/');
+    await asLoggedInUser.locator('[aria-label="알림"]').waitFor({ timeout: 10_000 });
+
+    await expect(asLoggedInUser.locator('.h-2.w-2.rounded-full.bg-red-500')).toHaveCount(0, {
+      timeout: 5000,
+    });
+  });
+
+  test('서버 seen_at 미래 값이면 배지 숫자 0', async ({ page }) => {
+    const { mockAuthenticatedAPIs } = await import('./fixtures/api-mocks');
+    const { MOCK_USER } = await import('./fixtures/test-data');
+
+    await mockAuthenticatedAPIs(page, {
+      user: { ...MOCK_USER, keyword_notice_seen_at: '2099-01-01T00:00:00Z' },
+    });
+
+    await page.goto('/');
+    await page.locator('[aria-label="알림"]').waitFor({ timeout: 10_000 });
+
+    await expect(page.locator('[aria-label="알림"] .bg-red-500')).toHaveCount(0, {
+      timeout: 5000,
+    });
+  });
+});
