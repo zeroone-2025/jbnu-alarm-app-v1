@@ -6,6 +6,12 @@ import { getLatestKeywordNoticeAt } from '@/_lib/utils/notice';
 import { useUser } from '@/_lib/hooks/useUser';
 import { useUserStore } from '@/_lib/store/useUserStore';
 import { updateUserProfile } from '@/_lib/api/user';
+import { getQueryClient } from '@/providers';
+
+// Normalize datetime to 3 decimal places (milliseconds) for cross-browser safety
+function normalizeDateTime(s: string): string {
+  return s.replace(/(\.\d{3})\d+/, '$1');
+}
 
 interface NotificationBadgeContextType {
   keywordNotices: Notice[];
@@ -88,7 +94,7 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
       const serverSeenAt = user?.keyword_notice_seen_at ?? null;
       const localSeenAt = localStorage.getItem('keyword_notice_seen_at');
       const seenAt = serverSeenAt ?? localSeenAt;
-      const seenTime = seenAt ? new Date(seenAt).getTime() : 0;
+      const seenTime = seenAt ? new Date(normalizeDateTime(seenAt)).getTime() : 0;
      if (isNaN(seenTime)) {
        // localStorage 오염 방어: 잘못된 값이면 모든 공지를 새 알림으로 처리
        setHasNewKeywordNotices(true);
@@ -97,10 +103,10 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
      }
      setHasNewKeywordNotices(latest > seenTime);
 
-    const newCount = items.filter(notice => {
-      const noticeTime = new Date(notice.created_at ?? notice.date).getTime();
-      return noticeTime > seenTime;
-    }).length;
+     const newCount = items.filter(notice => {
+       const noticeTime = new Date(normalizeDateTime(notice.created_at ?? notice.date)).getTime();
+       return noticeTime > seenTime;
+     }).length;
 
     setNewKeywordCount(newCount);
   };
@@ -116,14 +122,19 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
       setNewKeywordCount(0);
       setHasNewKeywordNotices(false);
       _badgeClearedAt.current = Date.now();
-      updateUserProfile({ keyword_notice_seen_at: timestamp }).catch(() => {
-        if (prevSeenAt !== null) {
-          localStorage.setItem('keyword_notice_seen_at', prevSeenAt);
-        } else {
-          localStorage.removeItem('keyword_notice_seen_at');
-        }
-        updateKeywordBadge(keywordNoticesRef.current);
-      });
+      updateUserProfile({ keyword_notice_seen_at: timestamp })
+        .then((updatedUser) => {
+          useUserStore.getState().setUser(updatedUser);
+          getQueryClient()?.setQueryData(['user', 'profile'], updatedUser);
+        })
+        .catch(() => {
+          if (prevSeenAt !== null) {
+            localStorage.setItem('keyword_notice_seen_at', prevSeenAt);
+          } else {
+            localStorage.removeItem('keyword_notice_seen_at');
+          }
+          updateKeywordBadge(keywordNoticesRef.current);
+        });
       return;
     }
 
@@ -136,14 +147,19 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
     setHasNewKeywordNotices(false);
     setNewKeywordCount(0);
     _badgeClearedAt.current = Date.now();
-    updateUserProfile({ keyword_notice_seen_at: timestamp }).catch(() => {
-      if (prevSeenAt !== null) {
-        localStorage.setItem('keyword_notice_seen_at', prevSeenAt);
-      } else {
-        localStorage.removeItem('keyword_notice_seen_at');
-      }
-      updateKeywordBadge(keywordNoticesRef.current);
-    });
+    updateUserProfile({ keyword_notice_seen_at: timestamp })
+      .then((updatedUser) => {
+        useUserStore.getState().setUser(updatedUser);
+        getQueryClient()?.setQueryData(['user', 'profile'], updatedUser);
+      })
+      .catch(() => {
+        if (prevSeenAt !== null) {
+          localStorage.setItem('keyword_notice_seen_at', prevSeenAt);
+        } else {
+          localStorage.removeItem('keyword_notice_seen_at');
+        }
+        updateKeywordBadge(keywordNoticesRef.current);
+      });
   };
 
   useEffect(() => {
