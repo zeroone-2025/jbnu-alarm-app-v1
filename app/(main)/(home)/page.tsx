@@ -81,7 +81,7 @@ function HomeContent() {
     scrollContainerRef,
   });
 
-  const { keywordNotices, keywordCount, refreshKeywordNotices, markKeywordNoticesSeen, hasNewKeywordNotices } = useNotificationBadge();
+  const { keywordNotices, keywordCount, refreshKeywordNotices, markKeywordNoticesSeen } = useNotificationBadge();
 
   // 게시판 목록
   const selectedBoards = selectedCategories;
@@ -252,17 +252,16 @@ function HomeContent() {
       {/* User Stats Banner */}
       <UserStatsBanner isLoggedIn={isLoggedIn} onSignupClick={() => router.push('/login')} />
 
-       {/* 카테고리 필터 */}
-       <div className="shrink-0" style={{ touchAction: 'none' }}>
-         <CategoryFilter
-           activeFilter={filter}
-           onFilterChange={(f) => setFilter(f as any)}
-           isLoggedIn={isLoggedIn}
-           onSettingsClick={() => router.push('/filter')}
-           onShowToast={showToast}
-           hasNewKeywordNotices={hasNewKeywordNotices}
-         />
-       </div>
+        {/* 카테고리 필터 */}
+        <div className="shrink-0" style={{ touchAction: 'none' }}>
+          <CategoryFilter
+            activeFilter={filter}
+            onFilterChange={(f) => setFilter(f as any)}
+            isLoggedIn={isLoggedIn}
+            onSettingsClick={() => router.push('/filter')}
+            onShowToast={showToast}
+          />
+        </div>
 
       {/* 키워드 필터일 때만 키워드 설정 바 표시 */}
       {filter === 'KEYWORD' && (
