@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { FiUser, FiBell } from 'react-icons/fi';
 import Logo from '@/_components/ui/Logo';
 import { useNotificationBadge } from '@/_context/NotificationBadgeContext';
-import { useUser } from '@/_lib/hooks/useUser';
+import { useUserStore } from '@/_lib/store/useUserStore';
 
 interface SharedHeaderProps {
   title: string; // 'logo' | '프로필' | '친해지길 바래'
@@ -13,11 +13,11 @@ interface SharedHeaderProps {
 
 export default function SharedHeader({ title, onMenuClick }: SharedHeaderProps) {
   const router = useRouter();
-  const { isLoggedIn } = useUser();
   const { newKeywordCount, markKeywordNoticesSeen, keywordNotices } = useNotificationBadge();
+  const user = useUserStore((state) => state.user);
 
   const handleNotificationClick = () => {
-    const lastSeen = localStorage.getItem('keyword_notice_seen_at');
+    const lastSeen = user?.keyword_notice_seen_at ?? null;
     markKeywordNoticesSeen(keywordNotices);
     router.push(lastSeen ? `/notifications?last_seen=${encodeURIComponent(lastSeen)}` : '/notifications');
   };
