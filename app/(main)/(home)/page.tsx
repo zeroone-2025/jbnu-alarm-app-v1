@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
@@ -82,6 +82,22 @@ function HomeContent() {
   });
 
   const { keywordNotices, keywordCount, refreshKeywordNotices, markKeywordNoticesSeen } = useNotificationBadge();
+
+  // Logo tap 이벤트 핸들러
+  const handleLogoTap = useCallback(async () => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    if (filter === 'KEYWORD') {
+      await refreshKeywordNotices();
+    } else {
+      await refetch();
+    }
+  }, [filter, refetch, refreshKeywordNotices, scrollContainerRef]);
+
+  // Logo tap 이벤트 리스너 등록
+  useEffect(() => {
+    window.addEventListener('logo-tap', handleLogoTap);
+    return () => window.removeEventListener('logo-tap', handleLogoTap);
+  }, [handleLogoTap]);
 
   // 게시판 목록
   const selectedBoards = selectedCategories;
