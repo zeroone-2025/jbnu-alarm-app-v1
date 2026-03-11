@@ -31,6 +31,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     setDesktopCollapsed((prev) => {
       const next = !prev;
       localStorage.setItem('sidebar_collapsed', String(next));
+      if (next) {
+        document.documentElement.classList.add('sidebar-collapsed');
+      } else {
+        document.documentElement.classList.remove('sidebar-collapsed');
+      }
       return next;
     });
   };
