@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getUserProfile, getUserInit, updateUserProfile, checkHasToken } from '@/_lib/api';
+import { getUserInit, updateUserProfile, checkHasToken } from '@/_lib/api';
 import { useUserStore } from '@/_lib/store/useUserStore';
 import type { UserProfileUpdate } from '@/_types/user';
 import { useEffect, useState } from 'react';
