@@ -83,22 +83,6 @@ function HomeContent() {
 
   const { keywordNotices, keywordCount, refreshKeywordNotices, markKeywordNoticesSeen } = useNotificationBadge();
 
-  // Logo tap 이벤트 핸들러
-  const handleLogoTap = useCallback(async () => {
-    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-    if (filter === 'KEYWORD') {
-      await refreshKeywordNotices();
-    } else {
-      await refetch();
-    }
-  }, [filter, refetch, refreshKeywordNotices, scrollContainerRef]);
-
-  // Logo tap 이벤트 리스너 등록
-  useEffect(() => {
-    window.addEventListener('logo-tap', handleLogoTap);
-    return () => window.removeEventListener('logo-tap', handleLogoTap);
-  }, [handleLogoTap]);
-
   // 게시판 목록
   const selectedBoards = selectedCategories;
   const selectedBoardsParam = useMemo(
@@ -130,6 +114,20 @@ function HomeContent() {
     refetchOnMount: false,
     refetchOnReconnect: false,
   });
+
+  const handleLogoTap = useCallback(async () => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    if (filter === 'KEYWORD') {
+      await refreshKeywordNotices();
+    } else {
+      await refetch();
+    }
+  }, [filter, refetch, refreshKeywordNotices, scrollContainerRef]);
+
+  useEffect(() => {
+    window.addEventListener('logo-tap', handleLogoTap);
+    return () => window.removeEventListener('logo-tap', handleLogoTap);
+  }, [handleLogoTap]);
 
   // 모든 페이지의 공지사항을 하나의 배열로 합치기
   const notices = useMemo<Notice[]>(() => {
