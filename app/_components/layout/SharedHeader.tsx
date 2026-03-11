@@ -38,7 +38,14 @@ export default function SharedHeader({ title, onMenuClick }: SharedHeaderProps) 
       {/* Center: Logo or title */}
       <div className="absolute left-1/2 -translate-x-1/2 transform">
         {title === 'logo' ? (
-          <Logo className="h-7 w-auto text-gray-900" />
+          <button
+            type="button"
+            aria-label="맨 위로 이동 및 새로고침"
+            className="appearance-none bg-transparent border-none p-0 m-0 leading-none cursor-pointer active:scale-95 transition-transform"
+            onClick={() => window.dispatchEvent(new CustomEvent('logo-tap'))}
+          >
+            <Logo className="h-7 w-auto text-gray-900" />
+          </button>
         ) : (
           <h1 className="text-base font-bold text-gray-800 whitespace-nowrap">{title}</h1>
         )}
