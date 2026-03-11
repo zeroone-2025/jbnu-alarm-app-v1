@@ -109,8 +109,12 @@ test.describe('키워드 배지 localStorage 새로고침 시나리오', () => {
     await page.reload();
     await page.locator('[aria-label="알림"]').waitFor({ timeout: 10_000 });
 
+    // localStorage 보존 확인
     const value = await page.evaluate(() => localStorage.getItem('keyword_notice_seen_at'));
     expect(value).not.toBeNull();
+
+    // 새로고침 후 배지 카운트가 0 이어야 함 (숫자 배지 없음)
+    await expect(page.locator('[aria-label="알림"] .bg-red-500')).toHaveCount(0, { timeout: 5000 });
   });
 
   test('서버 keyword_notice_seen_at이 null이어도 기존 localStorage 값을 삭제하지 않아야 함', async ({ page }) => {
