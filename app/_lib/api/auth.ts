@@ -77,16 +77,6 @@ export const initializeAuth = async (): Promise<boolean> => {
 
     initializationPromise = (async () => {
         try {
-            // 1. 먼저 refresh token 쿠키가 있는지 확인 (경량 체크)
-            const hasRefreshToken = await checkRefreshToken();
-
-            // 2. 쿠키가 없으면 refresh 요청하지 않음 (401 에러 방지)
-            if (!hasRefreshToken) {
-                isAuthInitialized = true;
-                return false;
-            }
-
-            // 3. 쿠키가 있으면 refresh 요청
             const token = await refreshAccessToken();
             isAuthInitialized = true;
             return !!token;
