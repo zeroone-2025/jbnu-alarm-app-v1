@@ -104,25 +104,7 @@ body {
   animation: bottomSheetUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-@keyframes blink-orange {
-  0% {
-    background-color: #fff7ed;
-    /* bg-orange-50 */
-  }
 
-  50% {
-    background-color: white;
-  }
-
-  100% {
-    background-color: #fff7ed;
-    /* bg-orange-50 */
-  }
-}
-
-.animate-blink-orange {
-  animation: blink-orange 3s ease-in-out 3 forwards;
-}
 
 /* 탭 컨텐츠 슬라이드 */
 @keyframes slideInRight {

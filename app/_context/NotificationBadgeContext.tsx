@@ -10,7 +10,7 @@ import { getAccessToken } from '@/_lib/auth/tokenStore';
 import { getQueryClient } from '@/providers';
 
 // Normalize datetime to 3 decimal places (milliseconds) for cross-browser safety
-function normalizeDateTime(s: string): string {
+export function normalizeDateTime(s: string): string {
   return s.replace(/(\.\d{3})\d+/, '$1');
 }
 
