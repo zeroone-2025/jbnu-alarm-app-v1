@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
@@ -114,6 +114,20 @@ function HomeContent() {
     refetchOnMount: false,
     refetchOnReconnect: false,
   });
+
+  const handleLogoTap = useCallback(async () => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    if (filter === 'KEYWORD') {
+      await refreshKeywordNotices();
+    } else {
+      await refetch();
+    }
+  }, [filter, refetch, refreshKeywordNotices, scrollContainerRef]);
+
+  useEffect(() => {
+    window.addEventListener('logo-tap', handleLogoTap);
+    return () => window.removeEventListener('logo-tap', handleLogoTap);
+  }, [handleLogoTap]);
 
   // 모든 페이지의 공지사항을 하나의 배열로 합치기
   const notices = useMemo<Notice[]>(() => {
