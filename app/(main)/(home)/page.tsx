@@ -57,10 +57,10 @@ function HomeContent() {
 
   // 모든 의존성이 준비되면 쿼리 활성화
   useEffect(() => {
-    if (isMounted && isAuthLoaded && !isCategoriesLoading && selectedCategories.length > 0) {
+    if (isMounted && !isCategoriesLoading && selectedCategories.length > 0) {
       setIsQueryReady(true);
     }
-  }, [isMounted, isAuthLoaded, isCategoriesLoading, selectedCategories.length]);
+  }, [isMounted, isCategoriesLoading, selectedCategories.length]);
 
   // Pull to Refresh용 스크롤 컨테이너 ref 초기화
   const { scrollContainerRef, isPulling, pullDistance, refreshing } = usePullToRefresh({
