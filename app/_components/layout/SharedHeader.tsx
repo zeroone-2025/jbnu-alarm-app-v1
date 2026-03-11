@@ -41,7 +41,7 @@ export default function SharedHeader({ title, onMenuClick }: SharedHeaderProps) 
           <button
             type="button"
             aria-label="맨 위로 이동 및 새로고침"
-            className="appearance-none bg-transparent border-none p-0 m-0 leading-none cursor-pointer active:scale-95 transition-transform"
+            className="appearance-none bg-transparent border-none p-0 m-0 leading-none cursor-pointer flex items-center"
             onClick={() => window.dispatchEvent(new CustomEvent('logo-tap'))}
           >
             <Logo className="h-7 w-auto text-gray-900" />
