@@ -53,8 +53,9 @@ export default defineConfig([
       "@typescript-eslint/no-explicit-any": "warn",
       "react-hooks/set-state-in-effect": "off",
       "react-hooks/preserve-manual-memoization": "off",
-      "react/no-unescaped-entities": "warn",
-      "prefer-const": "warn",
+       "react/no-unescaped-entities": "warn",
+       "react/no-danger": "warn",
+       "prefer-const": "warn",
     },
   },
   {

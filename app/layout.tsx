@@ -45,8 +45,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.getItem('sidebar_collapsed') === 'true') {
+                  document.documentElement.classList.add('sidebar-collapsed');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
         <DevHostMetaTag />
         <Script async src="https://www.googletagmanager.com/gtag/js?id=G-SMF31V39T9" />
         <Script id="ga-init">
