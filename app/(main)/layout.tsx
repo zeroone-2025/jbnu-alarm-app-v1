@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useLayoutEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { ToastProvider } from '@/_context/ToastContext';
 import { NotificationBadgeProvider } from '@/_context/NotificationBadgeContext';
@@ -14,14 +14,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // SSR에서는 window가 없으므로 false(펼침)로 초기화.
-  // 클라이언트 hydration 시 localStorage 값으로 동기 보정됨.
-  const [desktopCollapsed, setDesktopCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false
-    const saved = localStorage.getItem('sidebar_collapsed')
-    if (saved !== null) return saved === 'true'
-    return window.innerWidth < 1200
-  })
+  // SSR과 클라이언트 초기값을 false(펼침)로 일치시켜 hydration mismatch 방지.
+  // useLayoutEffect로 페인트 전에 localStorage 값을 반영하여 깜빡임 없이 보정.
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+
+  useLayoutEffect(() => {
+    const saved = localStorage.getItem('sidebar_collapsed');
+    if (saved !== null) {
+      setDesktopCollapsed(saved === 'true');
+    } else if (window.innerWidth < 1200) {
+      setDesktopCollapsed(true);
+    }
+  }, []);
 
   const handleDesktopToggle = () => {
     setDesktopCollapsed((prev) => {
