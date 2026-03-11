@@ -53,11 +53,6 @@ function json(route: Route, data: unknown, status = 200) {
  * 게스트 (비로그인) 상태 API 모킹
  */
 export async function mockGuestAPIs(page: Page) {
-  // Auth check: 토큰 없음
-  await page.route('**/auth/check', apiOnly((route) =>
-    json(route, { hasToken: false })
-  ));
-
   // Auth refresh: 실패
   await page.route('**/auth/refresh', apiOnly((route) =>
     json(route, { detail: 'Not authenticated' }, 401)
@@ -121,14 +116,14 @@ export async function mockAuthenticatedAPIs(page: Page, options?: {
 }) {
   const user = options?.isNewUser ? MOCK_NEW_USER : (options?.user ?? MOCK_USER);
 
-  // Auth check: 토큰 있음
-  await page.route('**/auth/check', apiOnly((route) =>
-    json(route, { hasToken: true })
-  ));
-
   // Auth refresh: 성공
   await page.route('**/auth/refresh', apiOnly((route) =>
     json(route, { access_token: 'test-jwt-token-for-e2e' })
+  ));
+
+  // Users/me/init: 유저 정보 + 구독 합산 (병렬화용)
+  await page.route('**/users/me/init', apiOnly((route) =>
+    json(route, { user, subscriptions: MOCK_SUBSCRIPTIONS })
   ));
 
   // Users/me
