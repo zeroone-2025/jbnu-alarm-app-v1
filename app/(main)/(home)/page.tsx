@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import { fetchNoticesInfinite, Notice } from '@/_lib/api';
+import { smoothScrollToTop } from '@/_lib/utils/scroll';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -116,7 +117,7 @@ function HomeContent() {
   });
 
   const handleLogoTap = useCallback(async () => {
-    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    smoothScrollToTop(scrollContainerRef.current ?? null);
     if (filter === 'KEYWORD') {
       await refreshKeywordNotices();
     } else {
