@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { BOARD_LIST, GUEST_FILTER_KEY, GUEST_DEFAULT_BOARDS } from '@/_lib/constants/boards';
 import { getUserSubscriptions, updateUserSubscriptions } from '@/_lib/api';
 import { useAuthInitialized } from '@/providers';
 import { checkHasToken } from '@/_lib/api/auth';
+import type { UserSubscription } from '@/_types/user';
 
 const USER_STORAGE_KEY = 'my_subscribed_categories'; // 로그인 사용자 캐시 키
 
@@ -18,6 +20,7 @@ export function useSelectedCategories() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const isAuthInitialized = useAuthInitialized();
+  const queryClient = useQueryClient();
   const hasToken = isAuthInitialized && checkHasToken();
   const isLoggedIn = hasToken;
 
@@ -34,9 +37,10 @@ export function useSelectedCategories() {
       }
 
       if (isLoggedIn) {
-        // ✅ User: 백엔드 API에서 구독 정보 가져오기
+        // ✅ User: React Query 캐시 우선 조회 (useUser가 /users/me/init으로 이미 fetch했을 수 있음)
         try {
-          const subscriptions = await getUserSubscriptions();
+          const cached = queryClient.getQueryData<UserSubscription[]>(['user', 'subscriptions']);
+          const subscriptions = cached ?? await getUserSubscriptions();
           const boardCodes = subscriptions.map(sub => sub.board_code);
           setSelectedCategories(boardCodes);
 
@@ -83,7 +87,7 @@ export function useSelectedCategories() {
     };
 
     loadCategories();
-  }, [isAuthInitialized, hasToken]);
+  }, [isAuthInitialized, hasToken, isLoggedIn, queryClient]);
 
   // 선택 변경: 로그인 여부에 따라 다른 저장소에 저장
   const updateSelectedCategories = async (categories: string[]) => {

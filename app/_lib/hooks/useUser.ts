@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getUserProfile, updateUserProfile, checkHasToken } from '@/_lib/api';
+import { getUserProfile, getUserInit, updateUserProfile, checkHasToken } from '@/_lib/api';
 import { useUserStore } from '@/_lib/store/useUserStore';
 import type { UserProfileUpdate } from '@/_types/user';
 import { useEffect, useState } from 'react';
@@ -17,13 +17,14 @@ export function useUser() {
     const setUser = useUserStore((state) => state.setUser);
     const [isInternalLoaded, setIsInternalLoaded] = useState(false);
     const isAuthInitialized = useAuthInitialized();
+    const queryClient = useQueryClient();
 
     // 인증 초기화 완료 후 메모리의 토큰 확인
     const hasToken = isAuthInitialized && checkHasToken();
 
     const query = useQuery({
-        queryKey: ['user', 'profile'],
-        queryFn: getUserProfile,
+        queryKey: ['user', 'init'],
+        queryFn: getUserInit,
         staleTime: 1000 * 60 * 5, // 5분
         enabled: hasToken,
         retry: (failureCount, error) => {
@@ -38,7 +39,12 @@ export function useUser() {
     // 조회 성공 시 Zustand Store 업데이트 / 실패 시 초기화
     useEffect(() => {
         if (query.data) {
-            setUser(query.data);
+            // 1. Zustand Store 업데이트
+            setUser(query.data.user);
+            // 2. ['user', 'profile'] 캐시 동기화 (7곳의 setQueryData 호환성 유지)
+            queryClient.setQueryData(['user', 'profile'], query.data.user);
+            // 3. ['user', 'subscriptions'] 캐시 동기화 (useSelectedCategories 캐시 우선 조회용)
+            queryClient.setQueryData(['user', 'subscriptions'], query.data.subscriptions);
             setIsInternalLoaded(true);
         } else if (query.isError) {
             setUser(null);
@@ -48,7 +54,7 @@ export function useUser() {
             setUser(null);
             setIsInternalLoaded(true);
         }
-    }, [query.data, query.isError, hasToken, isAuthInitialized, setUser]);
+    }, [query.data, query.isError, hasToken, isAuthInitialized, setUser, queryClient]);
 
     return {
         ...query,
