@@ -78,3 +78,57 @@ test.describe('키워드 배지 서버 동기화', () => {
     });
   });
 });
+
+test.describe('키워드 배지 localStorage 새로고침 시나리오', () => {
+  test('markKeywordNoticesSeen 후 localStorage keyword_notice_seen_at 값이 존재해야 함', async ({ page }) => {
+    const { mockAuthenticatedAPIs } = await import('./fixtures/api-mocks');
+
+    await mockAuthenticatedAPIs(page);
+    await page.addInitScript(() => {
+      localStorage.setItem('keyword_notice_seen_at', '2024-01-01T00:00:00.000Z');
+    });
+
+    await page.goto('/notifications');
+    await page.locator('[aria-label="알림"]').waitFor({ timeout: 10_000 });
+
+    const value = await page.evaluate(() => localStorage.getItem('keyword_notice_seen_at'));
+    expect(value).not.toBeNull();
+  });
+
+  test('keyword_notice_seen_at localStorage 값이 새로고침 후에도 유지되어야 함', async ({ page }) => {
+    const { mockAuthenticatedAPIs } = await import('./fixtures/api-mocks');
+
+    await mockAuthenticatedAPIs(page);
+    await page.addInitScript(() => {
+      localStorage.setItem('keyword_notice_seen_at', '2024-06-01T12:00:00.000Z');
+    });
+
+    await page.goto('/');
+    await page.locator('[aria-label="알림"]').waitFor({ timeout: 10_000 });
+
+    await page.reload();
+    await page.locator('[aria-label="알림"]').waitFor({ timeout: 10_000 });
+
+    const value = await page.evaluate(() => localStorage.getItem('keyword_notice_seen_at'));
+    expect(value).not.toBeNull();
+  });
+
+  test('서버 keyword_notice_seen_at이 null이어도 기존 localStorage 값을 삭제하지 않아야 함', async ({ page }) => {
+    const { mockAuthenticatedAPIs } = await import('./fixtures/api-mocks');
+    const { MOCK_USER } = await import('./fixtures/test-data');
+
+    await mockAuthenticatedAPIs(page, {
+      user: { ...MOCK_USER, keyword_notice_seen_at: null },
+    });
+    await page.addInitScript(() => {
+      localStorage.setItem('keyword_notice_seen_at', '2023-12-01T00:00:00.000Z');
+    });
+
+    await page.goto('/');
+    await page.locator('[aria-label="알림"]').waitFor({ timeout: 10_000 });
+
+    const value = await page.evaluate(() => localStorage.getItem('keyword_notice_seen_at'));
+    expect(value).not.toBeNull();
+    expect(value).toBe('2023-12-01T00:00:00.000Z');
+  });
+});
