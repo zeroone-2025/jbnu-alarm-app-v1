@@ -17,7 +17,9 @@ export default function SharedHeader({ title, onMenuClick }: SharedHeaderProps) 
   const user = useUserStore((state) => state.user);
 
   const handleNotificationClick = () => {
-    const lastSeen = user?.keyword_notice_seen_at ?? null;
+    const serverSeen = user?.keyword_notice_seen_at ?? null;
+    const localSeen = typeof window !== 'undefined' ? localStorage.getItem('keyword_notice_seen_at') : null;
+    const lastSeen = [serverSeen, localSeen].filter(Boolean).sort().pop() ?? null;
     markKeywordNoticesSeen(keywordNotices);
     router.push(lastSeen ? `/notifications?last_seen=${encodeURIComponent(lastSeen)}` : '/notifications');
   };
