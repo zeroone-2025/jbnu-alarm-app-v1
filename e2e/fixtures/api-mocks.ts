@@ -116,8 +116,7 @@ export async function mockAuthenticatedAPIs(page: Page, options?: {
 }) {
   const user = options?.isNewUser ? MOCK_NEW_USER : (options?.user ?? MOCK_USER);
 
-  // session_hint 플래그 설정 (로그인 상태 시뮬레이션)
-  await page.evaluate(() => localStorage.setItem('session_hint', 'active'));
+  await page.addInitScript(() => localStorage.setItem('session_hint', 'active'));
 
   // Auth refresh: 성공
   await page.route('**/auth/refresh', apiOnly((route) =>
