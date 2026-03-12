@@ -17,7 +17,14 @@ export function getAccessToken(): string | null {
  * Access Token 설정
  */
 export function setAccessToken(token: string | null): void {
-    accessToken = token;
+    if (token) {
+        accessToken = token;
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('session_hint', 'active');
+        }
+    } else {
+        accessToken = null;
+    }
 }
 
 /**

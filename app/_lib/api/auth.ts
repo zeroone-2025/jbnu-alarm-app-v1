@@ -36,16 +36,6 @@ export const isAuthReady = () => isAuthInitialized;
 // 토큰 존재 여부 확인
 export const checkHasToken = () => hasAccessToken();
 
-// Refresh Token 쿠키 존재 여부 확인 (경량 체크)
-export const checkRefreshToken = async (): Promise<boolean> => {
-    try {
-        const response = await authApi.get<{ hasToken: boolean }>('/auth/check');
-        return response.data.hasToken;
-    } catch (error) {
-        return false;
-    }
-};
-
 // Refresh Token으로 새 Access Token 발급
 export const refreshAccessToken = async (): Promise<string | null> => {
     try {
@@ -59,6 +49,16 @@ export const refreshAccessToken = async (): Promise<string | null> => {
         return null;
     } catch (error) {
         clearAccessToken();
+        if (
+            typeof window !== 'undefined' &&
+            error instanceof Error &&
+            'response' in (error as unknown as Record<string, unknown>)
+        ) {
+            const status = (error as {response?: {status?: number}}).response?.status;
+            if (status === 401 || status === 403) {
+                localStorage.removeItem('session_hint');
+            }
+        }
         return null;
     }
 };
@@ -76,6 +76,13 @@ export const initializeAuth = async (): Promise<boolean> => {
     }
 
     initializationPromise = (async () => {
+        // session_hint 없으면 게스트 — refresh 시도 없이 조기 반환
+        const hasSessionHint = typeof window !== 'undefined' &&
+                                localStorage.getItem('session_hint') !== null;
+        if (!hasSessionHint) {
+            isAuthInitialized = true;
+            return false;
+        }
         try {
             const token = await refreshAccessToken();
             isAuthInitialized = true;
@@ -99,6 +106,9 @@ export const logoutUser = async (): Promise<void> => {
         // 로그아웃 요청 실패해도 로컬 상태는 정리
     } finally {
         clearAccessToken();
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('session_hint');
+        }
         isAuthInitialized = false;
     }
 };
@@ -108,4 +118,7 @@ export const resetAuthState = (): void => {
     isAuthInitialized = false;
     initializationPromise = null;
     clearAccessToken();
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('session_hint');
+    }
 };

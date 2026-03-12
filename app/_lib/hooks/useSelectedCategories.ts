@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { BOARD_LIST, GUEST_FILTER_KEY, GUEST_DEFAULT_BOARDS } from '@/_lib/constants/boards';
-import { getUserSubscriptions, updateUserSubscriptions } from '@/_lib/api';
+import { getUserInit, getUserSubscriptions, updateUserSubscriptions } from '@/_lib/api';
 import { useAuthInitialized } from '@/providers';
 import { checkHasToken } from '@/_lib/api/auth';
-import type { UserSubscription } from '@/_types/user';
 
 const USER_STORAGE_KEY = 'my_subscribed_categories'; // 로그인 사용자 캐시 키
 
@@ -37,19 +36,29 @@ export function useSelectedCategories() {
       }
 
       if (isLoggedIn) {
-        // ✅ User: React Query 캐시 우선 조회 (useUser가 /users/me/init으로 이미 fetch했을 수 있음)
+        // ✅ User: ensureQueryData로 ['user', 'init'] 캐시 활용 (race condition 해결)
         try {
-          const cached = queryClient.getQueryData<UserSubscription[]>(['user', 'subscriptions']);
-          const subscriptions = cached ?? await getUserSubscriptions();
+          const initData = await queryClient.ensureQueryData({
+            queryKey: ['user', 'init'],
+            queryFn: getUserInit,
+          });
+          const subscriptions = initData.subscriptions;
           const boardCodes = subscriptions.map(sub => sub.board_code);
           setSelectedCategories(boardCodes);
 
           // localStorage에 캐시 저장
           localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(boardCodes));
         } catch (error) {
-          console.error('Failed to load subscriptions from API:', error);
-          // API 실패 시 빈 배열 (page.tsx에서 home_campus로 fallback)
-          setSelectedCategories([]);
+          try {
+            const subscriptions = await getUserSubscriptions();
+            const boardCodes = subscriptions.map(sub => sub.board_code);
+            setSelectedCategories(boardCodes);
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(boardCodes));
+          } catch (fallbackError) {
+            console.error('Failed to load subscriptions:', fallbackError);
+            // API 실패 시 빈 배열 (page.tsx에서 home_campus로 fallback)
+            setSelectedCategories([]);
+          }
         }
       } else {
         // ✅ Guest: localStorage에서만 읽기 (API 호출 차단)
