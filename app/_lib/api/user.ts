@@ -25,6 +25,12 @@ export const getUserSubscriptions = async () => {
     return response.data;
 };
 
+// 유저 정보 + 구독 합산 조회 (병렬화용)
+export const getUserInit = async () => {
+    const response = await api.get<{ user: UserProfile; subscriptions: UserSubscription[] }>('/users/me/init');
+    return response.data;
+};
+
 // 구독 업데이트 (전체 교체)
 export const updateUserSubscriptions = async (boardCodes: string[]) => {
     const response = await api.put<UpdateSubscriptionsResponse>('/users/me/subscriptions', {
