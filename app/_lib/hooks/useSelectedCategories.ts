@@ -111,6 +111,10 @@ export function useSelectedCategories() {
         await updateUserSubscriptions(categories);
         // 성공 시 localStorage 캐시 저장
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(categories));
+        // ['user', 'init'] 캐시 무효화 → 홈 페이지 마운트 시 최신 구독 정보 로드
+        queryClient.invalidateQueries({ queryKey: ['user', 'init'] });
+        // 공지 목록 캐시 무효화 → 변경된 게시판 구독에 맞는 공지 다시 로드
+        queryClient.invalidateQueries({ queryKey: ['notices', 'infinite'] });
       } catch (error) {
         console.error('Failed to save subscriptions to backend:', error);
         // 실패 시 롤백
