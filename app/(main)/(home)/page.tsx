@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import { fetchNoticesInfinite, Notice } from '@/_lib/api';
+import { smoothScrollToTop } from '@/_lib/utils/scroll';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -57,10 +58,10 @@ function HomeContent() {
 
   // 모든 의존성이 준비되면 쿼리 활성화
   useEffect(() => {
-    if (isMounted && isAuthLoaded && !isCategoriesLoading && selectedCategories.length > 0) {
+    if (isMounted && !isCategoriesLoading && selectedCategories.length > 0) {
       setIsQueryReady(true);
     }
-  }, [isMounted, isAuthLoaded, isCategoriesLoading, selectedCategories.length]);
+  }, [isMounted, isCategoriesLoading, selectedCategories.length]);
 
   // Pull to Refresh용 스크롤 컨테이너 ref 초기화
   const { scrollContainerRef, isPulling, pullDistance, refreshing } = usePullToRefresh({
@@ -114,6 +115,20 @@ function HomeContent() {
     refetchOnMount: false,
     refetchOnReconnect: false,
   });
+
+  const handleLogoTap = useCallback(async () => {
+    smoothScrollToTop(scrollContainerRef.current ?? null);
+    if (filter === 'KEYWORD') {
+      await refreshKeywordNotices();
+    } else {
+      await refetch();
+    }
+  }, [filter, refetch, refreshKeywordNotices, scrollContainerRef]);
+
+  useEffect(() => {
+    window.addEventListener('logo-tap', handleLogoTap);
+    return () => window.removeEventListener('logo-tap', handleLogoTap);
+  }, [handleLogoTap]);
 
   // 모든 페이지의 공지사항을 하나의 배열로 합치기
   const notices = useMemo<Notice[]>(() => {
@@ -252,16 +267,16 @@ function HomeContent() {
       {/* User Stats Banner */}
       <UserStatsBanner isLoggedIn={isLoggedIn} onSignupClick={() => router.push('/login')} />
 
-      {/* 카테고리 필터 */}
-      <div className="shrink-0" style={{ touchAction: 'none' }}>
-        <CategoryFilter
-          activeFilter={filter}
-          onFilterChange={(f) => setFilter(f as any)}
-          isLoggedIn={isLoggedIn}
-          onSettingsClick={() => router.push('/filter')}
-          onShowToast={showToast}
-        />
-      </div>
+        {/* 카테고리 필터 */}
+        <div className="shrink-0" style={{ touchAction: 'none' }}>
+          <CategoryFilter
+            activeFilter={filter}
+            onFilterChange={(f) => setFilter(f as any)}
+            isLoggedIn={isLoggedIn}
+            onSettingsClick={() => router.push('/filter')}
+            onShowToast={showToast}
+          />
+        </div>
 
       {/* 키워드 필터일 때만 키워드 설정 바 표시 */}
       {filter === 'KEYWORD' && (

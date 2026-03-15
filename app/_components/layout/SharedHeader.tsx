@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { FiUser, FiBell } from 'react-icons/fi';
 import Logo from '@/_components/ui/Logo';
 import { useNotificationBadge } from '@/_context/NotificationBadgeContext';
-import { useUser } from '@/_lib/hooks/useUser';
+import { useUserStore } from '@/_lib/store/useUserStore';
 
 interface SharedHeaderProps {
   title: string; // 'logo' | '프로필' | '친해지길 바래'
@@ -13,11 +13,13 @@ interface SharedHeaderProps {
 
 export default function SharedHeader({ title, onMenuClick }: SharedHeaderProps) {
   const router = useRouter();
-  const { isLoggedIn } = useUser();
   const { newKeywordCount, markKeywordNoticesSeen, keywordNotices } = useNotificationBadge();
+  const user = useUserStore((state) => state.user);
 
   const handleNotificationClick = () => {
-    const lastSeen = localStorage.getItem('keyword_notice_seen_at');
+    const serverSeen = user?.keyword_notice_seen_at ?? null;
+    const localSeen = typeof window !== 'undefined' ? localStorage.getItem('keyword_notice_seen_at') : null;
+    const lastSeen = [serverSeen, localSeen].filter(Boolean).sort().pop() ?? null;
     markKeywordNoticesSeen(keywordNotices);
     router.push(lastSeen ? `/notifications?last_seen=${encodeURIComponent(lastSeen)}` : '/notifications');
   };
@@ -38,7 +40,14 @@ export default function SharedHeader({ title, onMenuClick }: SharedHeaderProps) 
       {/* Center: Logo or title */}
       <div className="absolute left-1/2 -translate-x-1/2 transform">
         {title === 'logo' ? (
-          <Logo className="h-7 w-auto text-gray-900" />
+          <button
+            type="button"
+            aria-label="맨 위로 이동 및 새로고침"
+            className="appearance-none bg-transparent border-none p-0 m-0 leading-none cursor-pointer flex items-center"
+            onClick={() => window.dispatchEvent(new CustomEvent('logo-tap'))}
+          >
+            <Logo className="h-7 w-auto text-gray-900" />
+          </button>
         ) : (
           <h1 className="text-base font-bold text-gray-800 whitespace-nowrap">{title}</h1>
         )}

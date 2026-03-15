@@ -7,7 +7,7 @@ import {
   toggleNoticeFavorite,
   Notice,
 } from '@/_lib/api';
-import { useNotificationBadge } from '@/_context/NotificationBadgeContext';
+import { useNotificationBadge, normalizeDateTime } from '@/_context/NotificationBadgeContext';
 import Toast from '@/_components/ui/Toast';
 import { getLoginUrl } from '@/_lib/utils/requireLogin';
 import NoticeList from '@/(main)/(home)/_components/NoticeList';
@@ -131,14 +131,14 @@ export default function NotificationsClient() {
   const searchParams = useSearchParams();
   const lastSeenParam = searchParams.get('last_seen');
 
-  const highlightedIds = useMemo(() => {
-    if (!lastSeenParam || keywordNotices.length === 0) return [];
-    try {
-      const lastSeenTime = new Date(lastSeenParam).getTime();
-      const ids = keywordNotices
-        .filter(notice => {
-          // created_at이 있으면 우선 사용, 없으면 date 사용
-          const noticeTime = new Date(notice.created_at || notice.date).getTime();
+   const highlightedIds = useMemo(() => {
+     if (!lastSeenParam || keywordNotices.length === 0) return [];
+     try {
+       const lastSeenTime = new Date(normalizeDateTime(lastSeenParam)).getTime();
+       const ids = keywordNotices
+         .filter(notice => {
+           // created_at이 있으면 우선 사용, 없으면 date 사용
+           const noticeTime = new Date(normalizeDateTime(notice.created_at ?? notice.date)).getTime();
           // 기준 시점(마지막으로 확인한 시점)보다 나중에 올라온 공지만 강조
           return noticeTime > lastSeenTime;
         })

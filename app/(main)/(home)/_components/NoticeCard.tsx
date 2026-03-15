@@ -69,7 +69,7 @@ export default function NoticeCard({
   return (
     <div
       role="listitem"
-      className={`transition-all hover:bg-gray-50 md:rounded-xl md:border md:border-gray-100 md:shadow-sm md:hover:-translate-y-0.5 md:hover:shadow-md ${isHighlighted && !notice.is_read ? 'bg-orange-50 animate-blink-orange' : 'bg-white'}`}
+      className={`transition-all hover:bg-gray-50 md:rounded-xl md:border md:border-gray-100 md:shadow-sm md:hover:-translate-y-0.5 md:hover:shadow-md ${isHighlighted && !notice.is_read ? 'bg-blue-50' : 'bg-white'}`}
       style={{ opacity: styleConfig.opacity }}
     >
       <a

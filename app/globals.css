@@ -104,25 +104,7 @@ body {
   animation: bottomSheetUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-@keyframes blink-orange {
-  0% {
-    background-color: #fff7ed;
-    /* bg-orange-50 */
-  }
 
-  50% {
-    background-color: white;
-  }
-
-  100% {
-    background-color: #fff7ed;
-    /* bg-orange-50 */
-  }
-}
-
-.animate-blink-orange {
-  animation: blink-orange 3s ease-in-out 3 forwards;
-}
 
 /* 탭 컨텐츠 슬라이드 */
 @keyframes slideInRight {
@@ -153,4 +135,18 @@ body {
 
 .animate-slideInLeft {
   animation: slideInLeft 0.25s ease-out;
+}
+
+/* 사이드바 FOUC 방지 — React 로딩 전 인라인 스크립트가 클래스 추가 */
+@media (min-width: 52rem) {
+  .sidebar-collapsed aside {
+    width: 60px !important;
+  }
+  .sidebar-collapsed aside > div:first-child {
+    opacity: 1 !important;
+  }
+  .sidebar-collapsed aside > div:last-child {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
 }
