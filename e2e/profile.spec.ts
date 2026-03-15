@@ -14,7 +14,7 @@ test.describe('프로필 페이지 - 로그인 사용자', () => {
     // 프로필 탭이 표시되면 프로필 페이지 로드 완료
     await expect(asLoggedInUser.getByRole('button', { name: '기본정보' })).toBeVisible({ timeout: 10_000 });
     // 닉네임 입력 필드에 유저 이름이 있는지 확인
-    await expect(asLoggedInUser.getByPlaceholder('닉네임을 입력하세요')).toHaveValue('테스트유저');
+    await expect(asLoggedInUser.getByPlaceholder('이름을 입력하세요')).toHaveValue('테스트유저');
   });
 
   test('수정하기 버튼이 있다', async ({ asLoggedInUser }) => {
@@ -56,6 +56,6 @@ test.describe('프로필 페이지 - 반응형', () => {
     // 프로필 탭이 표시되면 로드 완료
     await expect(asLoggedInUser.getByRole('button', { name: '기본정보' })).toBeVisible({ timeout: 10_000 });
     // 닉네임 입력 필드 확인
-    await expect(asLoggedInUser.getByPlaceholder('닉네임을 입력하세요')).toHaveValue('테스트유저');
+    await expect(asLoggedInUser.getByPlaceholder('이름을 입력하세요')).toHaveValue('테스트유저');
   });
 });

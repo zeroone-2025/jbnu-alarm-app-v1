@@ -244,6 +244,7 @@ export default function OnboardingModal({
   const [userType, setUserType] = useState<UserType | null>(null);
   const [formData, setFormData] = useState<UserInfoFormData>({
     nickname: '',
+    username: '',
     school: '',
     dept_code: '',
     dept_name: '',
@@ -418,6 +419,7 @@ export default function OnboardingModal({
     setUserType(null);
     setFormData({
       nickname: '',
+      username: '',
       school: '',
       dept_code: '',
       dept_name: '',

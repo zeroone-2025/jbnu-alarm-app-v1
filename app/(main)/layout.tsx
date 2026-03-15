@@ -41,7 +41,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   };
 
   const normalizedPath = pathname === '/' ? '/' : pathname.replace(/\/$/, '');
-  const showHeader = MAIN_PAGES.has(normalizedPath);
+  const CHINBA_HEADER_PATHS = new Set(['/chinba', '/chinba/team', '/chinba/my']);
+  const showHeader = MAIN_PAGES.has(normalizedPath) || CHINBA_HEADER_PATHS.has(normalizedPath);
 
   const collapsed = desktopCollapsed;
   // sidebar(60 or 260) + content — iPad Pro 12.9" 가로(1366px)까지 꽉 채움

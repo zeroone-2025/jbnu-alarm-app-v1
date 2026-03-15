@@ -11,6 +11,7 @@ interface FullPageModalProps {
   children: ReactNode;
   mode?: 'inline' | 'overlay';
   showBackButton?: boolean;
+  headerRight?: ReactNode;
 }
 
 export default function FullPageModal({
@@ -20,6 +21,7 @@ export default function FullPageModal({
   children,
   mode = 'inline',
   showBackButton = true,
+  headerRight,
 }: FullPageModalProps) {
   const [isMounted, setIsMounted] = useState(false);
 
@@ -66,6 +68,9 @@ export default function FullPageModal({
             </button>
           )}
           <h1 className="text-base font-bold text-gray-800">{title}</h1>
+          {headerRight && (
+            <div className="absolute right-0 z-10">{headerRight}</div>
+          )}
         </div>
       </div>
       {/* 컨텐츠 영역 */}
