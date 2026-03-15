@@ -10,3 +10,13 @@ export const getUserStats = async () => {
     const response = await api.get<UserStats>('/stats/users');
     return response.data;
 };
+
+export interface TeamStats {
+    total_teams: number;
+    updated_at: string;
+}
+
+export const getTeamStats = async () => {
+    const response = await api.get<TeamStats>('/stats/teams');
+    return response.data;
+};

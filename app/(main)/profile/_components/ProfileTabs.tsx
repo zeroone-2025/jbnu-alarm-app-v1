@@ -2,7 +2,7 @@
 
 import { useRef, useLayoutEffect, useState, useCallback } from 'react';
 
-export type ProfileTabType = 'basic' | 'timetable' | 'career';
+export type ProfileTabType = 'basic' | 'career';
 
 interface ProfileTabsProps {
   activeTab: ProfileTabType;
@@ -11,7 +11,6 @@ interface ProfileTabsProps {
 
 const TABS: { key: ProfileTabType; label: string }[] = [
   { key: 'basic', label: '기본정보' },
-  { key: 'timetable', label: '일정관리' },
   { key: 'career', label: '이력관리' },
 ];
 

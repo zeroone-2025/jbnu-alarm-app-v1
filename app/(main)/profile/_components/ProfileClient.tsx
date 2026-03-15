@@ -12,7 +12,6 @@ import { getAllDepartments, deleteUserAccount, logoutUser } from '@/_lib/api';
 import { useUserStore } from '@/_lib/store/useUserStore';
 import { useToast } from '@/_context/ToastContext';
 import ProfileTabs, { ProfileTabType } from './ProfileTabs';
-import { TimetableTab } from '@/_components/timetable';
 import CareerTab from './career/CareerTab';
 
 function formatAdmissionYear(year: number | null | undefined): string | null {
@@ -36,10 +35,11 @@ export default function ProfileClient() {
   const [isAnimating, setIsAnimating] = useState(false);
   const prevTabRef = useRef<ProfileTabType>(initialTab);
 
-  const TAB_INDEX: Record<ProfileTabType, number> = { basic: 0, timetable: 1, career: 2 };
+  const TAB_INDEX: Record<ProfileTabType, number> = { basic: 0, career: 1 };
 
   const [formData, setFormData] = useState<UserInfoFormData>({
     nickname: '',
+    username: '',
     school: '',
     dept_code: '',
     dept_name: '',
@@ -66,6 +66,7 @@ export default function ProfileClient() {
     if (user) {
       setFormData({
         nickname: user.nickname || '',
+        username: user.username || '',
         school: user.school || '',
         dept_code: user.dept_code || '',
         dept_name: '',
@@ -88,6 +89,7 @@ export default function ProfileClient() {
     if (user) {
       setFormData({
         nickname: user.nickname || '',
+        username: user.username || '',
         school: user.school || '',
         dept_code: user.dept_code || '',
         dept_name: '',
@@ -116,6 +118,7 @@ export default function ProfileClient() {
     try {
       await updateMutation.mutateAsync({
         nickname: formData.nickname,
+        username: formData.username,
         school: formData.school,
         dept_code: formData.dept_code,
         admission_year: formData.admission_year ? parseInt(formData.admission_year) : undefined,
@@ -171,7 +174,9 @@ export default function ProfileClient() {
           <p className="text-lg leading-tight font-bold text-gray-800">
             {user?.nickname || '사용자'}
           </p>
-          <p className="mt-1 text-xs text-gray-400">{user?.email}</p>
+          {user?.username && (
+            <p className="mt-0.5 text-sm text-gray-500">@{user.username}</p>
+          )}
           {(user?.school || deptName || admissionYearText) && (
             <p className="mt-0.5 text-xs text-gray-400">
               {[user?.school, deptName, admissionYearText].filter(Boolean).join(' · ')}
@@ -207,7 +212,8 @@ export default function ProfileClient() {
                     onChange={handleFormChange}
                     email={user?.email}
                     showNickname={true}
-                    isReadonlyNickname={true}
+                    isReadonlyNickname={false}
+                    showUsername={true}
                     isReadonly={!isEditing}
                   />
 
@@ -277,12 +283,6 @@ export default function ProfileClient() {
                     같은 계정으로 다시 가입할 수 있습니다.
                   </p>
                 </ConfirmModal>
-              </div>
-            )}
-
-            {activeTab === 'timetable' && (
-              <div className="h-full">
-                <TimetableTab />
               </div>
             )}
 

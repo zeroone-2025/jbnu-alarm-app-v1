@@ -1,12 +1,13 @@
 'use client';
 
-import { FiUser, FiHome, FiBook, FiHash, FiMail } from 'react-icons/fi';
+import { FiUser, FiHome, FiBook, FiHash, FiMail, FiAtSign } from 'react-icons/fi';
 
 import DepartmentSearch from '@/_components/ui/DepartmentSearch';
 import type { Department } from '@/_types/department';
 
 export interface UserInfoFormData {
     nickname: string;
+    username: string;
     school: string;
     dept_code: string;
     dept_name: string;
@@ -19,6 +20,8 @@ interface UserInfoFormProps {
     email?: string;
     showNickname?: boolean;
     isReadonlyNickname?: boolean;
+    showUsername?: boolean;
+    isReadonlyUsername?: boolean;
     isReadonlySchool?: boolean;
     isReadonly?: boolean;
     showRequirementBadges?: boolean;
@@ -27,6 +30,7 @@ interface UserInfoFormProps {
         school?: boolean;
         dept_code?: boolean;
         admission_year?: boolean;
+        username?: boolean;
     };
 }
 
@@ -36,6 +40,8 @@ export default function UserInfoForm({
     email,
     showNickname = true,
     isReadonlyNickname = false,
+    showUsername = false,
+    isReadonlyUsername = false,
     isReadonlySchool = false,
     isReadonly = false,
     showRequirementBadges = false,
@@ -67,12 +73,12 @@ export default function UserInfoForm({
 
     return (
         <div className="space-y-6">
-            {/* 닉네임 */}
+            {/* 이름 */}
             {showNickname && (
                 <div className="space-y-2">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                         <FiUser className="text-gray-400" />
-                        닉네임
+                        이름
                         {renderBadge('nickname')}
                     </label>
                     <input
@@ -81,12 +87,42 @@ export default function UserInfoForm({
                         value={formData.nickname}
                         onChange={handleInputChange}
                         readOnly={isReadonlyNickname || isReadonly}
-                        placeholder="닉네임을 입력하세요"
+                        placeholder="이름을 입력하세요"
                         className={`w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all ${(isReadonlyNickname || isReadonly)
                             ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                             : 'bg-gray-50 focus:border-gray-900 focus:bg-white'
                             }`}
                     />
+                </div>
+            )}
+
+            {/* @아이디 */}
+            {showUsername && (
+                <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <FiAtSign className="text-gray-400" />
+                        아이디
+                    </label>
+                    <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">@</span>
+                        <input
+                            type="text"
+                            name="username"
+                            value={formData.username}
+                            onChange={handleInputChange}
+                            readOnly={isReadonlyUsername || isReadonly}
+                            placeholder="아이디를 입력하세요"
+                            className={`w-full rounded-xl border px-4 py-3 pl-8 outline-none transition-all ${(isReadonlyUsername || isReadonly)
+                                ? 'border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed'
+                                : invalidFields.username
+                                    ? 'border-red-300 bg-red-50 focus:border-red-500'
+                                    : 'border-gray-200 bg-gray-50 focus:border-gray-900 focus:bg-white'
+                                }`}
+                        />
+                    </div>
+                    {!isReadonly && !isReadonlyUsername && (
+                        <p className="text-xs text-gray-400">영문 소문자, 숫자, 밑줄만 사용 가능 (3자 이상)</p>
+                    )}
                 </div>
             )}
 

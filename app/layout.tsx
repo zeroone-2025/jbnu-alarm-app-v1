@@ -67,7 +67,7 @@ gtag('js', new Date());
 gtag('config', 'G-SMF31V39T9');`}
         </Script>
       </head>
-      <body className={`${inter.className} flex h-screen flex-col bg-gray-50 text-gray-900`}>
+      <body className={`${inter.className} flex h-dvh flex-col bg-gray-50 text-gray-900`}>
         <ServiceWorkerRegistration />
         <Providers>
           <NavigationTracker />
