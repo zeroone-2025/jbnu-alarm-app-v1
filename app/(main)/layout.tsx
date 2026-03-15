@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useLayoutEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { ToastProvider } from '@/_context/ToastContext';
+import { NotificationBadgeProvider } from '@/_context/NotificationBadgeContext';
 import DesktopSidebar from '@/_components/layout/DesktopSidebar';
 import MobileSidebar from '@/_components/layout/MobileSidebar';
 import SharedHeader from '@/_components/layout/SharedHeader';
@@ -12,23 +13,29 @@ const MAIN_PAGES = new Set(['/', '/profile', '/chinba']);
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
+  // SSR과 클라이언트 초기값을 false(펼침)로 일치시켜 hydration mismatch 방지.
+  // useLayoutEffect로 페인트 전에 localStorage 값을 반영하여 깜빡임 없이 보정.
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+
+  useLayoutEffect(() => {
     const saved = localStorage.getItem('sidebar_collapsed');
     if (saved !== null) {
       setDesktopCollapsed(saved === 'true');
-    } else {
-      setDesktopCollapsed(window.innerWidth < 1200);
+    } else if (window.innerWidth < 1200) {
+      setDesktopCollapsed(true);
     }
-    setMounted(true);
   }, []);
 
   const handleDesktopToggle = () => {
     setDesktopCollapsed((prev) => {
       const next = !prev;
       localStorage.setItem('sidebar_collapsed', String(next));
+      if (next) {
+        document.documentElement.classList.add('sidebar-collapsed');
+      } else {
+        document.documentElement.classList.remove('sidebar-collapsed');
+      }
       return next;
     });
   };
@@ -36,13 +43,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const normalizedPath = pathname === '/' ? '/' : pathname.replace(/\/$/, '');
   const showHeader = MAIN_PAGES.has(normalizedPath);
 
-  const collapsed = mounted ? desktopCollapsed : false;
+  const collapsed = desktopCollapsed;
   // sidebar(60 or 260) + content — iPad Pro 12.9" 가로(1366px)까지 꽉 채움
   const desktopMaxWidth = 1366;
 
   return (
     <ToastProvider>
-      <div className="h-full w-full overflow-hidden bg-gray-50">
+      <NotificationBadgeProvider>
+        <div className="h-full w-full overflow-hidden bg-gray-50">
         {/* Desktop max-width varies with sidebar state */}
         <style>{`@media(min-width:52rem){[data-sidebar-layout]{max-width:${desktopMaxWidth}px!important}}`}</style>
 
@@ -75,7 +83,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             />
           </div>
         </div>
-      </div>
+        </div>
+      </NotificationBadgeProvider>
     </ToastProvider>
   );
 }

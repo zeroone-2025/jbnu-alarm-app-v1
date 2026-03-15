@@ -31,10 +31,14 @@ export function mergeNoticesForAll(primary: Notice[], extra: Notice[]): Notice[]
  */
 export function getLatestKeywordNoticeAt(items: Notice[]): number | null {
   if (items.length === 0) return null;
-  
-  return items
+
+  const timestamps = items
     .map((notice) => new Date(notice.created_at ?? notice.date).getTime())
-    .reduce((latest, current) => (current > latest ? current : latest), 0);
+    .filter((t) => !isNaN(t));
+
+  if (timestamps.length === 0) return null;
+
+  return Math.max(...timestamps);
 }
 
 /**

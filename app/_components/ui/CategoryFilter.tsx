@@ -91,18 +91,18 @@ export default function CategoryFilter({ activeFilter, onFilterChange, isLoggedI
         {ALL_FILTERS.map((filter) => {
           const isActive = activeFilter === filter.key;
 
-          return (
-            <button
-              key={filter.key}
-              onClick={() => handleFilterClick(filter.key)}
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all active:scale-95 ${isActive
-                ? 'bg-gray-900 text-white shadow-md'
-                : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
-                }`}
-            >
-              {filter.label}
-            </button>
-          );
+           return (
+             <button
+               key={filter.key}
+               onClick={() => handleFilterClick(filter.key)}
+               className={`relative whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all active:scale-95 ${isActive
+                 ? 'bg-gray-900 text-white shadow-md'
+                 : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                 }`}
+              >
+                {filter.label}
+              </button>
+           );
         })}
       </div>
     </div>

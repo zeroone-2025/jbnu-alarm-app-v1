@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useToast } from '@/_context/ToastContext';
 import SidebarContent from './SidebarContent';
@@ -31,6 +32,12 @@ export default function DesktopSidebar({ collapsed, onToggle }: DesktopSidebarPr
   const { showToast } = useToast();
   const { user, isLoggedIn } = useUser();
 
+  const [transitionEnabled, setTransitionEnabled] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setTransitionEnabled(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
 
   const isActive = (matchPath: string) => {
@@ -38,9 +45,18 @@ export default function DesktopSidebar({ collapsed, onToggle }: DesktopSidebarPr
     return pathname.startsWith(matchPath);
   };
 
-  if (collapsed) {
-    return (
-      <aside className="hidden md:flex md:w-[60px] md:shrink-0 h-full border-r border-gray-100 bg-white overflow-hidden transition-all duration-300 flex-col items-center py-4 gap-1">
+  return (
+    <aside
+      className={`hidden md:flex md:shrink-0 h-full border-r border-gray-100 bg-white overflow-hidden relative${
+        transitionEnabled ? ' transition-[width] duration-300 ease-in-out' : ''
+      } ${collapsed ? 'md:w-[60px]' : 'md:w-[260px]'}`}
+    >
+      <div
+        className={`absolute inset-y-0 left-0 w-[60px] flex flex-col items-center py-4 gap-1 bg-white z-10${
+          transitionEnabled ? ' transition-opacity duration-200' : ''
+        } ${collapsed ? 'opacity-100 delay-100' : 'opacity-0 pointer-events-none'}`}
+        {...(!collapsed ? { inert: true } : {})}
+      >
         {/* Expand toggle */}
         <button
           onClick={onToggle}
@@ -105,17 +121,20 @@ export default function DesktopSidebar({ collapsed, onToggle }: DesktopSidebarPr
             <FiSettings size={20} />
           </button>
         )}
-      </aside>
-    );
-  }
+      </div>
 
-  return (
-    <aside className="hidden md:flex md:w-[260px] md:shrink-0 h-full border-r border-gray-100 bg-white overflow-y-auto overflow-x-hidden transition-all duration-300">
-      <SidebarContent
-        onNavigate={(path) => router.push(path)}
-        onShowToast={showToast}
-        onCollapse={onToggle}
-      />
+      <div
+        className={`w-[260px] shrink-0 h-full overflow-y-auto overflow-x-hidden${
+          transitionEnabled ? ' transition-opacity duration-200' : ''
+        } ${collapsed ? 'opacity-0 pointer-events-none' : 'opacity-100 delay-100'}`}
+        {...(collapsed ? { inert: true } : {})}
+      >
+        <SidebarContent
+          onNavigate={(path) => router.push(path)}
+          onShowToast={showToast}
+          onCollapse={onToggle}
+        />
+      </div>
     </aside>
   );
 }

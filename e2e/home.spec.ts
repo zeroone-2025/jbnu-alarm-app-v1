@@ -120,3 +120,71 @@ test.describe('홈 페이지 - 데스크톱 뷰', () => {
     await expect(menuBtn).toBeHidden();
   });
 });
+
+test.describe('홈 페이지 - 로고 탭', () => {
+  test('로고 버튼이 존재하고 탭 가능하다', async ({ asGuest }) => {
+    await asGuest.goto('/');
+    const logoBtn = asGuest.getByRole('button', { name: /맨 위로 이동/ });
+    await expect(logoBtn).toBeVisible();
+    await expect(logoBtn).toBeEnabled();
+  });
+
+  test('로고 탭 시 logo-tap CustomEvent가 발생한다', async ({ asGuest }) => {
+    await asGuest.goto('/');
+    await expect(asGuest.locator('.animate-spin')).toHaveCount(0, { timeout: 10_000 });
+
+    await asGuest.evaluate(() => {
+      (window as unknown as Record<string, unknown>).__logoTapFired = false;
+      window.addEventListener('logo-tap', () => {
+        (window as unknown as Record<string, unknown>).__logoTapFired = true;
+      });
+    });
+
+    const logoBtn = asGuest.getByRole('button', { name: /맨 위로 이동/ });
+    await logoBtn.click();
+
+    const fired = await asGuest.evaluate(
+      () => (window as unknown as Record<string, unknown>).__logoTapFired
+    );
+    expect(fired).toBe(true);
+  });
+
+  test('로고 탭 시 공지사항 API refetch가 발생한다', async ({ asLoggedInUser }) => {
+    await asLoggedInUser.goto('/');
+    await expect(asLoggedInUser.locator('.animate-spin')).toHaveCount(0, { timeout: 10_000 });
+
+    await asLoggedInUser.evaluate(() => {
+      const el = document.querySelector('.h-full.overflow-y-auto');
+      if (el) el.scrollTop = 300;
+    });
+
+    const refetchPromise = asLoggedInUser.waitForRequest(
+      (req) => req.url().includes('/notices') && req.method() === 'GET',
+      { timeout: 10_000 }
+    );
+
+    await asLoggedInUser.getByRole('button', { name: /맨 위로 이동/ }).click();
+
+    await refetchPromise;
+  });
+
+  test('이미 상단에 있어도 로고 탭 시 refetch가 발생한다', async ({ asLoggedInUser }) => {
+    await asLoggedInUser.goto('/');
+    await expect(asLoggedInUser.locator('.animate-spin')).toHaveCount(0, { timeout: 10_000 });
+
+    const scrollTop = await asLoggedInUser.evaluate(() => {
+      const el = document.querySelector('.h-full.overflow-y-auto');
+      return el ? el.scrollTop : 0;
+    });
+    expect(scrollTop).toBe(0);
+
+    const refetchPromise = asLoggedInUser.waitForRequest(
+      (req) => req.url().includes('/notices') && req.method() === 'GET',
+      { timeout: 10_000 }
+    );
+
+    await asLoggedInUser.getByRole('button', { name: /맨 위로 이동/ }).click();
+
+    await refetchPromise;
+  });
+});

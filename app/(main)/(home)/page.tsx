@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import { fetchNoticesInfinite, Notice } from '@/_lib/api';
+import { smoothScrollToTop } from '@/_lib/utils/scroll';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -12,8 +13,8 @@ import { useSelectedCategories } from '@/_lib/hooks/useSelectedCategories';
 import { usePullToRefresh } from '@/_lib/hooks/usePullToRefresh';
 import { useUser } from '@/_lib/hooks/useUser';
 import { useToast } from '@/_context/ToastContext';
+import { useNotificationBadge } from '@/_context/NotificationBadgeContext';
 import { useFilterState } from './_hooks/useFilterState';
-import { useKeywordNotices } from './_hooks/useKeywordNotices';
 import { useNoticeActions } from './_hooks/useNoticeActions';
 import { useNoticeFiltering } from './_hooks/useNoticeFiltering';
 import OnboardingModal from './_components/OnboardingModal';
@@ -57,21 +58,16 @@ function HomeContent() {
 
   // 모든 의존성이 준비되면 쿼리 활성화
   useEffect(() => {
-    if (isMounted && isAuthLoaded && !isCategoriesLoading && selectedCategories.length > 0) {
+    if (isMounted && !isCategoriesLoading && selectedCategories.length > 0) {
       setIsQueryReady(true);
     }
-  }, [isMounted, isAuthLoaded, isCategoriesLoading, selectedCategories.length]);
+  }, [isMounted, isCategoriesLoading, selectedCategories.length]);
 
   // Pull to Refresh용 스크롤 컨테이너 ref 초기화
   const { scrollContainerRef, isPulling, pullDistance, refreshing } = usePullToRefresh({
     onRefresh: async () => {
       if (filter === 'KEYWORD') {
-        const count = await loadKeywordCount();
-        if (count === 0) {
-          setKeywordNotices([]);
-          return;
-        }
-        await loadKeywordNotices();
+        await refreshKeywordNotices();
         return;
       }
       await refetch();
@@ -86,14 +82,7 @@ function HomeContent() {
     scrollContainerRef,
   });
 
-  const {
-    keywordNotices,
-    keywordCount,
-    loadKeywordNotices,
-    loadKeywordNoticesSilent,
-    loadKeywordCount,
-    setKeywordNotices,
-  } = useKeywordNotices(isLoggedIn, filter);
+  const { keywordNotices, keywordCount, refreshKeywordNotices, markKeywordNoticesSeen } = useNotificationBadge();
 
   // 게시판 목록
   const selectedBoards = selectedCategories;
@@ -127,6 +116,20 @@ function HomeContent() {
     refetchOnReconnect: false,
   });
 
+  const handleLogoTap = useCallback(async () => {
+    smoothScrollToTop(scrollContainerRef.current ?? null);
+    if (filter === 'KEYWORD') {
+      await refreshKeywordNotices();
+    } else {
+      await refetch();
+    }
+  }, [filter, refetch, refreshKeywordNotices, scrollContainerRef]);
+
+  useEffect(() => {
+    window.addEventListener('logo-tap', handleLogoTap);
+    return () => window.removeEventListener('logo-tap', handleLogoTap);
+  }, [handleLogoTap]);
+
   // 모든 페이지의 공지사항을 하나의 배열로 합치기
   const notices = useMemo<Notice[]>(() => {
     const pages = noticePages?.pages;
@@ -137,10 +140,7 @@ function HomeContent() {
   }, [noticePages]);
 
   // 공지사항 액션
-  const { handleMarkAsRead, handleToggleFavorite } = useNoticeActions(
-    isLoggedIn,
-    setKeywordNotices
-  );
+  const { handleMarkAsRead, handleToggleFavorite } = useNoticeActions(isLoggedIn);
 
   // 공지사항 필터링
   const { filteredNotices } = useNoticeFiltering(
@@ -192,10 +192,6 @@ function HomeContent() {
         if (filter === 'ALL') {
           refetch();
         }
-        if (isLoggedIn) {
-          loadKeywordCount();
-          loadKeywordNoticesSilent();
-        }
       }
     };
 
@@ -203,7 +199,20 @@ function HomeContent() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [filter, isLoggedIn, refetch, refetchUser, loadKeywordCount, loadKeywordNoticesSilent]);
+  }, [filter, isLoggedIn, refetch, refetchUser]);
+
+  useEffect(() => {
+    if (!isMounted || !isLoggedIn) return;
+    if (filter === 'KEYWORD') {
+      refreshKeywordNotices();
+    }
+  }, [filter, isMounted, isLoggedIn]);
+
+  useEffect(() => {
+    if (filter === 'KEYWORD') {
+      markKeywordNoticesSeen(keywordNotices);
+    }
+  }, [filter, keywordNotices]);
 
   // 온보딩 완료 핸들러
   const handleOnboardingComplete = (categories: string[]) => {
@@ -258,16 +267,16 @@ function HomeContent() {
       {/* User Stats Banner */}
       <UserStatsBanner isLoggedIn={isLoggedIn} onSignupClick={() => router.push('/login')} />
 
-      {/* 카테고리 필터 */}
-      <div className="shrink-0" style={{ touchAction: 'none' }}>
-        <CategoryFilter
-          activeFilter={filter}
-          onFilterChange={(f) => setFilter(f as any)}
-          isLoggedIn={isLoggedIn}
-          onSettingsClick={() => router.push('/filter')}
-          onShowToast={showToast}
-        />
-      </div>
+        {/* 카테고리 필터 */}
+        <div className="shrink-0" style={{ touchAction: 'none' }}>
+          <CategoryFilter
+            activeFilter={filter}
+            onFilterChange={(f) => setFilter(f as any)}
+            isLoggedIn={isLoggedIn}
+            onSettingsClick={() => router.push('/filter')}
+            onShowToast={showToast}
+          />
+        </div>
 
       {/* 키워드 필터일 때만 키워드 설정 바 표시 */}
       {filter === 'KEYWORD' && (
