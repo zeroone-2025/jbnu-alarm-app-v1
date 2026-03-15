@@ -7,6 +7,7 @@ import Button from '@/_components/ui/Button';
 import { useRouter } from 'next/navigation'; // Added missing import for useRouter
 import { useEffect } from 'react'; // Added missing import for useEffect
 import { useSmartBack } from '@/_lib/hooks/useSmartBack';
+import { useNotificationBadge } from '@/_context/NotificationBadgeContext';
 
 /**
  * 키워드 관리 페이지
@@ -17,6 +18,7 @@ export default function KeywordsPage() {
   const router = useRouter();
   const smartBack = useSmartBack();
   const { isLoggedIn, isAuthLoaded } = useUser();
+  const { refreshKeywordNotices } = useNotificationBadge();
 
   useEffect(() => {
     if (isAuthLoaded && !isLoggedIn) {
@@ -29,8 +31,7 @@ export default function KeywordsPage() {
   };
 
   const handleUpdate = () => {
-    // 키워드 업데이트 완료
-    // 페이지는 그대로 유지 (사용자가 뒤로가기로 이동)
+    refreshKeywordNotices();
   };
 
   // 인증 상태 로딩 중이거나 비로그인 상태(리다이렉트 중)일 때는 아무것도 렌더링하지 않음
