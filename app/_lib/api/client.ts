@@ -105,7 +105,7 @@ api.interceptors.response.use(
                 const newToken = response.data.access_token;
 
                 if (newToken) {
-                    setAccessToken(newToken);
+                    await setAccessToken(newToken);
                     onRefreshed(newToken);
                     originalRequest.headers.Authorization = `Bearer ${newToken}`;
                     return api(originalRequest);

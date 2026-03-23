@@ -56,7 +56,7 @@ function AuthCallbackContent() {
       const processLogin = async () => {
         try {
           // 1. 백엔드에서 전달받은 JWT를 메모리에 저장
-          setAccessToken(accessToken);
+          await setAccessToken(accessToken);
           setStatus('로그인 성공! 사용자 정보를 확인하는 중...');
 
           // 2. 사용자 정보 조회

@@ -6,6 +6,8 @@ export function useUserStats() {
         queryKey: ['stats', 'users'],
         queryFn: getUserStats,
         staleTime: 1000 * 60 * 60, // 1시간 캐시
+        placeholderData: (previousData) => previousData,
+        gcTime: Infinity,
         refetchOnMount: false,
     });
 }

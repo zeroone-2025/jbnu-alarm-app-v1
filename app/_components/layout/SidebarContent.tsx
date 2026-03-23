@@ -19,6 +19,7 @@ import { SiNaver } from 'react-icons/si';
 import { IconType } from 'react-icons';
 import { useUser } from '@/_lib/hooks/useUser';
 import { getAllDepartments, logoutUser } from '@/_lib/api';
+import persistentStorage from '@/_lib/utils/persistentStorage';
 import { useUserStore } from '@/_lib/store/useUserStore';
 import { useMyChinbaEvents } from '@/_lib/hooks/useChinba';
 import { getLoginUrl } from '@/_lib/utils/requireLogin';
@@ -284,8 +285,7 @@ export default function SidebarContent({
             onClick={async () => {
               if (!confirm('로그아웃 하시겠습니까?')) return;
               await logoutUser();
-              localStorage.removeItem('my_subscribed_categories');
-              localStorage.removeItem('access_token');
+              await persistentStorage.remove('my_subscribed_categories');
               clearUser();
               window.location.href = '/?logout=success';
             }}

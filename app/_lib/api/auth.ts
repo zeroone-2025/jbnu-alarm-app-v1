@@ -1,5 +1,13 @@
 import { API_BASE_URL, authApi } from './client';
-import { setAccessToken, clearAccessToken, hasAccessToken } from '@/_lib/auth/tokenStore';
+import {
+    setAccessToken,
+    clearAccessToken,
+    hasAccessToken,
+    restoreAccessToken,
+    isRestoringToken,
+} from '@/_lib/auth/tokenStore';
+import persistentStorage from '@/_lib/utils/persistentStorage';
+import { updateUserProfile } from './user';
 
 // 인증 초기화 상태
 let isAuthInitialized = false;
@@ -38,12 +46,15 @@ export const checkHasToken = () => hasAccessToken();
 
 // Refresh Token으로 새 Access Token 발급
 export const refreshAccessToken = async (): Promise<string | null> => {
+    // single-flight: restoreAccessToken 진행 중이면 대기
+    if (isRestoringToken()) return null;
+
     try {
         const response = await authApi.post<{ access_token: string }>('/auth/refresh');
         const newToken = response.data.access_token;
 
         if (newToken) {
-            setAccessToken(newToken);
+            await setAccessToken(newToken);
             return newToken;
         }
         return null;
@@ -54,16 +65,17 @@ export const refreshAccessToken = async (): Promise<string | null> => {
             error instanceof Error &&
             'response' in (error as unknown as Record<string, unknown>)
         ) {
-            const status = (error as {response?: {status?: number}}).response?.status;
+            const status = (error as { response?: { status?: number } }).response?.status;
             if (status === 401 || status === 403) {
-                localStorage.removeItem('session_hint');
+                await persistentStorage.remove('session_hint');
             }
         }
         return null;
     }
 };
 
-// 앱 시작 시 세션 복구 (refresh token으로 access token 재발급)
+// 앱 시작 시 세션 복구
+// 복원 순서: ① Keychain 복원 → ② 실패 시 refresh(쿠키) → ③ 둘 다 실패 시 게스트
 export const initializeAuth = async (): Promise<boolean> => {
     // 이미 초기화 중이면 기존 Promise 반환
     if (initializationPromise) {
@@ -76,14 +88,32 @@ export const initializeAuth = async (): Promise<boolean> => {
     }
 
     initializationPromise = (async () => {
-        // session_hint 없으면 게스트 — refresh 시도 없이 조기 반환
-        const hasSessionHint = typeof window !== 'undefined' &&
-                                localStorage.getItem('session_hint') !== null;
-        if (!hasSessionHint) {
-            isAuthInitialized = true;
-            return false;
-        }
         try {
+            // ① Keychain에서 토큰 복원 시도
+            const restored = await restoreAccessToken();
+            if (restored) {
+                isAuthInitialized = true;
+                return true;
+            }
+
+            // ② Native 환경 또는 session_hint가 있는 경우 refresh 시도
+            const native = await (async () => {
+                try {
+                    const { Capacitor } = await import('@capacitor/core');
+                    return Capacitor.isNativePlatform();
+                } catch {
+                    return false;
+                }
+            })();
+
+            const hasSessionHint = native ||
+                (typeof window !== 'undefined' && localStorage.getItem('session_hint') !== null);
+
+            if (!hasSessionHint) {
+                isAuthInitialized = true;
+                return false;
+            }
+
             const token = await refreshAccessToken();
             isAuthInitialized = true;
             return !!token;
@@ -101,24 +131,27 @@ export const initializeAuth = async (): Promise<boolean> => {
 // 로그아웃 (백엔드에 요청 + 메모리 토큰 삭제)
 export const logoutUser = async (): Promise<void> => {
     try {
+        await updateUserProfile({ fcm_token: null });
+    } catch {
+        // fcm_token 삭제 실패해도 로그아웃 진행
+    }
+    try {
         await authApi.post('/auth/logout');
     } catch {
         // 로그아웃 요청 실패해도 로컬 상태는 정리
     } finally {
         clearAccessToken();
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('session_hint');
-        }
+        await persistentStorage.remove('session_hint');
+        await persistentStorage.removeSecure('access_token');
         isAuthInitialized = false;
     }
 };
 
 // 인증 상태 초기화 (테스트용)
-export const resetAuthState = (): void => {
+export const resetAuthState = async (): Promise<void> => {
     isAuthInitialized = false;
     initializationPromise = null;
     clearAccessToken();
-    if (typeof window !== 'undefined') {
-        localStorage.removeItem('session_hint');
-    }
+    await persistentStorage.remove('session_hint');
+    await persistentStorage.removeSecure('access_token');
 };

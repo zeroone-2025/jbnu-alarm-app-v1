@@ -21,6 +21,7 @@ import { MAJOR_PRESETS } from '@/_lib/constants/presets';
 import { clearPendingOnboarding, savePendingOnboarding, loadPendingOnboarding } from '@/_lib/onboarding/pendingSubmission';
 import type { PendingOnboardingSubmission } from '@/_lib/onboarding/pendingSubmission';
 import { useUserStore } from '@/_lib/store/useUserStore';
+import persistentStorage from '@/_lib/utils/persistentStorage';
 import type {
   CareerContactUpdate,
   CareerEducationsUpdate,
@@ -512,7 +513,7 @@ export default function OnboardingModal({
 
       queryClient.setQueryData(['user', 'profile'], result.user);
       setUser(result.user);
-      localStorage.setItem('my_subscribed_categories', JSON.stringify(result.subscribed_boards));
+      await persistentStorage.set('my_subscribed_categories', JSON.stringify(result.subscribed_boards));
       clearOnboardingDraft();
       onShowToast?.('제로타임에 오신 것을 환영합니다! 🎉', 'success');
       onComplete(result.subscribed_boards);
@@ -551,7 +552,7 @@ export default function OnboardingModal({
 
       queryClient.setQueryData(['user', 'profile'], result.user);
       setUser(result.user);
-      localStorage.setItem('my_subscribed_categories', JSON.stringify(defaultBoards));
+      await persistentStorage.set('my_subscribed_categories', JSON.stringify(defaultBoards));
       clearOnboardingDraft();
       onShowToast?.('제로타임에 오신 것을 환영합니다! 🎉', 'success');
       onComplete(defaultBoards);
@@ -874,7 +875,7 @@ export default function OnboardingModal({
 
       queryClient.setQueryData(['user', 'profile'], onboardingResult.user);
       setUser(onboardingResult.user);
-      localStorage.setItem('my_subscribed_categories', JSON.stringify(onboardingResult.subscribed_boards));
+      await persistentStorage.set('my_subscribed_categories', JSON.stringify(onboardingResult.subscribed_boards));
       clearOnboardingDraft();
       onSeniorCompleted?.();
       setSeniorCompleted(onboardingResult.subscribed_boards);

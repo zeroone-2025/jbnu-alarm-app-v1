@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { addKeyword, deleteKeyword, getMyKeywords, Keyword } from '@/_lib/api';
 import { useUser } from '@/_lib/hooks/useUser';
+import { registerPushNotifications } from '@/_lib/push/pushNotifications';
 import Toast from '@/_components/ui/Toast';
 import Button from '@/_components/ui/Button';
 import GoogleLoginButton from '@/_components/auth/GoogleLoginButton';
@@ -64,10 +65,15 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
 
     try {
       const created = await addKeyword(trimmed);
-      setKeywords((prev) => [created, ...prev]);
+      const updatedKeywords = [created, ...keywords];
+      setKeywords(updatedKeywords);
       setKeywordInput('');
       showToastMessage('키워드가 추가되었습니다.', 'success');
       onUpdate?.();
+      if (updatedKeywords.length === 1) {
+        // 첫 키워드 추가 → push 권한 요청
+        registerPushNotifications().catch(() => {});
+      }
     } catch (error) {
       console.error('Failed to add keyword', error);
       if (axios.isAxiosError(error)) {

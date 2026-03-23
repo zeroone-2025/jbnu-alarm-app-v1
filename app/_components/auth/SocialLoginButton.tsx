@@ -7,6 +7,7 @@ import { App } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { getSocialLoginUrl, fetchSocialLoginUrl, OAuthProvider } from '@/_lib/api';
 import { setAccessToken } from '@/_lib/auth/tokenStore';
+import persistentStorage from '@/_lib/utils/persistentStorage';
 import { useRouter } from 'next/navigation';
 
 interface ProviderConfig {
@@ -68,11 +69,11 @@ export default function SocialLoginButton({
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    let listenerHandle: any;
+    let listenerHandle: { remove: () => void } | null = null;
     let isProcessing = false;
 
     const handleDeepLink = async (urlString: string) => {
-      const lastProcessedUrl = localStorage.getItem('last_processed_url');
+      const lastProcessedUrl = persistentStorage.getSync('last_processed_url');
       if (lastProcessedUrl === urlString) return;
 
       if (urlString.startsWith('kr.zerotime.app://auth/callback')) {
@@ -83,12 +84,12 @@ export default function SocialLoginButton({
 
         if (accessToken) {
           isProcessing = true;
-          setAccessToken(accessToken);
-          localStorage.setItem('last_processed_url', urlString);
+          await setAccessToken(accessToken);
+          await persistentStorage.set('last_processed_url', urlString);
 
           try {
             await Browser.close();
-          } catch (e) {
+          } catch {
             // 브라우저가 이미 닫혀있을 수 있음
           }
 
@@ -123,7 +124,7 @@ export default function SocialLoginButton({
 
   const handleLogin = async () => {
     onLoginStart?.();
-    localStorage.setItem('last_login_provider', provider);
+    await persistentStorage.set('last_login_provider', provider);
 
     const platform = Capacitor.getPlatform();
 

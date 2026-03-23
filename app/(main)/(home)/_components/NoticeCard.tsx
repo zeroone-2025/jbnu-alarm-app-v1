@@ -1,5 +1,7 @@
 import { Notice, incrementNoticeView } from '@/_lib/api';
 import { THEME } from '@/_lib/constants/theme';
+import { openUrl } from '@/_lib/utils/openUrl';
+import { Capacitor } from '@capacitor/core';
 import dayjs from 'dayjs';
 import CategoryBadge from '@/_components/ui/CategoryBadge';
 import { FaStar, FaRegStar } from 'react-icons/fa';
@@ -32,16 +34,28 @@ export default function NoticeCard({
     : THEME.readState.read;
 
   // 링크 클릭 시 조회수 증가 + 읽음 처리
-  const handleClick = () => {
+  const handleClick = async (e: React.MouseEvent<HTMLAnchorElement>) => {
     // 조회수 증가 (로그인 사용자만 - 401 에러 방지)
     if (isLoggedIn) {
-      incrementNoticeView(notice.id).catch(() => { });
+      incrementNoticeView(notice.id).catch(() => {});
     }
 
     // 읽음 처리 (로그인 사용자만)
     if (!notice.is_read && onMarkAsRead) {
       onMarkAsRead(notice.id);
     }
+
+    // Native: 인앱 브라우저로 열기
+    if (Capacitor.isNativePlatform()) {
+      e.preventDefault();
+      try {
+        await openUrl(notice.link);
+      } catch {
+        // Fallback: 기본 동작
+        window.open(notice.link, '_blank', 'noreferrer');
+      }
+    }
+    // Web: 기본 <a> 동작 유지
   };
 
   // 즐겨찾기 버튼 클릭 (이벤트 전파 중지)

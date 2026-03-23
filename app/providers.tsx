@@ -2,8 +2,11 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createContext, useContext, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUser } from '@/_lib/hooks/useUser';
-import { initializeAuth, isAuthReady } from '@/_lib/api';
+import { initializeAuth, isAuthReady, refreshAccessToken } from '@/_lib/api';
+import { hasAccessToken, restoreAccessToken } from '@/_lib/auth/tokenStore';
+import persistentStorage from '@/_lib/utils/persistentStorage';
 
 // QueryClient 인스턴스를 외부에서 접근할 수 있도록 export
 let globalQueryClient: QueryClient | null = null;
@@ -19,9 +22,20 @@ export function useAuthInitialized() {
   return useContext(AuthInitContext);
 }
 
+// persistentStorage가 관리할 키 목록
+const PERSISTENT_STORAGE_KEYS = [
+  'my_subscribed_categories',
+  'JB_ALARM_GUEST_FILTER_VERSION',
+  'current_filter',
+  'keyword_notice_seen_at',
+  'last_processed_url',
+  'last_login_provider',
+  'session_hint',
+];
+
 /**
  * 앱 시작 시 세션 복구를 담당하는 컴포넌트
- * - refresh token(HttpOnly 쿠키)으로 access token 재발급 시도
+ * - persistent storage 초기화 → localStorage 마이그레이션 → 세션 복구
  */
 function AuthInitializer({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -39,7 +53,6 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
       origin: window.location.origin
     });
 
-    // 세션 복구 시도 (안전장치 포함)
     const hideSplash = async () => {
       const { Capacitor } = await import('@capacitor/core');
       if (Capacitor.isNativePlatform()) {
@@ -49,10 +62,13 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
       }
     };
 
-    // 1. 세션 복구 시작
-    const authPromise = initializeAuth().then(() => {
+    // 1. persistent storage 초기화 → 마이그레이션 → 세션 복구
+    const authPromise = (async () => {
+      await persistentStorage.init(PERSISTENT_STORAGE_KEYS);
+      await persistentStorage.migrateFromLocalStorage(PERSISTENT_STORAGE_KEYS);
+      await initializeAuth();
       console.log('[Auth] Session recovery complete');
-    }).catch(err => {
+    })().catch(err => {
       console.error('[Auth] Session recovery failed:', err);
     });
 
@@ -62,7 +78,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
       resolve(null);
     }, 5000));
 
-    // 어느 쪽이먼저든 끝나면 UI 표시 및 스플래시 숨기기
+    // 어느 쪽이 먼저든 끝나면 UI 표시 및 스플래시 숨기기
     Promise.race([authPromise, timeoutPromise]).finally(() => {
       setIsInitialized(true);
       hideSplash();
@@ -71,7 +87,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 
   // Deep Link 리스너 (OAuth 콜백 처리)
   useEffect(() => {
-    let listener: any;
+    let listener: { remove: () => void } | null = null;
 
     const setupDeepLinkListener = async () => {
       const { Capacitor } = await import('@capacitor/core');
@@ -94,7 +110,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 
             if (accessToken) {
               console.log('[Deep Link] Access token received, storing...');
-              setAccessToken(accessToken);
+              await setAccessToken(accessToken);
 
               // 외부 브라우저 닫기
               await Browser.close();
@@ -120,6 +136,40 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // 앱 포그라운드 복귀 시 토큰 복원 (iOS WKWebView 메모리 정리 대응)
+  useEffect(() => {
+    let appStateListener: { remove: () => void } | null = null;
+
+    const setupAppStateListener = async () => {
+      const { Capacitor } = await import('@capacitor/core');
+      if (!Capacitor.isNativePlatform()) return;
+
+      const { App } = await import('@capacitor/app');
+
+      appStateListener = await App.addListener('appStateChange', async ({ isActive }) => {
+        if (!isActive) return;
+
+        // 포그라운드 복귀 시 토큰이 없으면 복원 시도
+        if (!hasAccessToken()) {
+          console.log('[AppState] Foregrounded without token, attempting restore...');
+          const restored = await restoreAccessToken();
+          if (!restored) {
+            console.log('[AppState] Keychain restore failed, attempting refresh...');
+            await refreshAccessToken();
+          }
+        }
+      });
+    };
+
+    setupAppStateListener();
+
+    return () => {
+      if (appStateListener) {
+        appStateListener.remove();
+      }
+    };
+  }, []);
+
   return (
     <AuthInitContext.Provider value={isInitialized}>
       {children}
@@ -129,9 +179,26 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
 
 /**
  * 전역 유저 데이터를 초기화하고 동기화하는 컴포넌트
+ * 로그인 상태에서 push 리스너 설정 및 토큰 갱신도 담당
  */
 function UserHydrator() {
-  useUser();
+  const { isLoggedIn } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const setupPush = async () => {
+      const { Capacitor } = await import('@capacitor/core');
+      if (!Capacitor.isNativePlatform()) return;
+      const { setupPushListeners, registerPushNotifications } = await import('@/_lib/push/pushNotifications');
+      setupPushListeners((path) => router.push(path));
+      registerPushNotifications().catch(() => {});
+    };
+
+    setupPush();
+  }, [isLoggedIn, router]);
+
   return null;
 }
 

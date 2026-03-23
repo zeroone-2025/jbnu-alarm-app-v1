@@ -133,7 +133,7 @@ function AnimatedCount({ value }: { value: number }) {
 export default function UserStatsBanner({ isLoggedIn, onSignupClick }: UserStatsBannerProps) {
     const { data: stats, isLoading } = useUserStats();
 
-    if (isLoading || !stats) return null;
+    if (!stats) return null;
 
     if (!isLoggedIn) {
         return (

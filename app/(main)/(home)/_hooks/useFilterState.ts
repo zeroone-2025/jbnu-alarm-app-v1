@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, RefObject, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FilterType, isLoginRequiredFilter } from '@/_types/filter';
+import persistentStorage from '@/_lib/utils/persistentStorage';
 
 interface UseFilterStateOptions {
   isLoggedIn: boolean;
@@ -12,11 +13,11 @@ interface UseFilterStateOptions {
 const FILTER_STORAGE_KEY = 'current_filter';
 
 /**
- * 필터 상태와 localStorage/URL 동기화, 스크롤 위치 관리를 담당하는 Hook
+ * 필터 상태와 persistentStorage/URL 동기화, 스크롤 위치 관리를 담당하는 Hook
  */
 export function useFilterState({ isLoggedIn, isAuthLoaded, isMounted, scrollContainerRef }: UseFilterStateOptions) {
   const searchParams = useSearchParams();
-  
+
   // URL에서 초기 필터 가져오기 (동기적)
   const getInitialFilter = useCallback((): FilterType => {
     const urlFilterRaw = searchParams.get('filter');
@@ -30,13 +31,13 @@ export function useFilterState({ isLoggedIn, isAuthLoaded, isMounted, scrollCont
   const scrollPositionsRef = useRef<Record<string, number>>({});
   const lastFilterRef = useRef<string | null>(null);
 
-  // localStorage에서 필터 로드 (마운트 시 한 번만 실행)
+  // persistentStorage(getSync)에서 필터 로드 (마운트 시 한 번만 실행)
   useEffect(() => {
-    // URL에 필터가 없을 때만 localStorage 확인
+    // URL에 필터가 없을 때만 캐시 확인
     const params = new URLSearchParams(window.location.search);
     if (params.get('filter')) return;
 
-    const storedFilter = localStorage.getItem(FILTER_STORAGE_KEY) as FilterType | null;
+    const storedFilter = persistentStorage.getSync(FILTER_STORAGE_KEY) as FilterType | null;
     if (storedFilter && storedFilter !== filter) {
       setFilterState(storedFilter);
     }
@@ -46,21 +47,17 @@ export function useFilterState({ isLoggedIn, isAuthLoaded, isMounted, scrollCont
   // 초기 필터 검증 및 동기화 (로그인 체크)
   useEffect(() => {
     if (!isAuthLoaded) return;
-    
+
     if (isLoginRequiredFilter(filter) && !isLoggedIn) {
       setFilterState('ALL');
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(FILTER_STORAGE_KEY, 'ALL');
-      }
+      persistentStorage.set(FILTER_STORAGE_KEY, 'ALL').catch(() => {});
     }
   }, [isAuthLoaded, isLoggedIn, filter]);
 
-  // filter 변경 시 localStorage 저장
+  // filter 변경 시 persistentStorage 저장
   const setFilter = (newFilter: FilterType) => {
     setFilterState(newFilter);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(FILTER_STORAGE_KEY, newFilter);
-    }
+    persistentStorage.set(FILTER_STORAGE_KEY, newFilter).catch(() => {});
   };
 
   // 현재 필터를 URL에 반영 (공유/북마크 지원)

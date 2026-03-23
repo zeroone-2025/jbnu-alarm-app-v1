@@ -8,6 +8,9 @@ import { useUserStore } from '@/_lib/store/useUserStore';
 import { updateUserProfile } from '@/_lib/api/user';
 import { getAccessToken } from '@/_lib/auth/tokenStore';
 import { getQueryClient } from '@/providers';
+import persistentStorage from '@/_lib/utils/persistentStorage';
+
+const SEEN_AT_KEY = 'keyword_notice_seen_at';
 
 // Normalize datetime to 3 decimal places (milliseconds) for cross-browser safety
 export function normalizeDateTime(s: string): string {
@@ -34,9 +37,27 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
   const [newKeywordCount, setNewKeywordCount] = useState(0);
   const keywordNoticesRef = useRef<Notice[]>([]);
 
+  // seenAt ref — persistentStorage.getSync()로 동기 읽기 가능 (init() 후 캐시에 있음)
+  const seenAtRef = useRef<string | null>(null);
+
   // 레이스 컨디션 방어: markSeen 후 2초 이내 배지 재계산 스킵
   const _badgeClearedAt = useRef<number>(0);
   const _syncPending = useRef(false);
+
+  // seenAtRef를 persistentStorage와 동기화
+  const syncSeenAt = useCallback((value: string | null) => {
+    seenAtRef.current = value;
+    if (value !== null) {
+      persistentStorage.set(SEEN_AT_KEY, value).catch(() => {});
+    } else {
+      persistentStorage.remove(SEEN_AT_KEY).catch(() => {});
+    }
+  }, []);
+
+  // 초기화: persistentStorage 캐시에서 seenAt 로드
+  useEffect(() => {
+    seenAtRef.current = persistentStorage.getSync(SEEN_AT_KEY);
+  }, []);
 
   const loadKeywordCount = useCallback(async () => {
     try {
@@ -60,20 +81,20 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
     }
   }, []);
 
-    const refreshKeywordNotices = useCallback(async () => {
-      try {
-        const keywords = await getMyKeywords();
-        setKeywordCount(keywords.length);
-        if (keywords.length === 0) {
-         setKeywordNotices([]);
-         return;
-       }
-       const data = await getKeywordNotices(0, 200, true);
-       setKeywordNotices(data);
-      } catch (error) {
-        console.error('Failed to refresh keyword notices', error);
+  const refreshKeywordNotices = useCallback(async () => {
+    try {
+      const keywords = await getMyKeywords();
+      setKeywordCount(keywords.length);
+      if (keywords.length === 0) {
+        setKeywordNotices([]);
+        return;
       }
-    }, []);
+      const data = await getKeywordNotices(0, 200, true);
+      setKeywordNotices(data);
+    } catch (error) {
+      console.error('Failed to refresh keyword notices', error);
+    }
+  }, []);
 
   const updateKeywordBadge = useCallback((items: Notice[]) => {
     if (typeof window === 'undefined') return;
@@ -92,30 +113,30 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
       setNewKeywordCount(0);
       return;
     }
-      const user = useUserStore.getState().user;
-      const serverSeenAt = user?.keyword_notice_seen_at ?? null;
-      const localSeenAt = localStorage.getItem('keyword_notice_seen_at');
-      let seenAt: string | null = null;
-      if (serverSeenAt && localSeenAt) {
-        const serverTime = new Date(normalizeDateTime(serverSeenAt)).getTime();
-        const localTime = new Date(normalizeDateTime(localSeenAt)).getTime();
-        seenAt = serverTime > localTime ? serverSeenAt : localSeenAt;
-      } else {
-        seenAt = serverSeenAt ?? localSeenAt;
-      }
-      const seenTime = seenAt ? new Date(normalizeDateTime(seenAt)).getTime() : 0;
-     if (isNaN(seenTime)) {
-       // localStorage 오염 방어: 잘못된 값이면 모든 공지를 새 알림으로 처리
-       setHasNewKeywordNotices(true);
-       setNewKeywordCount(items.length);
-       return;
-     }
-     setHasNewKeywordNotices(latest > seenTime);
+    const user = useUserStore.getState().user;
+    const serverSeenAt = user?.keyword_notice_seen_at ?? null;
+    const localSeenAt = seenAtRef.current;
+    let seenAt: string | null = null;
+    if (serverSeenAt && localSeenAt) {
+      const serverTime = new Date(normalizeDateTime(serverSeenAt)).getTime();
+      const localTime = new Date(normalizeDateTime(localSeenAt)).getTime();
+      seenAt = serverTime > localTime ? serverSeenAt : localSeenAt;
+    } else {
+      seenAt = serverSeenAt ?? localSeenAt;
+    }
+    const seenTime = seenAt ? new Date(normalizeDateTime(seenAt)).getTime() : 0;
+    if (isNaN(seenTime)) {
+      // 오염된 값이면 모든 공지를 새 알림으로 처리
+      setHasNewKeywordNotices(true);
+      setNewKeywordCount(items.length);
+      return;
+    }
+    setHasNewKeywordNotices(latest > seenTime);
 
-     const newCount = items.filter(notice => {
-       const noticeTime = new Date(normalizeDateTime(notice.created_at ?? notice.date)).getTime();
-       return noticeTime > seenTime;
-     }).length;
+    const newCount = items.filter(notice => {
+      const noticeTime = new Date(normalizeDateTime(notice.created_at ?? notice.date)).getTime();
+      return noticeTime > seenTime;
+    }).length;
 
     setNewKeywordCount(newCount);
   }, []);
@@ -125,9 +146,9 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
 
     // 빈 배열 fallback: 지금까지 본 것으로 처리
     if (items.length === 0) {
-      const prevSeenAt = localStorage.getItem('keyword_notice_seen_at');
+      const prevSeenAt = seenAtRef.current;
       const timestamp = new Date().toISOString();
-      localStorage.setItem('keyword_notice_seen_at', timestamp);
+      syncSeenAt(timestamp);
       setNewKeywordCount(0);
       setHasNewKeywordNotices(false);
       _badgeClearedAt.current = Date.now();
@@ -140,7 +161,7 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
         })
         .catch(() => {
           if (prevSeenAt !== null) {
-            localStorage.setItem('keyword_notice_seen_at', prevSeenAt);
+            syncSeenAt(prevSeenAt);
           }
           updateKeywordBadge(keywordNoticesRef.current);
         });
@@ -150,9 +171,9 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
     const latest = getLatestKeywordNoticeAt(items);
     if (!latest) return; // 데이터 있는데 null이면 실제 버그 → 그냥 return
 
-    const prevSeenAt = localStorage.getItem('keyword_notice_seen_at');
+    const prevSeenAt = seenAtRef.current;
     const timestamp = new Date(latest).toISOString();
-    localStorage.setItem('keyword_notice_seen_at', timestamp);
+    syncSeenAt(timestamp);
     setHasNewKeywordNotices(false);
     setNewKeywordCount(0);
     _badgeClearedAt.current = Date.now();
@@ -165,7 +186,7 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
       })
       .catch(() => {
         if (prevSeenAt !== null) {
-          localStorage.setItem('keyword_notice_seen_at', prevSeenAt);
+          syncSeenAt(prevSeenAt);
         }
         updateKeywordBadge(keywordNoticesRef.current);
       });
@@ -179,20 +200,21 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
     if (isLoggedIn) {
       const user = useUserStore.getState().user;
       const serverSeenAt = user?.keyword_notice_seen_at ?? null;
-      const localSeenAt = localStorage.getItem('keyword_notice_seen_at');
+      const localSeenAt = seenAtRef.current;
 
       if (serverSeenAt && localSeenAt) {
         const serverTime = new Date(normalizeDateTime(serverSeenAt)).getTime();
         const localTime = new Date(normalizeDateTime(localSeenAt)).getTime();
         if (!isNaN(serverTime) && !isNaN(localTime)) {
-          localStorage.setItem('keyword_notice_seen_at', serverTime > localTime ? serverSeenAt : localSeenAt);
+          const winner = serverTime > localTime ? serverSeenAt : localSeenAt;
+          syncSeenAt(winner);
         } else if (!isNaN(serverTime)) {
-          localStorage.setItem('keyword_notice_seen_at', serverSeenAt);
+          syncSeenAt(serverSeenAt);
         } else if (!isNaN(localTime)) {
-          localStorage.setItem('keyword_notice_seen_at', localSeenAt);
+          syncSeenAt(localSeenAt);
         }
       } else if (serverSeenAt && !localSeenAt) {
-        localStorage.setItem('keyword_notice_seen_at', serverSeenAt);
+        syncSeenAt(serverSeenAt);
       } else if (!serverSeenAt && localSeenAt) {
         updateUserProfile({ keyword_notice_seen_at: localSeenAt })
           .then((updatedUser) => {
@@ -213,7 +235,7 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
       setNewKeywordCount(0);
       setHasNewKeywordNotices(false);
     }
-  }, [isLoggedIn, loadKeywordCount, loadKeywordNoticesSilent]);
+  }, [isLoggedIn, loadKeywordCount, loadKeywordNoticesSilent, syncSeenAt]);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -237,7 +259,7 @@ export function NotificationBadgeProvider({ children }: { children: ReactNode })
   useEffect(() => {
     const syncOnUnload = () => {
       if (!_syncPending.current) return;
-      const localVal = localStorage.getItem('keyword_notice_seen_at');
+      const localVal = seenAtRef.current;
       if (!localVal) return;
       const token = getAccessToken();
       if (!token) return;

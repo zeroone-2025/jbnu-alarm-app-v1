@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import AuthPageShell from '@/_components/layout/AuthPageShell';
 import { ToastProvider, useToast } from '@/_context/ToastContext';
 import { useUser } from '@/_lib/hooks/useUser';
+import persistentStorage from '@/_lib/utils/persistentStorage';
 import {
   clearPendingOnboarding,
   loadPendingOnboarding,
@@ -44,7 +45,7 @@ function OnboardingPageContent() {
     if (!isCompleted) return;
     onboardingCompletedRef.current = true;
     try {
-      const stored = localStorage.getItem('my_subscribed_categories');
+      const stored = persistentStorage.getSync('my_subscribed_categories');
       setSeniorCongratsBoards(stored ? JSON.parse(stored) : []);
     } catch {
       setSeniorCongratsBoards([]);
@@ -93,7 +94,7 @@ function OnboardingPageContent() {
         const result = await submitPendingOnboarding(payloadToSubmit);
         queryClient.setQueryData(['user', 'profile'], result.user);
         setUser(result.user);
-        localStorage.setItem('my_subscribed_categories', JSON.stringify(result.subscribedBoards));
+        await persistentStorage.set('my_subscribed_categories', JSON.stringify(result.subscribedBoards));
         clearPendingOnboarding();
         localStorage.removeItem(ONBOARDING_DRAFT_STORAGE_KEY);
 
@@ -113,8 +114,8 @@ function OnboardingPageContent() {
     })();
   }, [isAuthLoaded, isLoggedIn, queryClient, router, searchParams, setUser, showToast, user?.email, user?.nickname]);
 
-  const handleOnboardingComplete = (categories: string[], options?: OnboardingCompleteOptions) => {
-    localStorage.setItem('my_subscribed_categories', JSON.stringify(categories));
+  const handleOnboardingComplete = async (categories: string[], options?: OnboardingCompleteOptions) => {
+    await persistentStorage.set('my_subscribed_categories', JSON.stringify(categories));
     clearPendingOnboarding();
     localStorage.removeItem(ONBOARDING_DRAFT_STORAGE_KEY);
     router.replace(options?.redirectTo || '/');

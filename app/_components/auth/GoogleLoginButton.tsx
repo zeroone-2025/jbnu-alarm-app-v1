@@ -10,6 +10,7 @@ import { FiLogIn } from 'react-icons/fi';
 
 import { getGoogleLoginUrl, fetchGoogleLoginUrl } from '@/_lib/api';
 import { setAccessToken } from '@/_lib/auth/tokenStore';
+import persistentStorage from '@/_lib/utils/persistentStorage';
 
 interface GoogleLoginButtonProps {
   onLoginStart?: () => void;
@@ -37,7 +38,7 @@ export default function GoogleLoginButton({
 
     const handleDeepLink = async (urlString: string) => {
       // 이미 처리된 URL인지 확인 (로그아웃 후 재실행 방지)
-      const lastProcessedUrl = localStorage.getItem('last_processed_url');
+      const lastProcessedUrl = persistentStorage.getSync('last_processed_url');
       if (lastProcessedUrl === urlString) {
         return;
       }
@@ -50,10 +51,10 @@ export default function GoogleLoginButton({
 
         if (accessToken) {
           isProcessing = true;
-          setAccessToken(accessToken);
+          await setAccessToken(accessToken);
 
           // 처리된 URL 저장 (재실행 방지)
-          localStorage.setItem('last_processed_url', urlString);
+          await persistentStorage.set('last_processed_url', urlString);
 
           try {
             await Browser.close();
@@ -94,7 +95,7 @@ export default function GoogleLoginButton({
 
   const handleLogin = async () => {
     onLoginStart?.();
-    localStorage.setItem('last_login_provider', 'google');
+    await persistentStorage.set('last_login_provider', 'google');
 
     // 플랫폼 감지 (web, android, ios)
     const platform = Capacitor.getPlatform();
