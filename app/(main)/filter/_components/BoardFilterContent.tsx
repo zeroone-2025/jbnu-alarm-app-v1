@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { FiBookmark, FiInfo, FiRotateCcw, FiSave, FiSearch, FiTrash2, FiX } from 'react-icons/fi';
-import { BOARD_LIST, CATEGORY_ORDER, BoardCategory, GUEST_DEFAULT_BOARDS } from '@/_lib/constants/boards';
+import { BOARD_LIST, CATEGORY_ORDER, CATEGORY_COLORS, BoardCategory, GUEST_DEFAULT_BOARDS } from '@/_lib/constants/boards';
 import { useUser } from '@/_lib/hooks/useUser';
 import {
   BoardGroup,
@@ -419,7 +419,7 @@ export default function BoardFilterContent({
 
               return (
                 <div key={category}>
-                  <h4 className="mb-3 text-xs font-bold text-gray-400">{category}</h4>
+                  <h4 className={`mb-3 border-l-[3px] pl-2 text-xs font-bold ${CATEGORY_COLORS[category].border} ${CATEGORY_COLORS[category].text}`}>{category}</h4>
                   {unselectedBoards.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {unselectedBoards.map((board) => (

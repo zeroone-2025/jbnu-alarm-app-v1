@@ -201,6 +201,13 @@ export const GUEST_DEFAULT_BOARDS = [
  */
 export const CATEGORY_ORDER: BoardCategory[] = ['전북대', '단과대', '학과', '사업단'];
 
+export const CATEGORY_COLORS: Record<BoardCategory, { text: string; border: string }> = {
+  '전북대': { text: 'text-blue-600',   border: 'border-l-blue-400' },
+  '단과대': { text: 'text-indigo-600', border: 'border-l-indigo-400' },
+  '학과':   { text: 'text-amber-600',  border: 'border-l-amber-400' },
+  '사업단': { text: 'text-green-600',  border: 'border-l-green-400' },
+};
+
 /**
  * 전체 게시판 목록 (카테고리 포함)
  * - 카테고리 순서: CATEGORY_ORDER
