@@ -38,8 +38,8 @@ export * from './subscriptions';
 export * from './activities';
 
 // Types re-export for convenience
-export type { Notice, NoticeListResponse } from '@/_types/notice';
-export type { Keyword } from '@/_types/keyword';
+export type { Notice, NoticeListResponse, SearchNoticeListResponse } from '@/_types/notice';
+export type { Keyword, UpdateKeywordBoardsResponse } from '@/_types/keyword';
 export type { UserProfile, UserSubscription, OnboardingRequest } from '@/_types/user';
 export type { Department, DepartmentSearchResponse } from '@/_types/department';
 export type { TimetableData, TimetableClass, TimetableAnalysisResponse } from '@/_types/timetable';

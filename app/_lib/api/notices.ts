@@ -1,11 +1,13 @@
-import api from './client';
 import type {
     Notice,
     NoticeListResponse,
     MarkAsReadResponse,
     ToggleFavoriteResponse,
     IncrementViewResponse,
+    SearchNoticeListResponse,
 } from '@/_types/notice';
+
+import api from './client';
 
 // 공지사항 조회 (페이지네이션)
 export const fetchNotices = async (
@@ -69,4 +71,25 @@ export const incrementNoticeView = async (noticeId: number) => {
 // DB 데이터 전체 초기화 (관리자용)
 export const resetNotices = async () => {
     return api.delete('/notices/reset');
+};
+
+// 공지사항 검색
+export const searchNotices = async (
+    query: string,
+    cursor: string | null = null,
+    limit: number = 20,
+    dateRange: '1w' | '1m' | '3m' | 'all' = 'all',
+    boardCodes?: string[],
+): Promise<SearchNoticeListResponse> => {
+    const params: Record<string, string | number | boolean> = {
+        q: query,
+        limit,
+        date_range: dateRange,
+    };
+    if (cursor) params.cursor = cursor;
+    if (boardCodes && boardCodes.length > 0) {
+        params.board_codes = boardCodes.join(',');
+    }
+    const response = await api.get('/notices/search', { params });
+    return response.data;
 };

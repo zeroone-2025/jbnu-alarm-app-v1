@@ -42,3 +42,11 @@ export interface IncrementViewResponse {
     user_view_count: number;
     message: string;
 }
+
+// 공지사항 검색 응답
+export interface SearchNoticeListResponse {
+    items: Notice[];
+    next_cursor: string | null;
+    has_next: boolean;
+    total_count: number;
+}

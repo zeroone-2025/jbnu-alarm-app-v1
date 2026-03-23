@@ -1,7 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { FiUser, FiBell } from 'react-icons/fi';
+import { FiUser, FiBell, FiSearch } from 'react-icons/fi';
+
 import Logo from '@/_components/ui/Logo';
 import { useNotificationBadge } from '@/_context/NotificationBadgeContext';
 import { useUserStore } from '@/_lib/store/useUserStore';
@@ -53,8 +54,15 @@ export default function SharedHeader({ title, onMenuClick }: SharedHeaderProps) 
         )}
       </div>
 
-      {/* Right: Notification bell */}
-      <div className="flex w-20 items-center justify-end">
+      {/* Right: Search + Notification bell */}
+      <div className="flex items-center justify-end gap-1">
+        <button
+          onClick={() => router.push('/search')}
+          className="rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
+          aria-label="검색"
+        >
+          <FiSearch size={19} />
+        </button>
         <button
           onClick={handleNotificationClick}
           className="relative rounded-full p-2 text-gray-600 transition-all hover:bg-gray-100"
