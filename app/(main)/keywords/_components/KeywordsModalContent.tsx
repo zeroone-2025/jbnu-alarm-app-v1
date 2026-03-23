@@ -1,18 +1,29 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { addKeyword, deleteKeyword, getMyKeywords, Keyword } from '@/_lib/api';
+import { addKeyword, deleteKeyword, getMyKeywords, updateKeywordBoards, Keyword } from '@/_lib/api';
 import { useUser } from '@/_lib/hooks/useUser';
+import { useSelectedCategories } from '@/_lib/hooks/useSelectedCategories';
+import { BOARD_MAP } from '@/_lib/constants/boards';
 import Toast from '@/_components/ui/Toast';
 import Button from '@/_components/ui/Button';
 import GoogleLoginButton from '@/_components/auth/GoogleLoginButton';
-import { FiTrash2 } from 'react-icons/fi';
+import KeywordBoardSelector from './KeywordBoardSelector';
+import { FiTrash2, FiSliders } from 'react-icons/fi';
 
 interface KeywordsModalContentProps {
   onUpdate?: () => void;
 }
 
+function formatBoardCodes(boardCodes: string[] | null): string {
+  if (!boardCodes || boardCodes.length === 0) return '구독 게시판 전체';
+  const firstName = BOARD_MAP[boardCodes[0]]?.name ?? boardCodes[0];
+  if (boardCodes.length === 1) return firstName;
+  return `${firstName} 외 ${boardCodes.length - 1}개`;
+}
+
 export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentProps) {
   const { isLoggedIn } = useUser();
+  const { selectedCategories } = useSelectedCategories();
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [keywordInput, setKeywordInput] = useState('');
   const [keywordsLoading, setKeywordsLoading] = useState(false);
@@ -20,6 +31,12 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info');
   const [showToast, setShowToast] = useState(false);
   const [toastKey, setToastKey] = useState(0);
+
+  // 게시판 선택 상태
+  const [addBoardCodes, setAddBoardCodes] = useState<string[] | null>(null);
+  const [showAddBoardSelector, setShowAddBoardSelector] = useState(false);
+  const [editingKeyword, setEditingKeyword] = useState<Keyword | null>(null);
+  const [showEditBoardSelector, setShowEditBoardSelector] = useState(false);
 
   const showToastMessage = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToastMessage(message);
@@ -63,9 +80,10 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
     }
 
     try {
-      const created = await addKeyword(trimmed);
+      const created = await addKeyword(trimmed, addBoardCodes ?? undefined);
       setKeywords((prev) => [created, ...prev]);
       setKeywordInput('');
+      setAddBoardCodes(null);
       showToastMessage('키워드가 추가되었습니다.', 'success');
       onUpdate?.();
     } catch (error) {
@@ -81,7 +99,8 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
     }
   };
 
-  const handleDeleteKeyword = async (keywordId: number) => {
+  const handleDeleteKeyword = async (e: React.MouseEvent, keywordId: number) => {
+    e.stopPropagation();
     try {
       await deleteKeyword(keywordId);
       setKeywords((prev) => prev.filter((item) => item.id !== keywordId));
@@ -92,6 +111,59 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
       showToastMessage('키워드 삭제에 실패했습니다.', 'error');
     }
   };
+
+  const handleEditBoards = (keyword: Keyword) => {
+    setEditingKeyword(keyword);
+    setShowEditBoardSelector(true);
+  };
+
+  const handleUpdateBoards = async (boardCodes: string[] | null) => {
+    if (!editingKeyword) return;
+    try {
+      const result = await updateKeywordBoards(editingKeyword.id, boardCodes);
+      setKeywords(prev => prev.map(k =>
+        k.id === editingKeyword.id ? { ...k, board_codes: result.board_codes } : k
+      ));
+      setShowEditBoardSelector(false);
+      setEditingKeyword(null);
+      showToastMessage('게시판 범위가 수정되었습니다.', 'success');
+      onUpdate?.();
+    } catch (error) {
+      console.error('Failed to update keyword boards', error);
+      showToastMessage('게시판 범위 수정에 실패했습니다.', 'error');
+    }
+  };
+
+  const handleAddBoardApply = (boardCodes: string[] | null) => {
+    setAddBoardCodes(boardCodes);
+    setShowAddBoardSelector(false);
+  };
+
+  // 게시판 선택 UI 표시 중이면 해당 컴포넌트 렌더링
+  if (showAddBoardSelector) {
+    return (
+      <KeywordBoardSelector
+        subscribedBoardCodes={selectedCategories}
+        selectedBoardCodes={addBoardCodes}
+        onApply={handleAddBoardApply}
+        onClose={() => setShowAddBoardSelector(false)}
+      />
+    );
+  }
+
+  if (showEditBoardSelector && editingKeyword) {
+    return (
+      <KeywordBoardSelector
+        subscribedBoardCodes={selectedCategories}
+        selectedBoardCodes={editingKeyword.board_codes}
+        onApply={handleUpdateBoards}
+        onClose={() => {
+          setShowEditBoardSelector(false);
+          setEditingKeyword(null);
+        }}
+      />
+    );
+  }
 
   return (
     <>
@@ -130,6 +202,17 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
                   추가
                 </Button>
               </div>
+
+              {/* 게시판 범위 선택 */}
+              <button
+                onClick={() => setShowAddBoardSelector(true)}
+                className="mt-3 flex w-full items-center gap-2 rounded-lg border border-gray-200 px-3 py-2.5 text-left transition-colors hover:bg-gray-50"
+              >
+                <FiSliders size={14} className="shrink-0 text-gray-400" />
+                <span className={`flex-1 text-sm ${addBoardCodes ? 'font-medium text-blue-600' : 'text-gray-400'}`}>
+                  {formatBoardCodes(addBoardCodes)}
+                </span>
+              </button>
             </div>
 
             <div className="mt-6 flex min-h-0 flex-1 flex-col">
@@ -143,7 +226,7 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
                 {keywordsLoading ? (
                   <div className="space-y-2">
                     {[...Array(4)].map((_, idx) => (
-                      <div key={idx} className="h-10 animate-pulse rounded-lg bg-gray-100" />
+                      <div key={idx} className="h-14 animate-pulse rounded-lg bg-gray-100" />
                     ))}
                   </div>
                 ) : keywords.length > 0 ? (
@@ -151,12 +234,18 @@ export default function KeywordsModalContent({ onUpdate }: KeywordsModalContentP
                     {keywords.map((item) => (
                       <li
                         key={item.id}
-                        className="flex items-center justify-between rounded-lg border border-gray-100 bg-white px-4 py-2.5 text-sm shadow-sm"
+                        onClick={() => handleEditBoards(item)}
+                        className="flex cursor-pointer items-center justify-between rounded-lg border border-gray-100 bg-white px-4 py-2.5 shadow-sm transition-colors hover:bg-gray-50"
                       >
-                        <span className="font-medium text-gray-800">{item.keyword}</span>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-sm font-medium text-gray-800">{item.keyword}</span>
+                          <p className={`mt-0.5 truncate text-xs ${item.board_codes ? 'text-blue-500' : 'text-gray-400'}`}>
+                            {formatBoardCodes(item.board_codes)}
+                          </p>
+                        </div>
                         <button
-                          onClick={() => handleDeleteKeyword(item.id)}
-                          className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-red-500"
+                          onClick={(e) => handleDeleteKeyword(e, item.id)}
+                          className="ml-2 shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-50 hover:text-red-500"
                           aria-label={`${item.keyword} 삭제`}
                         >
                           <FiTrash2 size={16} />
