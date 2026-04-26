@@ -1,12 +1,25 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getUserInit, updateUserProfile, checkHasToken } from '@/_lib/api';
+import { getUserInit, updateUserProfile, uploadUserProfileImage, checkHasToken } from '@/_lib/api';
 import { useUserStore } from '@/_lib/store/useUserStore';
-import type { UserProfileUpdate } from '@/_types/user';
+import type { UserProfile, UserProfileUpdate } from '@/_types/user';
 import { useEffect, useState } from 'react';
 import { useAuthInitialized } from '@/providers';
 import axios from 'axios';
+
+function syncUserCaches(
+    queryClient: ReturnType<typeof useQueryClient>,
+    setUser: (user: UserProfile | null) => void,
+    updatedUser: UserProfile,
+) {
+    queryClient.setQueryData(['user', 'profile'], updatedUser);
+    queryClient.setQueryData<{ user: UserProfile; subscriptions: unknown[] } | undefined>(
+        ['user', 'init'],
+        (prev) => (prev ? { ...prev, user: updatedUser } : prev),
+    );
+    setUser(updatedUser);
+}
 
 /**
  * 유저 프로필 조회 및 관리 훅
@@ -75,12 +88,19 @@ export function useUpdateUser() {
     return useMutation({
         mutationFn: (data: UserProfileUpdate) => updateUserProfile(data),
         onSuccess: (updatedUser) => {
-            // 1. React Query 캐시 업데이트
-            queryClient.setQueryData(['user', 'profile'], updatedUser);
-            // 2. Zustand Store 업데이트
-            setUser(updatedUser);
-            // 3. 관련 쿼리 무효화 (필요시)
-            // queryClient.invalidateQueries({ queryKey: ['user'] });
+            syncUserCaches(queryClient, setUser, updatedUser);
+        },
+    });
+}
+
+export function useUploadUserProfileImage() {
+    const queryClient = useQueryClient();
+    const setUser = useUserStore((state) => state.setUser);
+
+    return useMutation({
+        mutationFn: (file: File) => uploadUserProfileImage(file),
+        onSuccess: (updatedUser) => {
+            syncUserCaches(queryClient, setUser, updatedUser);
         },
     });
 }

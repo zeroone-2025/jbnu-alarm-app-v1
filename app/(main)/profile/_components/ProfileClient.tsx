@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUser, useUpdateUser } from '@/_lib/hooks/useUser';
 import UserInfoForm, { UserInfoFormData } from '@/_components/auth/UserInfoForm';
 import { FiEdit3, FiUser } from 'react-icons/fi';
@@ -11,9 +11,6 @@ import ConfirmModal from '@/_components/ui/ConfirmModal';
 import { getAllDepartments, deleteUserAccount, logoutUser } from '@/_lib/api';
 import { useUserStore } from '@/_lib/store/useUserStore';
 import { useToast } from '@/_context/ToastContext';
-import ProfileTabs, { ProfileTabType } from './ProfileTabs';
-import { TimetableTab } from '@/_components/timetable';
-import CareerTab from './career/CareerTab';
 
 function formatAdmissionYear(year: number | null | undefined): string | null {
   if (!year) return null;
@@ -26,20 +23,13 @@ export default function ProfileClient() {
   const { user, isLoggedIn, isAuthLoaded, isLoading: isUserLoading } = useUser();
   const updateMutation = useUpdateUser();
   const clearUser = useUserStore((state) => state.clearUser);
-  const searchParams = useSearchParams();
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const initialTab = (searchParams.get('tab') as ProfileTabType) || 'basic';
-  const [activeTab, setActiveTab] = useState<ProfileTabType>(initialTab);
-  const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
-  const [isAnimating, setIsAnimating] = useState(false);
-  const prevTabRef = useRef<ProfileTabType>(initialTab);
-
-  const TAB_INDEX: Record<ProfileTabType, number> = { basic: 0, timetable: 1, career: 2 };
 
   const [formData, setFormData] = useState<UserInfoFormData>({
     nickname: '',
+    username: '',
     school: '',
     dept_code: '',
     dept_name: '',
@@ -66,6 +56,7 @@ export default function ProfileClient() {
     if (user) {
       setFormData({
         nickname: user.nickname || '',
+        username: user.username || '',
         school: user.school || '',
         dept_code: user.dept_code || '',
         dept_name: '',
@@ -88,6 +79,7 @@ export default function ProfileClient() {
     if (user) {
       setFormData({
         nickname: user.nickname || '',
+        username: user.username || '',
         school: user.school || '',
         dept_code: user.dept_code || '',
         dept_name: '',
@@ -97,25 +89,13 @@ export default function ProfileClient() {
     setIsEditing(false);
   };
 
-  const handleTabChange = (tab: ProfileTabType) => {
-    if (tab === activeTab) return;
-    const direction = TAB_INDEX[tab] > TAB_INDEX[activeTab] ? 'right' : 'left';
-    setSlideDirection(direction);
-    setIsAnimating(true);
-    prevTabRef.current = activeTab;
-    setActiveTab(tab);
-    if (isEditing) setIsEditing(false);
-    const url = new URL(window.location.href);
-    url.searchParams.set('tab', tab);
-    window.history.replaceState(null, '', url.toString());
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       await updateMutation.mutateAsync({
         nickname: formData.nickname,
+        username: formData.username,
         school: formData.school,
         dept_code: formData.dept_code,
         admission_year: formData.admission_year ? parseInt(formData.admission_year) : undefined,
@@ -171,7 +151,9 @@ export default function ProfileClient() {
           <p className="text-lg leading-tight font-bold text-gray-800">
             {user?.nickname || '사용자'}
           </p>
-          <p className="mt-1 text-xs text-gray-400">{user?.email}</p>
+          {user?.username && (
+            <p className="mt-0.5 text-sm text-gray-500">@{user.username}</p>
+          )}
           {(user?.school || deptName || admissionYearText) && (
             <p className="mt-0.5 text-xs text-gray-400">
               {[user?.school, deptName, admissionYearText].filter(Boolean).join(' · ')}
@@ -180,118 +162,85 @@ export default function ProfileClient() {
         </div>
       </div>
 
-      {/* Tab bar */}
-      <div className="shrink-0">
-        <ProfileTabs activeTab={activeTab} onTabChange={handleTabChange} />
-      </div>
+      {/* Basic info form */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <div className="px-5 py-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <UserInfoForm
+              formData={formData}
+              onChange={handleFormChange}
+              email={user?.email}
+              showNickname={true}
+              isReadonlyNickname={false}
+              showUsername={true}
+              isReadonly={!isEditing}
+            />
 
-      {/* Tab content with slide animation */}
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <div
-          key={activeTab}
-          className={`h-full ${
-            isAnimating
-              ? slideDirection === 'right'
-                ? 'animate-slideInRight'
-                : 'animate-slideInLeft'
-              : ''
-          }`}
-          onAnimationEnd={() => setIsAnimating(false)}
-        >
-          <div className="h-full overflow-y-auto">
-            {activeTab === 'basic' && (
-              <div className="px-5 py-6">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <UserInfoForm
-                    formData={formData}
-                    onChange={handleFormChange}
-                    email={user?.email}
-                    showNickname={true}
-                    isReadonlyNickname={true}
-                    isReadonly={!isEditing}
-                  />
-
-                  <div className="mb-4 flex justify-end">
-                    {!isEditing ? (
-                      <button
-                        type="button"
-                        onClick={() => setIsEditing(true)}
-                        className="flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-900 transition-all hover:bg-gray-200 active:scale-95"
-                      >
-                        <FiEdit3 size={14} />
-                        수정하기
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleCancel}
-                        className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-500 transition-all hover:bg-gray-200 active:scale-95"
-                      >
-                        취소
-                      </button>
-                    )}
-                  </div>
-
-                  {isEditing && (
-                    <div className="animate-slide-up pt-4">
-                      <Button
-                        type="submit"
-                        disabled={updateMutation.isPending}
-                        fullWidth
-                        size="lg"
-                        className="shadow-lg active:scale-95"
-                      >
-                        {updateMutation.isPending ? '저장 중...' : '저장하기'}
-                      </Button>
-                    </div>
-                  )}
-
-                </form>
-
-                {/* 회원 탈퇴 섹션 */}
-                <div className="mt-12 border-t border-gray-100 pt-6">
-                  <p className="text-xs text-gray-400 mb-2">
-                    탈퇴 시 구독, 키워드, 즐겨찾기 등 설정 데이터가 삭제됩니다.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowDeleteModal(true)}
-                    className="text-xs text-red-400 underline underline-offset-2 hover:text-red-500 transition-colors"
-                  >
-                    회원 탈퇴하기
-                  </button>
-                </div>
-
-                <ConfirmModal
-                  isOpen={showDeleteModal}
-                  onConfirm={handleDeleteAccount}
-                  onCancel={() => setShowDeleteModal(false)}
-                  title="회원 탈퇴"
-                  confirmLabel={isDeleting ? '처리 중...' : '탈퇴하기'}
-                  cancelLabel="취소"
-                  variant="danger"
+            <div className="mb-4 flex justify-end">
+              {!isEditing ? (
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-900 transition-all hover:bg-gray-200 active:scale-95"
                 >
-                  <p>정말 탈퇴하시겠습니까?</p>
-                  <p className="mt-1 text-xs text-gray-400">
-                    구독, 키워드, 즐겨찾기 등이 삭제됩니다.<br />
-                    같은 계정으로 다시 가입할 수 있습니다.
-                  </p>
-                </ConfirmModal>
-              </div>
-            )}
+                  <FiEdit3 size={14} />
+                  수정하기
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-500 transition-all hover:bg-gray-200 active:scale-95"
+                >
+                  취소
+                </button>
+              )}
+            </div>
 
-            {activeTab === 'timetable' && (
-              <div className="h-full">
-                <TimetableTab />
+            {isEditing && (
+              <div className="animate-slide-up pt-4">
+                <Button
+                  type="submit"
+                  disabled={updateMutation.isPending}
+                  fullWidth
+                  size="lg"
+                  className="shadow-lg active:scale-95"
+                >
+                  {updateMutation.isPending ? '저장 중...' : '저장하기'}
+                </Button>
               </div>
             )}
+          </form>
 
-            {activeTab === 'career' && (
-              <div className="h-full">
-                <CareerTab onShowToast={showToast} />
-              </div>
-            )}
+          {/* 회원 탈퇴 섹션 */}
+          <div className="mt-12 border-t border-gray-100 pt-6">
+            <p className="text-xs text-gray-400 mb-2">
+              탈퇴 시 구독, 키워드, 즐겨찾기 등 설정 데이터가 삭제됩니다.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="text-xs text-red-400 underline underline-offset-2 hover:text-red-500 transition-colors"
+            >
+              회원 탈퇴하기
+            </button>
           </div>
+
+          <ConfirmModal
+            isOpen={showDeleteModal}
+            onConfirm={handleDeleteAccount}
+            onCancel={() => setShowDeleteModal(false)}
+            title="회원 탈퇴"
+            confirmLabel={isDeleting ? '처리 중...' : '탈퇴하기'}
+            cancelLabel="취소"
+            variant="danger"
+          >
+            <p>정말 탈퇴하시겠습니까?</p>
+            <p className="mt-1 text-xs text-gray-400">
+              구독, 키워드, 즐겨찾기 등이 삭제됩니다.<br />
+              같은 계정으로 다시 가입할 수 있습니다.
+            </p>
+          </ConfirmModal>
         </div>
       </div>
     </div>

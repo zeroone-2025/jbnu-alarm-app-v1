@@ -2,13 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { FiPlus, FiUsers } from 'react-icons/fi';
-import { TimetableTab } from '@/_components/timetable';
 import { useUser } from '@/_lib/hooks/useUser';
 import { useMyChinbaEvents } from '@/_lib/hooks/useChinba';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
 import { useToast } from '@/_context/ToastContext';
 import { ChinbaEventList } from './ChinbaEventList';
-import BottomSheet from '@/_components/layout/BottomSheet';
+import TeamStatsBanner from '@/_components/ui/TeamStatsBanner';
 
 export default function ChinbaTimetableView() {
   const router = useRouter();
@@ -26,10 +25,12 @@ export default function ChinbaTimetableView() {
 
   return (
     <div className="flex flex-col h-full">
+      <TeamStatsBanner />
+
       {/* Chinba Event List Header */}
       <div className="shrink-0 px-4 pt-4 pb-2">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-gray-800">내 친바 일정</h2>
+          <h2 className="text-lg font-bold text-gray-800">내 친바 일정</h2>
           <button
             onClick={() => router.push('/chinba/create')}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-gray-900 hover:bg-gray-800 rounded-full transition-colors active:scale-95"
@@ -66,10 +67,6 @@ export default function ChinbaTimetableView() {
         )}
       </div>
 
-      {/* Timetable Bottom Sheet */}
-      <BottomSheet title="내 시간표 관리">
-        <TimetableTab />
-      </BottomSheet>
     </div>
   );
 }

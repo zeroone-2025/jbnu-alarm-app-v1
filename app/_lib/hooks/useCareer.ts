@@ -3,12 +3,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   getMyCareer,
+  getPublicCareer,
   saveCareerContact,
   saveCareerEducations,
   saveCareerWorks,
   saveCareerSkills,
   saveCareerCertifications,
   saveCareerActivities,
+  saveCareerLanguageScores,
   saveCareerMentorQnA,
 } from '@/_lib/api/career';
 import type {
@@ -18,6 +20,7 @@ import type {
   CareerSkillsUpdate,
   CareerCertificationsUpdate,
   CareerActivitiesUpdate,
+  CareerLanguageScoresUpdate,
   CareerMentorQnAUpdate,
 } from '@/_types/career';
 
@@ -27,6 +30,16 @@ export function useCareer() {
     queryFn: getMyCareer,
     staleTime: 1000 * 60 * 5,
     retry: 1,
+  });
+}
+
+export function usePublicCareer(username: string | null) {
+  return useQuery({
+    queryKey: ['career', 'public', username],
+    queryFn: () => getPublicCareer(username as string),
+    enabled: Boolean(username),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
   });
 }
 
@@ -84,6 +97,16 @@ export function useSaveCareerActivities() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CareerActivitiesUpdate) => saveCareerActivities(data),
+    onSuccess: (updatedProfile) => {
+      queryClient.setQueryData(['career', 'my-profile'], updatedProfile);
+    },
+  });
+}
+
+export function useSaveCareerLanguageScores() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CareerLanguageScoresUpdate) => saveCareerLanguageScores(data),
     onSuccess: (updatedProfile) => {
       queryClient.setQueryData(['career', 'my-profile'], updatedProfile);
     },

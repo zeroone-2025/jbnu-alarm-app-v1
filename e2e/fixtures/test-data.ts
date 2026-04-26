@@ -168,7 +168,7 @@ export const MOCK_CHINBA_EVENT_DETAIL = {
   title: '조별과제 회의',
   dates: ['2024-07-10', '2024-07-11', '2024-07-12'],
   start_hour: 9,
-  end_hour: 21,
+  end_hour: 24,
   status: 'active' as const,
   creator_id: 1,
   creator_nickname: '테스트유저',

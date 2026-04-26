@@ -260,7 +260,7 @@ export async function mockAuthenticatedAPIs(page: Page, options?: {
     if (url.includes('/my-participation')) return json(route, MOCK_CHINBA_MY_PARTICIPATION);
     if (url.includes('/my-unavailability')) return json(route, { message: 'ok' });
     if (url.includes('/complete')) return json(route, { message: 'ok' });
-    if (url.includes('/import-timetable')) return json(route, { message: 'ok', imported_count: 0 });
+    if (url.includes('/import-timetable')) return json(route, { message: '시간표에서 6개 슬롯을 불러왔습니다', imported_count: 6 });
     if (method === 'GET') return json(route, MOCK_CHINBA_EVENT_DETAIL);
     if (method === 'DELETE') return json(route, { message: 'deleted' });
     return route.continue();

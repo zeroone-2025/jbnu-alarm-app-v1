@@ -1,134 +1,98 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+JBNU Notice Alarm — Next.js 기반 대학 공지 알림 웹/네이티브 앱
 
-## Project Overview
+## Overview
 
-JBNU Notice Alarm is a Next.js web application that aggregates and displays university notices from Jeonbuk National University (JBNU) homepage and Computer Science & AI department. The frontend fetches notices from a backend API (expected at `http://localhost:8000`) and provides category filtering, manual refresh/crawling, and a responsive UI.
+전북대학교 150개+ 게시판 공지를 구독 기반으로 보여주는 프론트엔드. Next.js 16 + Capacitor(iOS/Android) + PWA로 웹/네이티브 동시 지원. 백엔드 API 서버(`localhost:8080`)에서 데이터를 가져오며, 키워드 알림/즐겨찾기/읽음 추적/친바(일정조율)/시간표/커리어 프로필 기능 포함.
 
 ## Development Commands
 
 ```bash
-# Install dependencies
-npm install
-
-# Run development server (http://localhost:3000)
-npm run dev
-
-# Build for production
-npm run build
-
-# Run production server
-npm start
-
-# Run linter
-npm run lint
+npm install              # 의존성 설치
+npm run dev              # 개발 서버 (http://localhost:3000)
+npm run build            # 프로덕션 빌드
+npm run lint             # ESLint
+npm run test:e2e         # Playwright E2E 테스트
 ```
 
 ## Backend Dependency
 
-This frontend requires a backend server running at `http://localhost:8000` with these endpoints:
-- `GET /notices?skip=0&limit=100` - Fetch notices
-- `POST /notices/crawl` - Trigger manual crawling
+백엔드: `http://localhost:8080` (기본값). 환경변수로 변경 가능:
+- `NEXT_PUBLIC_API_BASE_URL_WEB` — 웹/SSR용
+- `NEXT_PUBLIC_API_BASE_URL_NATIVE` — Capacitor 네이티브용
 
-To change the API endpoint, modify `API_BASE_URL` in `app/lib/api.ts:4`.
+플랫폼 감지 로직: `app/_lib/api/client.ts`의 `getApiBaseUrl()` 참조.
+
+## Directory Convention
+
+Next.js 13+ private folder 컨벤션 사용 — 언더스코어 접두사 디렉토리는 라우팅에서 제외:
+
+- `app/_lib/` — API 클라이언트, hooks, 상수, store (상세: `app/_lib/CLAUDE.md`)
+- `app/_components/` — 공유 컴포넌트 (상세: `app/_components/CLAUDE.md`)
+- `app/_context/` — React Context providers
+- `app/_types/` — TypeScript 타입 정의
+
+### Route Groups
+
+- `app/(auth)/` — 로그인, OAuth 콜백, 온보딩
+- `app/(main)/` — 메인 앱 (홈, 필터, 친바, 시간표, 프로필, 키워드, 알림 등)
+- 각 라우트는 자체 `_components/`, `_hooks/` 폴더를 가질 수 있음
 
 ## Architecture
 
-### Data Flow
-1. **Client-side filtering**: The app fetches 100 notices from the backend and performs filtering on the client side (tab filtering + category filtering). This is noted as an MVP approach that could be optimized with server-side filtering later (see `app/page.tsx:46`).
-
-2. **Manual refresh flow**: When user clicks refresh button, it:
-   - Triggers backend crawl (`POST /notices/crawl`)
-   - Waits 1 second for database updates
-   - Re-fetches notice list
-   (See `app/page.tsx:57-68`)
-
-3. **localStorage persistence**: Selected categories are saved to localStorage using the `useSelectedCategories` hook to persist user preferences across sessions.
-
-### Category System
-
-The category system is centralized in `app/lib/categories.ts` and designed for easy extension:
-
-- **Adding new categories**: Add an entry to `CATEGORY_CONFIGS` array in `app/lib/categories.ts:73-93`
-- **Color palette**: 10 pre-defined colors cycle for unlimited categories
-- **Category structure**: Each category has `id` (must match API), `label` (display name), `color` (theme), and `order` (display order)
-
-Current categories: `homepage` (학교공지), `csai` (컴인지)
-
-### Component Structure
-
-- **app/(home)/page.tsx**: Main page with state management (notices, loading, filtering). Supports client-side filtering by read status, favorites, and board subscriptions.
-- **app/components/CategoryFilter.tsx**: 당근마켓 스타일 필터 바 - 좌측 고정 설정 버튼(FiSliders 아이콘) + 우측 가로 스크롤 필터 칩 (전체/안읽음/최신공지/즐겨찾기). Sticky positioning으로 스크롤 시 상단 고정.
-- **app/components/Sidebar.tsx**: Left sidebar with login/logout functionality and menu options
-- **app/components/NoticeCard.tsx**: Individual notice display with category badge, date, and external link
-- **app/components/TabBar.tsx**: Horizontal scrollable tab navigation with auto-scroll to active tab
-- **app/components/CategoryFilterModal.tsx**: Modal for selecting which categories to display
-- **app/components/CategoryBadge.tsx**: Colored badge component for category labels
-- **app/hooks/useSelectedCategories.ts**: Custom hook managing category selection state with localStorage
-- **app/api/index.ts**: Axios instance with JWT interceptor and API functions (`fetchNotices`, `triggerCrawl`, `markNoticeAsRead`)
-- **app/constants/boards.ts**: Board metadata (BOARD_MAP) with UI information
-
-**Note:** BottomNav component has been removed to maximize screen space. All navigation is now handled through the Sidebar component.
-
-### Responsive Design
-
-- **Mobile (default)**: Full-width list view with native app-like experience
-- **Desktop (md breakpoint, 832px로 커스텀)**: 사이드바(260px) 포함 데스크톱 레이아웃, card grid view with borders and shadows
-- Apple App Store 태블릿 호환을 위해 md breakpoint를 832px로 상향 (globals.css @theme), 사이드바 260px로 축소
-- Container max-width: `max-w-md` (mobile), `md:max-w-[calc(260px+56rem)]` (desktop)
-
-### Styling
-
-- **Tailwind CSS v4** with custom safelist for dynamic color classes (see `tailwind.config.js:8-16`)
-- **Dynamic classes**: Category colors are applied via string interpolation and must be safelisted to prevent purging in production builds
-- **Inter font** from Google Fonts
-- **Korean locale**: dayjs configured with Korean locale for relative time display
-- **Custom CSS classes**: `no-scrollbar` and `scrollbar-hide` for hiding scrollbars on horizontal scroll containers (see `app/globals.css:3-13`)
-
 ### State Management
 
-Uses React hooks (no external state library):
-- `useState` for notices, loading states, active filter (전체/안읽음/즐겨찾기)
-- `useEffect` for initial data fetch, scroll management, and login status handling
-- `useRef` for scroll container and tab references
-- Custom `useSelectedCategories` hook for board subscription state with localStorage persistence
+- **Zustand** (`app/_lib/store/useUserStore.ts`) — 사용자 전역 상태
+- **React Query** (`@tanstack/react-query`) — 서버 상태 (공지 목록, 무한 스크롤 등)
+- **localStorage** — 구독 게시판 설정 (`useSelectedCategories` hook)
 
-### Filtering System
+### Filtering Pipeline
 
-The app implements a **two-stage filtering pipeline**:
+`app/(main)/(home)/page.tsx`에서 2단계 필터링:
 
-1. **Board subscription filter** (`selectedCategories`): Filters notices by user-subscribed boards (configured in onboarding or settings)
-2. **Category filter** (`filter` state): Further filters by:
-   - `ALL`: Shows all subscribed notices
-   - `UNREAD`: Shows only unread notices (`is_read === false`)
-   - `FAVORITE`: Shows only favorited notices (`is_favorite === true`)
+1. **게시판 구독 필터** — `selectedCategories`로 구독한 게시판만 표시
+2. **카테고리 필터** — `ALL` / `UNREAD` / `KEYWORD` / `FAVORITE`
 
-Filtering logic is implemented client-side in `app/(home)/page.tsx:173-182`.
+### Authentication
 
-## Code Style & Linting
+OAuth 2.0 → JWT. Access Token은 메모리, Refresh Token은 HttpOnly 쿠키.
+Axios interceptor로 401 시 자동 토큰 리프레시 (큐 기반). 상세: `app/_lib/api/client.ts`
 
-ESLint is configured with:
-- Next.js core-web-vitals and TypeScript rules
-- Import order enforcement (React first, then external, internal, relative)
-- TypeScript rules: error on unused vars, warn on explicit any
-- Prettier integration to avoid conflicts
+### Board System
 
-When adding imports, follow this order:
-1. React imports
-2. External dependencies (axios, dayjs, etc.)
-3. Internal aliases (@/lib/*, @/components/*)
-4. Relative imports
+`app/_lib/constants/boards.ts`의 `BOARD_MAP` — 150개+ 게시판 정의.
+각 게시판: `{ name, color, category }`. 카테고리: 전북대/단과대/학과/사업단.
 
-## Important Implementation Notes
+## Styling
 
-- **API timeout**: 5 seconds (configured in `app/api/index.ts:8`)
-- **Notice interface**: Must match backend model (`id`, `title`, `link`, `date`, `board_code`, `view`, `is_read`, `is_favorite`, `created_at`)
-- **Authentication**: OAuth 2.0 flow with Google. JWT tokens stored in localStorage and automatically added to API requests via axios interceptor.
-- **Scroll behavior**: Tab changes trigger smooth scroll to top of notice list
-- **"New" indicator**: Red pulse dot appears for notices with today's date
-- **Loading skeleton**: 6 placeholder items shown during data fetch
-- **Layout**: Full-screen layout without bottom navigation bar (removed for maximum screen space). Navigation handled through left sidebar.
+- **Tailwind CSS v4** — `@import "tailwindcss"` 구문 사용
+- **Custom md breakpoint**: 832px (`52rem`) — 태블릿 호환 (`app/globals.css` @theme)
+- **동적 색상 safelist**: `tailwind.config.js`에 bg/text 색상 패턴 등록
+- **Custom CSS**: `no-scrollbar`, safe-area 유틸리티, fadeIn/slideUp 애니메이션 (`app/globals.css`)
+
+## Key Dependencies
+
+| 패키지 | 용도 |
+|--------|------|
+| Next.js 16 + React 19 | 프레임워크 |
+| @capacitor/* 8.x | iOS/Android 네이티브 빌드 |
+| @ducanh2912/next-pwa | PWA + Service Worker |
+| @tanstack/react-query | 서버 상태 관리 |
+| zustand | 클라이언트 전역 상태 |
+| axios | HTTP 클라이언트 + JWT interceptor |
+| dayjs | 날짜 처리 (Korean locale) |
+| react-icons | 아이콘 |
+| react-intersection-observer | 무한 스크롤 |
+| Playwright | E2E 테스트 |
+
+## Code Style
+
+ESLint 설정:
+- Next.js core-web-vitals + TypeScript 규칙
+- Import 순서: React → 외부 패키지 → 내부 alias (`@/_lib/*`, `@/_components/*`) → 상대 경로
+- unused vars: error / explicit any: warn
+- Prettier 통합
 
 ## Git Conventions
 
@@ -137,7 +101,6 @@ When adding imports, follow this order:
 ```
 <type>(<scope>): <설명>
 
-# 관련 이슈가 있으면 본문 또는 footer에 참조
 Refs #이슈번호
 ```
 
@@ -155,7 +118,7 @@ Refs #이슈번호
 | `chore` | 잡일, 설정 파일 등 |
 | `ci` | CI/CD 파이프라인 변경 |
 
-**스코프 (선택)**: `auth`, `alarm`, `chinba`, `ui`, `filter`, `keywords`, `profile`, `notification` 등
+**스코프 (선택)**: `auth`, `alarm`, `chinba`, `ui`, `filter`, `keywords`, `profile`, `notification`, `timetable` 등
 
 **예시**:
 ```
@@ -170,38 +133,28 @@ refactor(ui): FullPageModal 레이아웃 개선
 <type>/#<이슈번호>-<짧은설명>
 ```
 
-**타입**: `feature/`, `fix/`, `hotfix/`, `refactor/`, `docs/`
+타입: `feature/`, `fix/`, `hotfix/`, `refactor/`, `docs/`
 
-**예시**:
-```
-feature/#12-chinba-event
-fix/#45-notification-badge
-hotfix/#99-auth-redirect
-```
-
-### Epic Branch 전략 (연관 이슈 묶음)
-
-하나의 큰 기능이 여러 이슈로 나뉠 때, Epic 브랜치를 사용한다.
+### Epic Branch 전략
 
 ```
 dev (기본 브랜치)
- └── feature/#10-social-login          ← Epic 브랜치 (dev에서 분기)
-      ├── feature/#10-login-ui         ← Epic에서 분기, 완료 후 Epic으로 머지
-      ├── feature/#11-login-api        ← Epic에서 분기, 완료 후 Epic으로 머지
-      └── feature/#12-login-token      ← Epic에서 분기, 완료 후 Epic으로 머지
+ └── feature/#10-social-login          ← Epic 브랜치
+      ├── feature/#10-login-ui         ← Epic에서 분기 → Epic으로 머지
+      ├── feature/#11-login-api
+      └── feature/#12-login-token
 ```
 
-**규칙**:
-1. Epic 브랜치는 `dev`에서 분기하고, 대표 이슈 번호를 사용한다
-2. 하위 브랜치들은 Epic 브랜치에서 분기하고, 완료 후 Epic으로 PR/머지한다
-3. 모든 하위 작업이 완료되면 Epic 브랜치를 `dev`로 PR한다
-4. 이슈가 2개 이하로 밀접하게 연관되면, 하나의 브랜치에서 커밋 메시지로 이슈를 구분해도 된다
+규칙:
+1. Epic 브랜치는 `dev`에서 분기, 대표 이슈 번호 사용
+2. 하위 브랜치는 Epic에서 분기, 완료 후 Epic으로 PR/머지
+3. 모든 하위 작업 완료 후 Epic → `dev` PR
+4. 이슈 2개 이하로 밀접하면 하나의 브랜치에서 커밋으로 구분 가능
 
-### AI 커밋/브랜치 자동 판단 규칙
+### AI 커밋/브랜치 규칙
 
-Claude가 커밋 또는 브랜치를 생성할 때:
-1. 변경 내용을 분석하여 적절한 커밋 타입을 자동 선택한다
-2. 변경된 모듈에 따라 scope를 자동 부여한다
-3. 브랜치 생성 시 이슈 번호가 제공되면 네이밍 규칙을 따른다
-4. 커밋 메시지는 한글로 작성하되, 타입과 스코프는 영문으로 한다
-5. **반드시 위 컨벤션을 따르며, 규칙에 맞지 않는 커밋/브랜치를 만들지 않는다**
+1. 변경 내용 분석 → 적절한 타입 자동 선택
+2. 변경 모듈에 따라 scope 자동 부여
+3. 이슈 번호 제공 시 브랜치 네이밍 규칙 준수
+4. 커밋 메시지는 한글, 타입/스코프는 영문
+5. 반드시 위 컨벤션을 따름
