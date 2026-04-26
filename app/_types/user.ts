@@ -18,11 +18,12 @@ export interface UserProfile {
 // 사용자 정보 업데이트 요청
 export interface UserProfileUpdate {
     nickname?: string;
+    username?: string;
     school?: string;
     dept_code?: string;
     admission_year?: number;
     fcm_token?: string;
-    profile_image?: string;
+    profile_image?: string | null;
     keyword_notice_seen_at?: string;
 }
 

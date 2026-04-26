@@ -5,14 +5,32 @@ export interface CareerProfile {
   name: string | null;
   email: string | null;
   phone: string | null;
-  visibility: 'public' | 'career_only';
+  visibility: CareerVisibility;
   skill_tags: string[];
   is_mentor: boolean;
   educations: Education[];
   works: WorkExperience[];
   certifications: Certification[];
   activities: Activity[];
+  language_scores: LanguageScore[];
   mentor_qna: MentorQnA | null;
+}
+
+export type CareerVisibility = 'private' | 'career_only' | 'public';
+
+export interface PublicCareerUser {
+  id: number;
+  username: string;
+  nickname: string | null;
+  school: string | null;
+  dept_code: string | null;
+  admission_year: number | null;
+  profile_image: string | null;
+}
+
+export interface PublicCareerProfile extends CareerProfile {
+  user: PublicCareerUser;
+  can_edit: boolean;
 }
 
 export interface Education {
@@ -44,11 +62,21 @@ export interface Certification {
   date: string | null;
 }
 
+export type ActivityKind = 'experience' | 'award' | 'etc';
+
 export interface Activity {
   id?: number;
   name: string;
   period: string | null;
   description: string | null;
+  kind: ActivityKind;
+}
+
+export interface LanguageScore {
+  id?: number;
+  test_type: string;
+  score: string;
+  date: string | null;
 }
 
 export interface MentorQnA {
@@ -64,7 +92,7 @@ export interface CareerContactUpdate {
   name: string | null;
   email: string | null;
   phone: string | null;
-  visibility: 'public' | 'career_only';
+  visibility: CareerVisibility;
 }
 
 export interface CareerEducationsUpdate {
@@ -86,6 +114,16 @@ export interface CareerCertificationsUpdate {
 export interface CareerActivitiesUpdate {
   activities: Omit<Activity, 'id'>[];
 }
+
+export interface CareerLanguageScoresUpdate {
+  language_scores: Omit<LanguageScore, 'id'>[];
+}
+
+export const ACTIVITY_KIND_LABELS: Record<ActivityKind, string> = {
+  experience: '경험',
+  award: '수상',
+  etc: '기타',
+};
 
 export interface CareerMentorQnAUpdate {
   mentor_qna: MentorQnA;

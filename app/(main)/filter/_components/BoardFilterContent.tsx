@@ -460,7 +460,7 @@ export default function BoardFilterContent({
         )}
 
         {/* 버튼 영역 */}
-        <div className="flex gap-3 px-5 py-4">
+        <div className="flex gap-3 px-5 py-4 pb-safe">
           <Button variant="outline" fullWidth onClick={onClose}>
             취소
           </Button>
