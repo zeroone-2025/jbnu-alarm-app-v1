@@ -13,9 +13,16 @@ interface TeamSetupGuideProps {
   memberCount: number;
   inviteCode: string | null;
   hasGroups: boolean;
+  terminology?: 'team' | 'club';
 }
 
-export default function TeamSetupGuide({ teamId, memberCount, inviteCode, hasGroups }: TeamSetupGuideProps) {
+export default function TeamSetupGuide({
+  teamId,
+  memberCount,
+  inviteCode,
+  hasGroups,
+  terminology = 'team',
+}: TeamSetupGuideProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
 
@@ -40,8 +47,8 @@ export default function TeamSetupGuide({ teamId, memberCount, inviteCode, hasGro
     if (navigator.share) {
       try {
         await navigator.share({
-          title: '팀 초대',
-          text: '팀에 참여하세요!',
+          title: terminology === 'club' ? '동아리 초대' : '팀 초대',
+          text: terminology === 'club' ? '동아리에 참여하세요!' : '팀에 참여하세요!',
           url: inviteUrl,
         });
       } catch {
@@ -61,8 +68,12 @@ export default function TeamSetupGuide({ teamId, memberCount, inviteCode, hasGro
             <span className="text-xs font-bold text-blue-600">①</span>
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-700">팀원을 초대하세요</p>
-            <p className="text-xs text-gray-500 mt-0.5">초대 링크를 공유해서 팀원을 모아보세요</p>
+            <p className="text-sm font-medium text-gray-700">
+              {terminology === 'club' ? '회원을 초대하세요' : '팀원을 초대하세요'}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              초대 링크를 공유해서 {terminology === 'club' ? '회원을' : '팀원을'} 모아보세요
+            </p>
             {inviteUrl && (
               <div className="flex gap-2 mt-2.5">
                 <button
@@ -88,14 +99,18 @@ export default function TeamSetupGuide({ teamId, memberCount, inviteCode, hasGro
           <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-100">
             <FiCheck size={12} className="text-green-600" />
           </div>
-          <p className="text-sm font-medium text-gray-500">팀원 초대 완료 ({memberCount}명)</p>
+          <p className="text-sm font-medium text-gray-500">
+            {terminology === 'club' ? '회원' : '팀원'} 초대 완료 ({memberCount}명)
+          </p>
         </div>
       )}
 
       {/* Step 2 */}
       {!isStep1Done ? (
         <div className="flex items-center gap-3 pl-11">
-          <p className="text-xs text-gray-400">② 조 편성하기 (팀원 초대 후 가능)</p>
+          <p className="text-xs text-gray-400">
+            ② 조 편성하기 ({terminology === 'club' ? '회원' : '팀원'} 초대 후 가능)
+          </p>
         </div>
       ) : (
         <div className="flex items-start gap-3">
@@ -104,7 +119,9 @@ export default function TeamSetupGuide({ teamId, memberCount, inviteCode, hasGro
           </div>
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-700">조를 편성해보세요</p>
-            <p className="text-xs text-gray-500 mt-0.5">팀원을 바탕으로 조를 나누면 조별 일정 관리가 가능해요</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {terminology === 'club' ? '회원' : '팀원'}을 바탕으로 조를 나누면 조별 일정 관리가 가능해요
+            </p>
             <button
               onClick={() => router.push(`/chinba/team/groups?id=${teamId}`)}
               className="mt-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700"

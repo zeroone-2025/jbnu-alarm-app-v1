@@ -1,12 +1,14 @@
 import api from './client';
 import type {
   CareerProfile,
+  PublicCareerProfile,
   CareerContactUpdate,
   CareerEducationsUpdate,
   CareerWorksUpdate,
   CareerSkillsUpdate,
   CareerCertificationsUpdate,
   CareerActivitiesUpdate,
+  CareerLanguageScoresUpdate,
   CareerMentorQnAUpdate,
 } from '@/_types/career';
 
@@ -17,6 +19,12 @@ export async function getMyCareer(): Promise<CareerProfile> {
 
 export async function getUserCareer(userId: number): Promise<CareerProfile> {
   const { data } = await api.get(`/users/${userId}/career`);
+  return data;
+}
+
+export async function getPublicCareer(username: string): Promise<PublicCareerProfile> {
+  const normalized = username.startsWith('@') ? username.slice(1) : username;
+  const { data } = await api.get(`/career/public/${normalized}`);
   return data;
 }
 
@@ -47,6 +55,13 @@ export async function saveCareerCertifications(certificationsData: CareerCertifi
 
 export async function saveCareerActivities(activitiesData: CareerActivitiesUpdate): Promise<CareerProfile> {
   const { data } = await api.put('/users/me/career/activities', activitiesData);
+  return data;
+}
+
+export async function saveCareerLanguageScores(
+  languageScoresData: CareerLanguageScoresUpdate,
+): Promise<CareerProfile> {
+  const { data } = await api.put('/users/me/career/language-scores', languageScoresData);
   return data;
 }
 

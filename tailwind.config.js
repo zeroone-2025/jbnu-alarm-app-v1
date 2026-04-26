@@ -8,10 +8,16 @@ module.exports = {
   safelist: [
     // 동적 색상 클래스 보호 (프로덕션 빌드 시 purge 방지)
     {
-      pattern: /bg-(indigo|emerald|amber|rose|violet|cyan|pink|lime|orange|teal|sky)-(100)/,
+      pattern: /bg-(indigo|emerald|amber|rose|violet|cyan|pink|lime|orange|teal|sky|purple|blue|yellow)-(50|100|400)/,
     },
     {
-      pattern: /text-(indigo|emerald|amber|rose|violet|cyan|pink|lime|orange|teal|sky)-(600|700)/,
+      pattern: /text-(indigo|emerald|amber|rose|violet|cyan|pink|lime|orange|teal|sky|purple|blue|yellow)-(600|700)/,
+    },
+    {
+      pattern: /border-(indigo|emerald|amber|rose|violet|cyan|pink|lime|orange|teal|sky|purple|blue|yellow)-(100|300)/,
+    },
+    {
+      pattern: /bg-(purple|cyan|emerald|amber|rose|indigo|blue)-500/,
     },
     // BoardFilterModal 선택된 게시판 색상 (카테고리별)
     {
@@ -19,6 +25,10 @@ module.exports = {
     },
     {
       pattern: /hover:bg-(blue|green|gray|indigo|sky|teal)-(600|700)/,
+    },
+    // FLOW 회사 헤더 그라데이션
+    {
+      pattern: /(from|to)-(blue|indigo|emerald|teal|rose|pink|amber|orange|sky|violet)-(500|600|700)/,
     },
   ],
   theme: {

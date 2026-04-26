@@ -15,9 +15,16 @@ interface ActivityTabProps {
   myRole: TeamRole;
   selectedSetId?: number | null;
   selectedGroupId?: number | null;
+  terminology?: 'team' | 'club';
 }
 
-export default function ActivityTab({ teamId, myRole, selectedSetId, selectedGroupId }: ActivityTabProps) {
+export default function ActivityTab({
+  teamId,
+  myRole,
+  selectedSetId,
+  selectedGroupId,
+  terminology = 'team',
+}: ActivityTabProps) {
   const { data, isLoading } = useActivities(teamId);
   const { data: groupsData } = useGroups(teamId);
   const createMutation = useCreateActivity(teamId);
@@ -238,7 +245,7 @@ export default function ActivityTab({ teamId, myRole, selectedSetId, selectedGro
           </div>
           <p className="text-sm font-medium text-gray-500 mb-1">아직 활동 기록이 없습니다</p>
           <p className="text-xs text-gray-400 text-center">
-            팀 활동을 기록하고 공유하세요
+            {terminology === 'club' ? '동아리 활동을 기록하고 공유하세요' : '팀 활동을 기록하고 공유하세요'}
           </p>
         </div>
       ) : (

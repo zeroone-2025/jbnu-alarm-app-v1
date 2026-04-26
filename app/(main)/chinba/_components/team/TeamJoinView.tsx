@@ -42,7 +42,7 @@ export default function TeamJoinView() {
   };
 
   return (
-    <FullPageModal isOpen={true} onClose={goBack} title="팀 가입">
+    <FullPageModal isOpen={true} onClose={goBack} title="동아리 가입">
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4">
         <div className="flex flex-col items-center py-8">

@@ -242,7 +242,7 @@ export default function MyScheduleTab({ eventId, dates, startHour, endHour, isLo
         title="저장된 시간표가 없습니다"
         confirmLabel="등록하러 가기"
         cancelLabel="취소"
-        onConfirm={() => router.push('/profile?tab=timetable')}
+        onConfirm={() => router.push('/chinba/my')}
         onCancel={() => setShowNoTimetableModal(false)}
       >
         시간표를 등록하고 1초만에 불러오세요.

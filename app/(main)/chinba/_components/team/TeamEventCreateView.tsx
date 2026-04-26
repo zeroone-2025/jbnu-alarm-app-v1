@@ -84,7 +84,7 @@ export default function TeamEventCreateView() {
   };
 
   return (
-    <FullPageModal isOpen={true} onClose={goBack} title="팀 친바 만들기">
+    <FullPageModal isOpen={true} onClose={goBack} title="동아리 친바 만들기">
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4">
         {error && (
@@ -93,11 +93,11 @@ export default function TeamEventCreateView() {
           </div>
         )}
 
-        {/* 전체 팀 대상 안내 (그룹세트 미선택) */}
+        {/* 전체 동아리 대상 안내 (그룹세트 미선택) */}
         {!preSetId && (
           <div className="mb-6 rounded-xl bg-gray-50 px-4 py-3">
             <p className="text-sm text-gray-500">
-              전체 팀 대상으로 생성됩니다
+              전체 동아리 대상으로 생성됩니다
             </p>
           </div>
         )}
@@ -136,7 +136,7 @@ export default function TeamEventCreateView() {
             </div>
             {selectedGroupIds.length === 0 && (
               <p className="mt-2 text-[11px] text-gray-400">
-                선택하지 않으면 전체 팀 대상으로 생성됩니다
+                선택하지 않으면 전체 동아리 대상으로 생성됩니다
               </p>
             )}
           </div>

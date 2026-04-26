@@ -36,7 +36,7 @@ export default function TeamListView() {
       <div className="shrink-0 px-4 pb-3">
         <div className="pt-safe md:pt-0" />
         <div className="relative mt-4 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-gray-800">내 팀</h1>
+          <h1 className="text-lg font-bold text-gray-800">내 동아리</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => isLoggedIn ? router.push('/chinba/team/join') : handleRequireLogin()}
@@ -63,7 +63,7 @@ export default function TeamListView() {
           </div>
         ) : isError ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <p className="text-sm text-gray-400">팀 목록을 불러오지 못했습니다</p>
+            <p className="text-sm text-gray-400">동아리 목록을 불러오지 못했습니다</p>
             <button
               onClick={() => window.location.reload()}
               className="mt-3 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
@@ -76,9 +76,9 @@ export default function TeamListView() {
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50">
               <FiUsers size={28} className="text-gray-300" />
             </div>
-            <p className="text-sm font-medium text-gray-500 mb-1">팀이 없습니다</p>
+            <p className="text-sm font-medium text-gray-500 mb-1">동아리가 없습니다</p>
             <p className="text-xs text-gray-400 text-center">
-              새 팀을 만들거나 초대 링크로 가입하세요
+              새 동아리를 만들거나 초대 링크로 가입하세요
             </p>
           </div>
         ) : (
@@ -87,6 +87,7 @@ export default function TeamListView() {
               <TeamCard
                 key={team.id}
                 team={team}
+                terminology="club"
                 onClick={() => router.push(`/chinba/team/detail?id=${team.id}`)}
               />
             ))}

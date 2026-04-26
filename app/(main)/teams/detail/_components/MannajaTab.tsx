@@ -21,9 +21,18 @@ interface MannajaTabProps {
   inviteCode: string | null;
   selectedSetId?: number | null;
   selectedGroupId?: number | null;
+  terminology?: 'team' | 'club';
 }
 
-export default function MannajaTab({ teamId, myRole, memberCount, inviteCode, selectedSetId, selectedGroupId }: MannajaTabProps) {
+export default function MannajaTab({
+  teamId,
+  myRole,
+  memberCount,
+  inviteCode,
+  selectedSetId,
+  selectedGroupId,
+  terminology = 'team',
+}: MannajaTabProps) {
   const router = useRouter();
   const { data, isLoading } = useTeamEvents(teamId);
   const { data: groupSetsData } = useGroupSets(teamId);
@@ -85,7 +94,13 @@ export default function MannajaTab({ teamId, myRole, memberCount, inviteCode, se
     <div className="space-y-4">
       {/* 팀 셋업 가이드 (captain/executive만) */}
       {canCreate && (!hasGroups || memberCount <= 1) && (
-        <TeamSetupGuide teamId={teamId} memberCount={memberCount} inviteCode={inviteCode} hasGroups={hasGroups} />
+        <TeamSetupGuide
+          teamId={teamId}
+          memberCount={memberCount}
+          inviteCode={inviteCode}
+          hasGroups={hasGroups}
+          terminology={terminology}
+        />
       )}
 
       {/* Create button for captain/executive */}
@@ -100,7 +115,7 @@ export default function MannajaTab({ teamId, myRole, memberCount, inviteCode, se
           className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 py-4 text-sm font-medium text-gray-400 transition-colors hover:border-gray-300 hover:text-gray-500 active:scale-[0.98]"
         >
           <FiPlus size={18} />
-          <span>팀 친바 만들기</span>
+          <span>{terminology === 'club' ? '동아리 친바 만들기' : '팀 친바 만들기'}</span>
         </button>
       )}
 
@@ -109,7 +124,7 @@ export default function MannajaTab({ teamId, myRole, memberCount, inviteCode, se
         <>
           {!isFilterActive && (
             <>
-              <SectionHeader icon={FiUsers} label="팀 전체 일정" />
+              <SectionHeader icon={FiUsers} label={terminology === 'club' ? '동아리 전체 일정' : '팀 전체 일정'} />
               {teamWideEvents.length > 0 ? (
                 teamWideEvents.map((event) => (
                   <EventCard
@@ -120,7 +135,7 @@ export default function MannajaTab({ teamId, myRole, memberCount, inviteCode, se
                   />
                 ))
               ) : (
-                <SectionEmptyState message="팀 전체 일정이 없습니다" />
+                <SectionEmptyState message={terminology === 'club' ? '동아리 전체 일정이 없습니다' : '팀 전체 일정이 없습니다'} />
               )}
             </>
           )}
@@ -152,7 +167,9 @@ export default function MannajaTab({ teamId, myRole, memberCount, inviteCode, se
           <p className="text-xs text-gray-400 text-center">
             {canCreate
               ? '위의 버튼을 눌러 일정 조율을 시작하세요'
-              : '팀장 또는 임원이 일정 조율을 생성할 수 있습니다'}
+              : terminology === 'club'
+                ? '회장 또는 운영진이 일정 조율을 생성할 수 있습니다'
+                : '팀장 또는 임원이 일정 조율을 생성할 수 있습니다'}
           </p>
         </div>
       ) : (
@@ -262,4 +279,3 @@ function SectionEmptyState({ message, submessage }: { message: string; submessag
     </div>
   );
 }
-

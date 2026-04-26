@@ -7,6 +7,7 @@ import {
   FiSettings,
   FiBell,
   FiUsers,
+  FiZap,
   FiLogOut,
   FiHome,
   FiInstagram,
@@ -24,6 +25,7 @@ import { useMyChinbaEvents } from '@/_lib/hooks/useChinba';
 import { getLoginUrl } from '@/_lib/utils/requireLogin';
 import { ChinbaEventList } from '@/(main)/chinba/_components/ChinbaEventList';
 import LoadingSpinner from '@/_components/ui/LoadingSpinner';
+import Logo from '@/_components/ui/Logo';
 
 interface SidebarContentProps {
   onNavigate: (path: string) => void;
@@ -44,7 +46,7 @@ const SERVICE_ITEMS: ServiceItem[] = [
   { id: 'profile', label: '프로필', icon: FiUser, href: '/profile', matchPath: '/profile' },
   { id: 'jbnu-alarm', label: '전북대 알리미', icon: FiBell, matchPath: '/' },
   { id: 'chinba', label: '친해지길 바래', icon: FiUsers, matchPath: '/chinba' },
-  // { id: 'flow', label: '플로우', icon: FiZap, isDisabled: true },
+  { id: 'flow', label: 'FLOW', icon: FiZap, href: '/flow', matchPath: '/flow' },
 ];
 
 function formatAdmissionYear(year: number | null | undefined): string | null {
@@ -138,9 +140,18 @@ export default function SidebarContent({
 
   return (
     <div className="flex h-full w-full flex-col">
-      {/* Collapse button (desktop only) */}
-      {onCollapse && (
-        <div className="hidden justify-end px-3 pt-3 md:flex">
+      {/* Brand + user summary */}
+      <div className="pt-safe px-5 pb-4 md:pt-0">
+        <div className="flex items-center justify-between pt-7">
+          <button
+            type="button"
+            onClick={() => onNavigate('/')}
+            aria-label="제로타임 홈"
+            className="text-gray-900 transition-colors hover:text-blue-600"
+          >
+            <Logo className="h-6 w-auto" />
+          </button>
+          {onCollapse && (
           <button
             onClick={onCollapse}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
@@ -148,19 +159,15 @@ export default function SidebarContent({
           >
             <FiChevronsLeft size={18} />
           </button>
+          )}
         </div>
-      )}
 
-      {/* Profile Card */}
-      <div className="pt-safe px-5 pb-4 md:pt-0">
-        <div className="pt-8">
+        <div className="pt-6">
           {!isAuthLoaded || (isLoading && !user) ? (
-            <div className="flex animate-pulse items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-gray-200" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-20 rounded bg-gray-200" />
-                <div className="h-3 w-32 rounded bg-gray-200" />
-              </div>
+            <div className="animate-pulse space-y-2">
+              <div className="h-4 w-24 rounded bg-gray-200" />
+              <div className="h-3 w-20 rounded bg-gray-200" />
+              <div className="h-3 w-36 rounded bg-gray-200" />
             </div>
           ) : !isLoggedIn ? (
             <div className="flex flex-col items-start gap-3">
@@ -176,27 +183,18 @@ export default function SidebarContent({
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-4">
-              {user?.profile_image ? (
-                <img
-                  src={user.profile_image}
-                  alt={user.nickname || '사용자'}
-                  className="h-16 w-16 rounded-full border border-gray-100 object-cover"
-                />
-              ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-gray-100 bg-gray-50 text-gray-400">
-                  <FiUser size={28} />
-                </div>
+            <div className="min-w-0">
+              <p className="truncate text-base font-bold text-gray-900">
+                {user?.nickname || '사용자'}
+              </p>
+              <p className="mt-0.5 truncate text-xs font-medium text-gray-500">
+                {user?.username ? `@${user.username}` : user?.email}
+              </p>
+              {(user?.school || deptName || admissionYearText) && (
+                <p className="mt-1 truncate text-[11px] text-gray-400">
+                  {[user?.school, deptName, admissionYearText].filter(Boolean).join(' · ')}
+                </p>
               )}
-              <div className="flex flex-col">
-                <p className="text-base font-bold text-gray-800">{user?.nickname || '사용자'}</p>
-                <p className="mt-0.5 text-[11px] text-gray-400">{user?.email}</p>
-                {(user?.school || deptName || admissionYearText) && (
-                  <p className="mt-0.5 text-[11px] text-gray-400">
-                    {[user?.school, deptName, admissionYearText].filter(Boolean).join(' · ')}
-                  </p>
-                )}
-              </div>
             </div>
           )}
         </div>

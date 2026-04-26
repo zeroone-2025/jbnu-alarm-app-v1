@@ -8,10 +8,15 @@ import type { TeamListItem } from '@/_types/team';
 interface TeamCardProps {
   team: TeamListItem;
   onClick: () => void;
+  terminology?: 'team' | 'club';
 }
 
-export default function TeamCard({ team, onClick }: TeamCardProps) {
-  const roleLabel = getRoleBadgeLabel(team.my_role);
+export default function TeamCard({ team, onClick, terminology = 'team' }: TeamCardProps) {
+  const defaultRoleLabel = getRoleBadgeLabel(team.my_role);
+  const roleLabel =
+    terminology === 'club'
+      ? ({ captain: '회장', executive: '운영진', member: '회원' }[team.my_role] ?? defaultRoleLabel)
+      : defaultRoleLabel;
   const roleColor = getRoleBadgeColor(team.my_role);
 
   const roleBadgeStyles: Record<string, string> = {

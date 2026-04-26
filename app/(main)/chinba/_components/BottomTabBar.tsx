@@ -6,7 +6,7 @@ import { FiHome, FiUsers, FiUser } from 'react-icons/fi';
 
 const tabs = [
   { href: '/chinba', label: '홈', icon: FiHome },
-  { href: '/chinba/team', label: '팀', icon: FiUsers },
+  { href: '/chinba/team', label: '동아리', icon: FiUsers },
   { href: '/chinba/my', label: 'MY', icon: FiUser },
 ];
 

@@ -12,6 +12,7 @@ interface InviteSectionProps {
   onRegenerate: () => void;
   isRegenerating?: boolean;
   onShowToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  terminology?: 'team' | 'club';
 }
 
 export default function InviteSection({
@@ -20,6 +21,7 @@ export default function InviteSection({
   onRegenerate,
   isRegenerating = false,
   onShowToast,
+  terminology = 'team',
 }: InviteSectionProps) {
   const [copied, setCopied] = useState(false);
 
@@ -48,8 +50,8 @@ export default function InviteSection({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: '팀 초대',
-          text: '팀에 참여하세요!',
+          title: terminology === 'club' ? '동아리 초대' : '팀 초대',
+          text: terminology === 'club' ? '동아리에 참여하세요!' : '팀에 참여하세요!',
           url: inviteUrl,
         });
       } catch {
