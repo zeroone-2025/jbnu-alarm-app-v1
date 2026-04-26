@@ -23,7 +23,7 @@ export interface UserProfileUpdate {
     dept_code?: string;
     admission_year?: number;
     fcm_token?: string;
-    profile_image?: string;
+    profile_image?: string | null;
     keyword_notice_seen_at?: string;
 }
 

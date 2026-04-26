@@ -67,7 +67,7 @@ export default function TeamSettingsView() {
   if (!team) {
     return (
       <div className="flex h-full flex-col items-center justify-center bg-white">
-        <p className="text-sm text-gray-400 mb-3">팀 정보를 불러오지 못했습니다</p>
+        <p className="text-sm text-gray-400 mb-3">동아리 정보를 불러오지 못했습니다</p>
         <button
           onClick={goBack}
           className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
@@ -92,7 +92,7 @@ export default function TeamSettingsView() {
     if (editName === null) return;
     const trimmed = editName.trim();
     if (!trimmed) {
-      showToast('팀 이름을 입력해주세요', 'error');
+      showToast('동아리 이름을 입력해주세요', 'error');
       return;
     }
 
@@ -101,7 +101,7 @@ export default function TeamSettingsView() {
         name: trimmed,
         category: editCategory || undefined,
       });
-      showToast('팀 정보가 수정되었습니다', 'success');
+      showToast('동아리 정보가 수정되었습니다', 'success');
       setEditName(null);
       setEditCategory(null);
     } catch (err: any) {
@@ -112,7 +112,7 @@ export default function TeamSettingsView() {
   const handleDeleteTeam = async () => {
     try {
       await deleteTeam.mutateAsync(teamId);
-      showToast('팀이 삭제되었습니다', 'success');
+      showToast('동아리가 삭제되었습니다', 'success');
       router.replace('/chinba/team');
     } catch (err: any) {
       showToast(err.response?.data?.detail || '삭제에 실패했습니다', 'error');
@@ -154,17 +154,17 @@ export default function TeamSettingsView() {
   };
 
   return (
-    <FullPageModal isOpen={true} onClose={goBack} title="팀 설정">
+    <FullPageModal isOpen={true} onClose={goBack} title="동아리 설정">
       {/* Content */}
       <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-8">
-        {/* Section 1: Team Info */}
+        {/* Section 1: Club Info */}
         <section className="mb-6">
-          <h2 className="text-sm font-bold text-gray-800 mb-3">팀 정보</h2>
+          <h2 className="text-sm font-bold text-gray-800 mb-3">동아리 정보</h2>
           <div className="rounded-xl border border-gray-100 bg-white p-4 space-y-4">
             {isEditing ? (
               <>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">팀 이름</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">동아리 이름</label>
                   <div className="relative">
                     <input
                       type="text"
@@ -223,7 +223,7 @@ export default function TeamSettingsView() {
               <>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs text-gray-400 mb-0.5">팀 이름</p>
+                    <p className="text-xs text-gray-400 mb-0.5">동아리 이름</p>
                     <p className="text-sm font-medium text-gray-800">{team.name}</p>
                   </div>
                   {canEditTeam(myRole) && (
@@ -262,6 +262,7 @@ export default function TeamSettingsView() {
             onRegenerate={handleRegenerateCode}
             isRegenerating={regenerateCode.isPending}
             onShowToast={showToast}
+            terminology="club"
           />
         </section>
 
@@ -289,6 +290,7 @@ export default function TeamSettingsView() {
                 members={members}
                 myRole={myRole}
                 teamId={teamId}
+                terminology="club"
                 onChangeRole={handleChangeRole}
                 onRemoveMember={handleRemoveMember}
               />
@@ -302,14 +304,14 @@ export default function TeamSettingsView() {
           canManage={canEditTeam(myRole)}
         />
 
-        {/* Section 6: 팀 삭제 (Danger Zone) */}
+        {/* Section 6: 동아리 삭제 (Danger Zone) */}
         {canDeleteTeam(myRole) && !isEditing && (
           <section className="mb-6 pt-4 border-t border-gray-100">
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="w-full rounded-xl border border-red-100 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-50"
             >
-              팀 삭제
+              동아리 삭제
             </button>
           </section>
         )}
@@ -320,12 +322,12 @@ export default function TeamSettingsView() {
         isOpen={showDeleteConfirm}
         onConfirm={handleDeleteTeam}
         onCancel={() => setShowDeleteConfirm(false)}
-        title="팀 삭제"
+        title="동아리 삭제"
         confirmLabel="삭제"
         cancelLabel="취소"
         variant="danger"
       >
-        <p>정말 이 팀을 삭제하시겠습니까?</p>
+        <p>정말 이 동아리를 삭제하시겠습니까?</p>
         <p className="mt-1 text-xs text-gray-400">이 작업은 되돌릴 수 없습니다.</p>
       </ConfirmModal>
 
@@ -339,7 +341,7 @@ export default function TeamSettingsView() {
         cancelLabel="취소"
         variant="danger"
       >
-        <p>이 멤버를 팀에서 내보내시겠습니까?</p>
+        <p>이 멤버를 동아리에서 내보내시겠습니까?</p>
       </ConfirmModal>
     </FullPageModal>
   );

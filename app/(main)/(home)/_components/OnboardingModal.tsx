@@ -1444,10 +1444,10 @@ export default function OnboardingModal({
             현재 이력은 공개되지 않으며, 정식 런칭 후 공유 기능이 추가될 예정입니다.
           </p>
           <p className="mb-10 text-center text-xs text-gray-400">
-            프로필 &gt; 이력관리에서 언제든지 수정할 수 있습니다.
+            FLOW &gt; 내 이력에서 언제든지 수정할 수 있습니다.
           </p>
           <button
-            onClick={() => onComplete(seniorCompleted, { redirectTo: '/profile/?tab=career' })}
+            onClick={() => onComplete(seniorCompleted, { redirectTo: '/flow/career' })}
             className="w-full max-w-xs rounded-xl bg-gray-900 py-4 font-bold text-white transition-all hover:bg-gray-800"
           >
             이력관리로 이동

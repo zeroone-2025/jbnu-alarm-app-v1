@@ -34,17 +34,17 @@ export default function TeamCreateView() {
         name: name.trim(),
         category: category || undefined,
       });
-      showToast('팀이 생성되었습니다', 'success');
+      showToast('동아리가 생성되었습니다', 'success');
       router.replace(`/chinba/team/detail?id=${result.id}`);
     } catch (err: any) {
-      const detail = err.response?.data?.detail || '팀 생성에 실패했습니다';
+      const detail = err.response?.data?.detail || '동아리 생성에 실패했습니다';
       setError(detail);
       showToast(detail, 'error');
     }
   };
 
   return (
-    <FullPageModal isOpen={true} onClose={goBack} title="팀 만들기">
+    <FullPageModal isOpen={true} onClose={goBack} title="동아리 만들기">
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4">
         {error && (
@@ -55,7 +55,7 @@ export default function TeamCreateView() {
 
         <div className="mb-6">
           <label className="block text-sm font-bold text-gray-700 mb-2">
-            팀 이름
+            동아리 이름
           </label>
           <div className="relative">
             <input

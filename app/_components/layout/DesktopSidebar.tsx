@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useToast } from '@/_context/ToastContext';
 import SidebarContent from './SidebarContent';
 import { useRouter } from 'next/navigation';
-import { FiUser, FiBell, FiUsers, FiSettings, FiChevronsRight } from 'react-icons/fi';
+import { FiUser, FiBell, FiUsers, FiSettings, FiChevronsRight, FiZap } from 'react-icons/fi';
 import { useUser } from '@/_lib/hooks/useUser';
 
 interface DesktopSidebarProps {
@@ -24,6 +24,7 @@ interface CollapsedNavItem {
 const NAV_ITEMS: CollapsedNavItem[] = [
   { id: 'jbnu-alarm', icon: FiBell, href: '/', label: '전북대 알리미', matchPath: '/' },
   { id: 'chinba', icon: FiUsers, href: '/chinba', label: '친해지길 바래', matchPath: '/chinba' },
+  { id: 'flow', icon: FiZap, href: '/flow', label: 'FLOW', matchPath: '/flow' },
 ];
 
 export default function DesktopSidebar({ collapsed, onToggle }: DesktopSidebarProps) {
@@ -77,15 +78,7 @@ export default function DesktopSidebar({ collapsed, onToggle }: DesktopSidebarPr
             }`}
             title="프로필"
           >
-            {user?.profile_image ? (
-              <img
-                src={user.profile_image}
-                alt={user.nickname || '사용자'}
-                className="w-8 h-8 rounded-full object-cover"
-              />
-            ) : (
-              <FiUser size={20} />
-            )}
+            <FiUser size={20} />
           </button>
         )}
 

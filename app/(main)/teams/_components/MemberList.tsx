@@ -15,6 +15,7 @@ interface MemberListProps {
   teamId?: number;
   onChangeRole?: (memberId: number, role: TeamRole) => void;
   onRemoveMember?: (memberId: number) => void;
+  terminology?: 'team' | 'club';
 }
 
 const ROLE_BADGE_STYLES: Record<string, string> = {
@@ -29,12 +30,19 @@ const ROLE_OPTIONS: { value: TeamRole; label: string }[] = [
   { value: 'member', label: '팀원' },
 ];
 
+const CLUB_ROLE_LABELS: Record<TeamRole, string> = {
+  captain: '회장',
+  executive: '운영진',
+  member: '회원',
+};
+
 export default function MemberList({
   members,
   myRole,
   teamId,
   onChangeRole,
   onRemoveMember,
+  terminology = 'team',
 }: MemberListProps) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const { data: groupSetsData } = useGroupSets(teamId);
@@ -50,7 +58,11 @@ export default function MemberList({
     <div className="space-y-1">
       {members.map((member) => {
         const roleColor = getRoleBadgeColor(member.role);
-        const roleLabel = getRoleBadgeLabel(member.role);
+        const defaultRoleLabel = getRoleBadgeLabel(member.role);
+        const roleLabel =
+          terminology === 'club'
+            ? CLUB_ROLE_LABELS[member.role]
+            : defaultRoleLabel;
         const canRemove = canRemoveMember(myRole, member.role);
 
         return (
@@ -106,7 +118,12 @@ export default function MemberList({
                       onClick={() => setOpenMenuId(null)}
                     />
                     <div className="absolute right-0 top-full z-20 mt-1 w-32 rounded-xl border border-gray-100 bg-white py-1 shadow-lg">
-                      {ROLE_OPTIONS.filter((r) => r.value !== 'captain' && r.value !== member.role).map((role) => (
+                      {ROLE_OPTIONS.filter((r) => r.value !== 'captain' && r.value !== member.role).map((role) => {
+                        const label =
+                          terminology === 'club'
+                            ? CLUB_ROLE_LABELS[role.value]
+                            : role.label;
+                        return (
                         <button
                           key={role.value}
                           onClick={() => {
@@ -115,9 +132,10 @@ export default function MemberList({
                           }}
                           className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 transition-colors"
                         >
-                          {role.label}으로 변경
+                          {label}으로 변경
                         </button>
-                      ))}
+                        );
+                      })}
                       {canRemove && (
                         <button
                           onClick={() => {

@@ -6,6 +6,7 @@ interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   teamId: number;
+  terminology?: 'team' | 'club';
 }
 
 const PREMIUM_FEATURES = [
@@ -19,7 +20,7 @@ const PRICING_DISPLAY = [
   { tier: 'Business', members: '80명+', price: '34,900원/월' },
 ];
 
-export default function UpgradeModal({ isOpen, onClose, teamId }: UpgradeModalProps) {
+export default function UpgradeModal({ isOpen, onClose, teamId, terminology = 'team' }: UpgradeModalProps) {
   const router = useRouter();
 
   if (!isOpen) return null;
@@ -39,7 +40,7 @@ export default function UpgradeModal({ isOpen, onClose, teamId }: UpgradeModalPr
           </div>
           <p className="text-base font-bold text-gray-900">프리미엄 기능입니다</p>
           <p className="mt-1 text-xs text-gray-500">
-            구독하고 팀 관리 기능을 모두 이용하세요
+            구독하고 {terminology === 'club' ? '동아리' : '팀'} 관리 기능을 모두 이용하세요
           </p>
         </div>
 

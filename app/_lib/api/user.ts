@@ -19,6 +19,20 @@ export const updateUserProfile = async (data: UserProfileUpdate) => {
     return response.data;
 };
 
+// 프로필 이미지 업로드
+export const uploadUserProfileImage = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post<UserProfile>('/users/me/profile-image', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+        timeout: 30_000,
+    });
+    return response.data;
+};
+
 // 내 구독 조회
 export const getUserSubscriptions = async () => {
     const response = await api.get<UserSubscription[]>('/users/me/subscriptions');

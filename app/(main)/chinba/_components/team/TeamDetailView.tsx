@@ -89,7 +89,7 @@ export default function TeamDetailView() {
   if (isError || !team) {
     return (
       <div className="flex h-full flex-col items-center justify-center bg-white">
-        <p className="text-sm text-gray-400 mb-3">팀 정보를 불러오지 못했습니다</p>
+        <p className="text-sm text-gray-400 mb-3">동아리 정보를 불러오지 못했습니다</p>
         <button
           onClick={goBack}
           className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
@@ -102,10 +102,10 @@ export default function TeamDetailView() {
 
   const renderTabContent = () => {
     if (activeTab === 'mannaja') {
-      return <MannajaTab teamId={teamId} myRole={team.my_role} memberCount={team.member_count} inviteCode={team.invite_code} selectedSetId={effectiveSetId} selectedGroupId={selectedGroupId} />;
+      return <MannajaTab teamId={teamId} myRole={team.my_role} memberCount={team.member_count} inviteCode={team.invite_code} selectedSetId={effectiveSetId} selectedGroupId={selectedGroupId} terminology="club" />;
     }
     if (activeTab === 'mwoheni') {
-      return <ActivityTab teamId={teamId} myRole={team.my_role} selectedSetId={effectiveSetId} selectedGroupId={selectedGroupId} />;
+      return <ActivityTab teamId={teamId} myRole={team.my_role} selectedSetId={effectiveSetId} selectedGroupId={selectedGroupId} terminology="club" />;
     }
     if (activeTab === 'jabahbwa') {
       return <JababwaTab teamId={teamId} myRole={team.my_role} selectedSetId={effectiveSetId} selectedGroupId={selectedGroupId} />;
@@ -153,6 +153,7 @@ export default function TeamDetailView() {
         isOpen={showUpgrade}
         onClose={() => setShowUpgrade(false)}
         teamId={teamId}
+        terminology="club"
       />
     </FullPageModal>
   );
