@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiChevronUp, FiX } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
+import { FiChevronUp, FiLogIn, FiX } from 'react-icons/fi';
 
 import { useUpsertCompanyInterest } from '@/_lib/hooks/useCompanies';
+import { useUser } from '@/_lib/hooks/useUser';
 import { useToast } from '@/_context/ToastContext';
 import type { CompanyDetail } from '@/_types/flow';
 
@@ -13,10 +15,12 @@ interface Props {
 
 type Choice = 'yes' | 'no' | null;
 
-/** 평소엔 하단에 슬림 바, 탭하면 백드롭 + bottom sheet 펼침 */
+/** 평소엔 하단에 슬림 바, 탭하면 백드롭 + bottom sheet 펼침. 비로그인 시 로그인 유도. */
 export default function InterestPanel({ company }: Props) {
+  const router = useRouter();
   const { showToast } = useToast();
   const upsert = useUpsertCompanyInterest(company.id);
+  const { isLoggedIn, isAuthLoaded } = useUser();
 
   const initialChoice: Choice = company.my_interest
     ? company.my_interest.is_interested
@@ -63,14 +67,29 @@ export default function InterestPanel({ company }: Props) {
     );
   };
 
-  // 슬림 바 텍스트 (응답 상태별)
-  const barText =
-    initialChoice === 'yes'
+  // 슬림 바 텍스트 + 액션 분기 (비로그인 / 로그인 응답 상태별)
+  // 인증 로딩 중에는 비로그인 모드로 깜빡이지 않도록 차분한 기본값
+  const isGuestMode = isAuthLoaded && !isLoggedIn;
+
+  const barText = isGuestMode
+    ? '🔒 로그인하고 관심 표현하기'
+    : initialChoice === 'yes'
       ? '✅ 관심 표현했어요'
       : initialChoice === 'no'
         ? '🤔 아직은 관심 없음'
         : '❓ 이 회사 어떠세요?';
-  const barAction = initialChoice ? '수정' : '관심표현';
+  const barAction = isGuestMode ? '로그인' : initialChoice ? '수정' : '관심표현';
+  const BarIcon = isGuestMode ? FiLogIn : FiChevronUp;
+
+  const handleBarClick = () => {
+    if (isGuestMode) {
+      // 로그인 후 같은 회사 페이지로 돌아오게
+      const redirect = `/flow/companies/?id=${company.id}`;
+      router.push(`/login?redirect=${encodeURIComponent(redirect)}`);
+      return;
+    }
+    setOpen(true);
+  };
 
   return (
     <>
@@ -81,12 +100,12 @@ export default function InterestPanel({ company }: Props) {
       >
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={handleBarClick}
           className="flex w-full items-center justify-between gap-3 rounded-full bg-white px-5 py-3.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)] ring-1 ring-black/5 transition active:scale-[0.98]"
         >
           <span className="truncate text-sm font-medium text-gray-700">{barText}</span>
           <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-blue-600">
-            {barAction} <FiChevronUp size={14} />
+            {barAction} <BarIcon size={14} />
           </span>
         </button>
       </div>
