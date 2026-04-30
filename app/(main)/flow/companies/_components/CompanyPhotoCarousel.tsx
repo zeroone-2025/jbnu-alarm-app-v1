@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 
 import type { CompanyPhoto } from '@/_types/flow';
+import { resolveAssetUrl } from '@/_lib/utils/assetUrl';
 import { logoBg, logoText } from '../../_components/companyTheme';
 
 interface Props {
@@ -63,7 +64,7 @@ export default function CompanyPhotoCarousel({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={p.url}
+                src={resolveAssetUrl(p.url)}
                 alt={p.caption ?? ''}
                 className="absolute inset-0 h-full w-full object-cover"
                 loading="lazy"
