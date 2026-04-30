@@ -91,7 +91,7 @@ export default function CompaniesList() {
                           .join(' · ')}
                       </p>
                       {c.slogan && (
-                        <p className="mt-1.5 text-xs text-gray-600 leading-relaxed break-keep line-clamp-2">
+                        <p className="mt-1.5 text-xs text-gray-600 leading-relaxed break-keep truncate">
                           “{c.slogan}”
                         </p>
                       )}
